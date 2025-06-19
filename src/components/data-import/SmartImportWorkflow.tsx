@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,8 +19,8 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<any>(null);
 
-  const handleFilesSelected = (selectedFiles: File[]) => {
-    setFiles(selectedFiles);
+  const handleFileSelected = (selectedFile: File) => {
+    setFiles([selectedFile]);
     setResults(null);
   };
 
@@ -95,9 +96,8 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
         </CardHeader>
         <CardContent className="space-y-4">
           <FileUploader
-            onFilesSelected={handleFilesSelected}
-            acceptedFileTypes={['.csv', '.xlsx', '.xls', '.pdf', '.jpg', '.png']}
-            maxFiles={10}
+            onFileSelected={handleFileSelected}
+            selectedFile={files[0] || null}
           />
 
           {files.length > 0 && (

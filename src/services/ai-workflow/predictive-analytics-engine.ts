@@ -25,22 +25,11 @@ function convertToAIPrediction(row: any): AIPrediction {
 }
 
 export class PredictiveAnalyticsEngine {
-  async getAllPredictions(associationId: string): Promise<AIPrediction[]> {
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .select('*')
-      .eq('association_id', associationId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      throw new Error(`Failed to fetch predictions: ${error.message}`);
-    }
-
-    return data ? data.map(convertToAIPrediction) : [];
-  }
-
-  async generateMaintenanceCostPrediction(associationId: string): Promise<AIPrediction> {
-    // Fetch maintenance history
+  async generateMaintenanceCostPrediction(associationId: string, options: {
+    timeframe?: string;
+    propertyTypes?: string[];
+    includeInflation?: boolean;
+  } = {}): Promise<AIPrediction> {
     const { data: maintenanceHistory, error } = await supabase
       .from('homeowner_requests')
       .select(`
@@ -61,22 +50,25 @@ export class PredictiveAnalyticsEngine {
       throw new Error(`Failed to fetch maintenance history: ${error.message}`);
     }
 
-    // Simple prediction logic (in production, this would use ML models)
-    const avgCost = 500; // Default average cost
-    const prediction = {
-      estimatedCost: avgCost,
-      confidence: 0.75,
-      factors: ['historical_data', 'seasonal_trends'],
-      timeframe: '30_days'
-    };
+    // Simple prediction logic - in production this would use ML models
+    const avgCost = maintenanceHistory?.reduce((sum, req) => sum + (req.estimated_cost || 0), 0) / (maintenanceHistory?.length || 1);
+    const projectedCost = avgCost * 1.15; // 15% inflation factor
 
     const predictionData = {
-      association_id: associationId,
       prediction_type: 'maintenance_cost',
-      prediction_data: prediction,
+      association_id: associationId,
+      prediction_data: {
+        projected_annual_cost: projectedCost,
+        confidence_factors: {
+          historical_data_points: maintenanceHistory?.length || 0,
+          seasonal_adjustment: 1.1,
+          inflation_factor: options.includeInflation ? 1.15 : 1.0
+        },
+        timeframe: options.timeframe || '12_months'
+      },
       confidence_level: 0.75,
-      model_version: 'v1.0',
-      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      model_version: 'maintenance_predictor_v1.0',
+      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
     };
 
     const { data, error: insertError } = await supabase
@@ -92,91 +84,37 @@ export class PredictiveAnalyticsEngine {
     return convertToAIPrediction(data);
   }
 
-  // Alias for backwards compatibility
-  async generateMaintenanceCostForecast(associationId: string): Promise<AIPrediction> {
-    return this.generateMaintenanceCostPrediction(associationId);
+  async getAllPredictions(associationId: string): Promise<AIPrediction[]> {
+    const { data, error } = await supabase
+      .from('ai_predictions')
+      .select('*')
+      .eq('association_id', associationId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch predictions: ${error.message}`);
+    }
+
+    return data ? data.map(convertToAIPrediction) : [];
+  }
+
+  async generateMaintenanceCostForecast(associationId: string, months: number = 12): Promise<AIPrediction> {
+    return this.generateMaintenanceCostPrediction(associationId, { 
+      timeframe: `${months}_months`,
+      includeInflation: true 
+    });
   }
 
   async generateVendorPerformancePrediction(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      topPerformers: ['Vendor A', 'Vendor B'],
-      averageRating: 4.2,
-      recommendedVendors: ['Vendor C'],
-      confidence: 0.82
-    };
-
     const predictionData = {
-      association_id: associationId,
       prediction_type: 'vendor_performance',
-      prediction_data: prediction,
-      confidence_level: 0.82,
-      model_version: 'v1.0',
-      valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .insert(predictionData)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to save vendor performance prediction: ${error.message}`);
-    }
-
-    return convertToAIPrediction(data);
-  }
-
-  async generateCommunityHealthScore(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      overallScore: 85,
-      factors: {
-        maintenance: 0.8,
-        financials: 0.9,
-        compliance: 0.85,
-        resident_satisfaction: 0.82
+      association_id: associationId,
+      prediction_data: {
+        vendor_scores: {},
+        recommendations: []
       },
-      recommendations: ['Improve maintenance response time', 'Increase community events'],
-      confidence: 0.78
-    };
-
-    const predictionData = {
-      association_id: associationId,
-      prediction_type: 'community_health',
-      prediction_data: prediction,
-      confidence_level: 0.78,
-      model_version: 'v1.0',
-      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .insert(predictionData)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to save community health prediction: ${error.message}`);
-    }
-
-    return convertToAIPrediction(data);
-  }
-
-  async generateBudgetVariancePrediction(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      expectedVariance: 5.2,
-      budgetHealth: 'good',
-      riskFactors: ['seasonal maintenance', 'utility costs'],
-      projectedOverrun: 2.3,
-      confidence: 0.85
-    };
-
-    const predictionData = {
-      association_id: associationId,
-      prediction_type: 'budget_variance',
-      prediction_data: prediction,
-      confidence_level: 0.85,
-      model_version: 'v1.0',
+      confidence_level: 0.65,
+      model_version: 'vendor_predictor_v1.0',
       valid_until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
     };
 
@@ -187,26 +125,26 @@ export class PredictiveAnalyticsEngine {
       .single();
 
     if (error) {
-      throw new Error(`Failed to save budget variance prediction: ${error.message}`);
+      throw new Error(`Failed to save vendor prediction: ${error.message}`);
     }
 
     return convertToAIPrediction(data);
   }
 
-  async generateComplianceRiskPrediction(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      riskLevel: 'medium',
-      riskFactors: ['payment_delays', 'maintenance_backlog'],
-      recommendedActions: ['increase_follow_ups', 'schedule_inspections'],
-      confidence: 0.68
-    };
-
+  async generateCommunityHealthScore(associationId: string): Promise<AIPrediction> {
     const predictionData = {
+      prediction_type: 'community_health',
       association_id: associationId,
-      prediction_type: 'compliance_risk',
-      prediction_data: prediction,
-      confidence_level: 0.68,
-      model_version: 'v1.0',
+      prediction_data: {
+        overall_score: 85,
+        factors: {
+          maintenance_backlog: 0.8,
+          resident_satisfaction: 0.9,
+          financial_health: 0.85
+        }
+      },
+      confidence_level: 0.8,
+      model_version: 'health_score_v1.0',
       valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
 
@@ -217,61 +155,24 @@ export class PredictiveAnalyticsEngine {
       .single();
 
     if (error) {
-      throw new Error(`Failed to save compliance prediction: ${error.message}`);
+      throw new Error(`Failed to save health score: ${error.message}`);
     }
 
     return convertToAIPrediction(data);
   }
 
-  async generateCashFlowPrediction(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      projectedIncome: 15000,
-      projectedExpenses: 12000,
-      netCashFlow: 3000,
-      confidence: 0.82,
-      timeframe: '90_days'
-    };
-
+  async generateBudgetVariancePrediction(associationId: string): Promise<AIPrediction> {
     const predictionData = {
+      prediction_type: 'budget_variance',
       association_id: associationId,
-      prediction_type: 'cash_flow',
-      prediction_data: prediction,
-      confidence_level: 0.82,
-      model_version: 'v1.0',
-      valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .insert(predictionData)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to save cash flow prediction: ${error.message}`);
-    }
-
-    return convertToAIPrediction(data);
-  }
-
-  async generateSeasonalTrendsPrediction(associationId: string): Promise<AIPrediction> {
-    const prediction = {
-      seasonalPatterns: {
-        spring: { maintenanceIncrease: 0.3, costIncrease: 0.25 },
-        summer: { maintenanceIncrease: 0.4, costIncrease: 0.35 },
-        fall: { maintenanceIncrease: 0.2, costIncrease: 0.15 },
-        winter: { maintenanceIncrease: 0.1, costIncrease: 0.1 }
+      prediction_data: {
+        predicted_variance: 0.05,
+        risk_factors: [],
+        recommendations: []
       },
-      confidence: 0.71
-    };
-
-    const predictionData = {
-      association_id: associationId,
-      prediction_type: 'seasonal_trends',
-      prediction_data: prediction,
-      confidence_level: 0.71,
-      model_version: 'v1.0',
-      valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      confidence_level: 0.7,
+      model_version: 'budget_predictor_v1.0',
+      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     };
 
     const { data, error } = await supabase
@@ -281,48 +182,17 @@ export class PredictiveAnalyticsEngine {
       .single();
 
     if (error) {
-      throw new Error(`Failed to save seasonal trends prediction: ${error.message}`);
+      throw new Error(`Failed to save budget prediction: ${error.message}`);
     }
 
     return convertToAIPrediction(data);
-  }
-
-  async getPredictionsByType(associationId: string, predictionType: string): Promise<AIPrediction[]> {
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .select('*')
-      .eq('association_id', associationId)
-      .eq('prediction_type', predictionType)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (error) {
-      throw new Error(`Failed to fetch predictions: ${error.message}`);
-    }
-
-    return data ? data.map(convertToAIPrediction) : [];
   }
 
   async updatePredictionAccuracy(predictionId: string, actualOutcome: Record<string, any>): Promise<AIPrediction> {
-    // Get the original prediction
-    const { data: original, error: fetchError } = await supabase
-      .from('ai_predictions')
-      .select('*')
-      .eq('id', predictionId)
-      .single();
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch original prediction: ${fetchError.message}`);
-    }
-
-    // Calculate accuracy score (simplified)
-    const accuracyScore = 0.85; // In production, this would be calculated based on actual vs predicted
-
     const { data, error } = await supabase
       .from('ai_predictions')
       .update({
         actual_outcome: actualOutcome,
-        accuracy_score: accuracyScore,
         updated_at: new Date().toISOString()
       })
       .eq('id', predictionId)

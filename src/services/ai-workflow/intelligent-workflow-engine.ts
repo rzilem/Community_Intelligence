@@ -40,7 +40,14 @@ function convertToWorkflowExecution(row: any): WorkflowExecution {
 }
 
 export class IntelligentWorkflowEngine {
-  async createWorkflowTemplate(templateData: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+  async createWorkflowTemplate(templateData: {
+    name?: string;
+    description?: string;
+    workflow_type?: string;
+    template_data?: Record<string, any>;
+    is_ai_recommended?: boolean;
+    created_by?: string;
+  }): Promise<WorkflowTemplate> {
     const { data, error } = await supabase
       .from('workflows')
       .insert({
@@ -161,7 +168,13 @@ export class IntelligentWorkflowEngine {
     return data ? data.map(convertToWorkflowExecution) : [];
   }
 
-  async updateWorkflowExecution(executionId: string, updates: Partial<WorkflowExecution>): Promise<WorkflowExecution> {
+  async updateWorkflowExecution(executionId: string, updates: {
+    status?: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    execution_data?: Record<string, any>;
+    performance_metrics?: Record<string, any>;
+    ai_insights?: Record<string, any>;
+    completed_at?: string;
+  }): Promise<WorkflowExecution> {
     const { data, error } = await supabase
       .from('workflow_executions')
       .update({
