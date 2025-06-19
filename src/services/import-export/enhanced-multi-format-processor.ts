@@ -1,4 +1,3 @@
-
 import { devLog } from '@/utils/dev-logger';
 import { multiFormatProcessor } from './multi-format-processor';
 import { addressEnrichmentService } from './address-enrichment-service';
@@ -13,8 +12,8 @@ import {
   PredictiveInsight
 } from './types';
 
-// Export the EnhancedProcessingOptions type
-export { EnhancedProcessingOptions };
+// Export the EnhancedProcessingOptions type using 'export type'
+export type { EnhancedProcessingOptions };
 
 export class EnhancedMultiFormatProcessor {
   async processWithAddressIntelligence(
