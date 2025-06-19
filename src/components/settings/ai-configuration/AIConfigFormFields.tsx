@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { TestOpenAIConnection } from './TestOpenAIConnection';
 import { OpenAIDiagnostics } from './OpenAIDiagnostics';
+import { CloudMailinSetup } from './CloudMailinSetup';
+import { InvoiceProcessingTest } from './InvoiceProcessingTest';
 import { Sparkles } from 'lucide-react';
 
 interface AIConfigFormFieldsProps {
@@ -82,6 +84,12 @@ export function AIConfigFormFields({ values, onFieldChange }: AIConfigFormFields
 
       {/* OpenAI Diagnostics Section */}
       <OpenAIDiagnostics />
+
+      {/* CloudMailin Integration Section */}
+      <CloudMailinSetup />
+
+      {/* Invoice Processing Test Section */}
+      <InvoiceProcessingTest />
 
       {/* AI Processing Configuration Section */}
       <Card>
