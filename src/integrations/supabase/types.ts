@@ -70,6 +70,95 @@ export type Database = {
           },
         ]
       }
+      ai_model_performance: {
+        Row: {
+          accuracy_score: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_trained: string | null
+          model_name: string
+          model_version: string
+          performance_metrics: Json
+          training_data_size: number | null
+          updated_at: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          model_name: string
+          model_version: string
+          performance_metrics?: Json
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          model_name?: string
+          model_version?: string
+          performance_metrics?: Json
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_predictions: {
+        Row: {
+          accuracy_score: number | null
+          actual_outcome: Json | null
+          association_id: string | null
+          confidence_level: number
+          created_at: string
+          id: string
+          model_version: string | null
+          prediction_data: Json
+          prediction_type: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          accuracy_score?: number | null
+          actual_outcome?: Json | null
+          association_id?: string | null
+          confidence_level?: number
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          prediction_data?: Json
+          prediction_type: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          accuracy_score?: number | null
+          actual_outcome?: Json | null
+          association_id?: string | null
+          confidence_level?: number
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          prediction_data?: Json
+          prediction_type?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_predictions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_processing_queue: {
         Row: {
           association_id: string | null
@@ -902,6 +991,68 @@ export type Database = {
           zip?: string | null
         }
         Relationships: []
+      }
+      automation_rules: {
+        Row: {
+          action_sequence: Json
+          association_id: string | null
+          created_at: string
+          created_by: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed: string | null
+          learning_enabled: boolean | null
+          performance_stats: Json | null
+          rule_name: string
+          rule_type: string
+          success_rate: number | null
+          trigger_conditions: Json
+          updated_at: string
+        }
+        Insert: {
+          action_sequence?: Json
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed?: string | null
+          learning_enabled?: boolean | null
+          performance_stats?: Json | null
+          rule_name: string
+          rule_type: string
+          success_rate?: number | null
+          trigger_conditions?: Json
+          updated_at?: string
+        }
+        Update: {
+          action_sequence?: Json
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed?: string | null
+          learning_enabled?: boolean | null
+          performance_stats?: Json | null
+          rule_name?: string
+          rule_type?: string
+          success_rate?: number | null
+          trigger_conditions?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bank_accounts: {
         Row: {
@@ -2036,6 +2187,59 @@ export type Database = {
           },
         ]
       }
+      communication_intelligence: {
+        Row: {
+          ai_category: string | null
+          association_id: string | null
+          auto_routing_rules: Json | null
+          communication_id: string | null
+          confidence_metrics: Json | null
+          created_at: string
+          id: string
+          message_content: string
+          sentiment_score: number | null
+          suggested_responses: Json | null
+          updated_at: string
+          urgency_level: string | null
+        }
+        Insert: {
+          ai_category?: string | null
+          association_id?: string | null
+          auto_routing_rules?: Json | null
+          communication_id?: string | null
+          confidence_metrics?: Json | null
+          created_at?: string
+          id?: string
+          message_content: string
+          sentiment_score?: number | null
+          suggested_responses?: Json | null
+          updated_at?: string
+          urgency_level?: string | null
+        }
+        Update: {
+          ai_category?: string | null
+          association_id?: string | null
+          auto_routing_rules?: Json | null
+          communication_id?: string | null
+          confidence_metrics?: Json | null
+          created_at?: string
+          id?: string
+          message_content?: string
+          sentiment_score?: number | null
+          suggested_responses?: Json | null
+          updated_at?: string
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_intelligence_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communications_log: {
         Row: {
           category: Database["public"]["Enums"]["message_category"]
@@ -2257,6 +2461,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      document_processing_queue: {
+        Row: {
+          ai_classification: Json | null
+          confidence_score: number | null
+          created_at: string
+          document_id: string | null
+          extracted_data: Json | null
+          id: string
+          processing_results: Json | null
+          processing_type: string
+          status: string
+          updated_at: string
+          workflow_triggers: Json | null
+        }
+        Insert: {
+          ai_classification?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          extracted_data?: Json | null
+          id?: string
+          processing_results?: Json | null
+          processing_type: string
+          status?: string
+          updated_at?: string
+          workflow_triggers?: Json | null
+        }
+        Update: {
+          ai_classification?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          extracted_data?: Json | null
+          id?: string
+          processing_results?: Json | null
+          processing_type?: string
+          status?: string
+          updated_at?: string
+          workflow_triggers?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_processing_queue_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_templates: {
         Row: {
@@ -7802,6 +8056,155 @@ export type Database = {
           vendor_name?: string | null
         }
         Relationships: []
+      }
+      workflow_analytics: {
+        Row: {
+          association_id: string | null
+          created_at: string
+          id: string
+          measurement_date: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          workflow_execution_id: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string
+          id?: string
+          measurement_date?: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          workflow_execution_id?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string
+          id?: string
+          measurement_date?: string
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number
+          workflow_execution_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_analytics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_analytics_workflow_execution_id_fkey"
+            columns: ["workflow_execution_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_events: {
+        Row: {
+          association_id: string | null
+          correlation_id: string | null
+          entity_id: string
+          entity_type: string
+          event_data: Json
+          event_type: string
+          id: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          correlation_id?: string | null
+          entity_id: string
+          entity_type: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          correlation_id?: string | null
+          entity_id?: string
+          entity_type?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_events_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_executions: {
+        Row: {
+          ai_insights: Json | null
+          association_id: string | null
+          completed_at: string | null
+          created_at: string
+          execution_data: Json
+          id: string
+          performance_metrics: Json | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          workflow_template_id: string | null
+        }
+        Insert: {
+          ai_insights?: Json | null
+          association_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          execution_data?: Json
+          id?: string
+          performance_metrics?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          workflow_template_id?: string | null
+        }
+        Update: {
+          ai_insights?: Json | null
+          association_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          execution_data?: Json
+          id?: string
+          performance_metrics?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          workflow_template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_executions_workflow_template_id_fkey"
+            columns: ["workflow_template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workflow_templates: {
         Row: {

@@ -10,6 +10,7 @@ import { operationsRoutes } from './operationsRoutes';
 import { recordsReportsRoutes } from './recordsReportsRoutes';
 import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
+import { aiWorkflowRoutes } from './aiWorkflowRoutes';
 
 /**
  * Main application router component that consolidates all routes
@@ -76,6 +77,9 @@ export const AppRouter = () => {
       
       {/* System routes */}
       {systemRoutes.map((route, index) => renderRoute(route, index, 'system'))}
+      
+      {/* AI Workflow routes */}
+      {aiWorkflowRoutes.map((route, index) => renderRoute(route, index, 'ai-workflow'))}
       
       {/* Catch-all route for undefined paths */}
       <Route 
