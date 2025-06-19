@@ -38,37 +38,42 @@ export function useAIConfiguration() {
         secret_name: 'ai_config'
       });
 
-      // Load OpenAI configuration
-      const { data: openaiConfigData, error: openaiConfigError } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'integrations')
-        .single();
+      // Load OpenAI configuration - simplified approach
+      const { data: openaiKeyData, error: openaiKeyError } = await supabase.rpc('get_secret', {
+        secret_name: 'openai_api_key'
+      });
+
+      const { data: openaiModelData, error: openaiModelError } = await supabase.rpc('get_secret', {
+        secret_name: 'openai_model'
+      });
 
       let configValues = { ...defaultValues };
 
       // Parse AI processing config
       if (!aiConfigError && aiConfigData) {
-        const aiConfig = typeof aiConfigData === 'object' ? aiConfigData : JSON.parse(aiConfigData as string);
-        configValues = {
-          ...configValues,
-          aiConfidenceThreshold: String(aiConfig.aiConfidenceThreshold || defaultValues.aiConfidenceThreshold),
-          highConfidenceThreshold: String(aiConfig.highConfidenceThreshold || defaultValues.highConfidenceThreshold),
-          processingTimeout: String(aiConfig.processingTimeout || defaultValues.processingTimeout),
-          retryAttempts: String(aiConfig.retryAttempts || defaultValues.retryAttempts),
-          maxFileSize: String(aiConfig.maxFileSize || defaultValues.maxFileSize),
-          allowedFileTypes: String(aiConfig.allowedFileTypes || defaultValues.allowedFileTypes)
-        };
+        try {
+          const aiConfig = typeof aiConfigData === 'string' ? JSON.parse(aiConfigData) : aiConfigData;
+          configValues = {
+            ...configValues,
+            aiConfidenceThreshold: String(aiConfig.aiConfidenceThreshold || defaultValues.aiConfidenceThreshold),
+            highConfidenceThreshold: String(aiConfig.highConfidenceThreshold || defaultValues.highConfidenceThreshold),
+            processingTimeout: String(aiConfig.processingTimeout || defaultValues.processingTimeout),
+            retryAttempts: String(aiConfig.retryAttempts || defaultValues.retryAttempts),
+            maxFileSize: String(aiConfig.maxFileSize || defaultValues.maxFileSize),
+            allowedFileTypes: String(aiConfig.allowedFileTypes || defaultValues.allowedFileTypes)
+          };
+        } catch (e) {
+          console.error('Error parsing AI config:', e);
+        }
       }
 
-      // Parse OpenAI config
-      if (!openaiConfigError && openaiConfigData?.value?.integrationSettings?.OpenAI) {
-        const openaiConfig = openaiConfigData.value.integrationSettings.OpenAI;
-        configValues = {
-          ...configValues,
-          openaiApiKey: openaiConfig.apiKey || '',
-          openaiModel: openaiConfig.model || 'gpt-4o-mini'
-        };
+      // Parse OpenAI config - direct from secrets
+      if (!openaiKeyError && openaiKeyData) {
+        configValues.openaiApiKey = openaiKeyData;
+      }
+
+      if (!openaiModelError && openaiModelData) {
+        configValues.openaiModel = openaiModelData;
       }
 
       setValues(configValues);
@@ -159,17 +164,24 @@ export function useAIConfiguration() {
         throw new Error(`Failed to save AI configuration: ${aiConfigError.message}`);
       }
 
-      // Save OpenAI configuration if API key is provided
+      // Save OpenAI configuration directly as secrets
       if (values.openaiApiKey.trim()) {
-        const { error: openaiError } = await supabase.functions.invoke('update-openai-config', {
-          body: {
-            apiKey: values.openaiApiKey,
-            model: values.openaiModel
-          }
+        const { error: keyError } = await supabase.rpc('set_secret', {
+          secret_name: 'openai_api_key',
+          secret_value: values.openaiApiKey
         });
 
-        if (openaiError) {
-          throw new Error(`Failed to save OpenAI configuration: ${openaiError.message}`);
+        if (keyError) {
+          throw new Error(`Failed to save OpenAI API key: ${keyError.message}`);
+        }
+
+        const { error: modelError } = await supabase.rpc('set_secret', {
+          secret_name: 'openai_model',
+          secret_value: values.openaiModel
+        });
+
+        if (modelError) {
+          throw new Error(`Failed to save OpenAI model: ${modelError.message}`);
         }
       }
 
