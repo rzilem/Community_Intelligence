@@ -34,46 +34,51 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Prepare context for OpenAI
+    // Enhanced context prompt with better instructions
     const contextPrompt = `
-You are an intelligent data mapping assistant for a HOA management system. 
-Analyze the uploaded data and provide intelligent field mapping suggestions.
+You are an expert data mapping assistant for a HOA (Homeowners Association) management system. 
+Your task is to analyze uploaded data and provide intelligent field mapping suggestions.
 
-Data Type: ${dataType}
-File Columns: ${JSON.stringify(columns)}
-Sample Data (first 3 rows): ${JSON.stringify(sampleData.slice(0, 3))}
-Available System Fields: ${JSON.stringify(systemFields.map(f => ({ value: f.value, label: f.label })))}
+CONTEXT:
+- Data Type: ${dataType}
+- File Columns (${columns?.length}): ${JSON.stringify(columns)}
+- Sample Data (first 3 rows): ${JSON.stringify(sampleData.slice(0, 3))}
+- Available System Fields: ${JSON.stringify(systemFields.map(f => ({ value: f.value, label: f.label })))}
 
-Your task:
-1. Analyze each column's content and semantics
-2. Map file columns to the most appropriate system fields
-3. Identify data quality issues
-4. Suggest data transformations if needed
-5. Provide confidence scores (0-1) for each mapping
+INSTRUCTIONS:
+1. Analyze each column's content semantically, not just by name
+2. Consider HOA management context (properties, residents, assessments, maintenance, etc.)
+3. Map file columns to the most appropriate system fields
+4. Identify data quality issues (missing values, format problems, inconsistencies)
+5. Suggest data transformations if needed
+6. Provide confidence scores (0-1) based on content analysis
+7. Give clear reasoning for each mapping decision
 
-Please respond with a JSON object in this exact format:
+RESPONSE FORMAT (JSON only):
 {
   "mappings": {
     "file_column_name": {
       "systemField": "system_field_name",
       "confidence": 0.95,
-      "reasoning": "Why this mapping makes sense",
+      "reasoning": "Detailed explanation of why this mapping makes sense based on data content",
       "dataQuality": "good|warning|error",
-      "suggestions": ["any transformation suggestions"]
+      "suggestions": ["specific improvement suggestions for this column"]
     }
   },
   "overallAnalysis": {
     "dataQuality": "excellent|good|fair|poor",
-    "issues": ["list of identified issues"],
-    "recommendations": ["list of recommendations"]
+    "issues": ["specific data quality issues found"],
+    "recommendations": ["actionable recommendations for data improvement"]
   }
 }
 
-Focus on semantic understanding - don't just match string patterns. Consider:
-- Data context and meaning
-- HOA management domain knowledge
-- Data format consistency
-- Completeness and quality
+IMPORTANT RULES: 
+- Focus on semantic understanding of the data content, not just column names
+- Consider HOA domain knowledge (properties have addresses, residents have names, etc.)
+- High confidence (0.8+) only for very clear matches
+- Be specific about data quality issues
+- Provide actionable suggestions
+- Return only valid JSON without any markdown formatting
 `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -87,7 +92,7 @@ Focus on semantic understanding - don't just match string patterns. Consider:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert data analyst specializing in HOA management systems. Provide intelligent, context-aware data mapping suggestions.'
+            content: 'You are an expert data analyst specializing in HOA management systems. Respond only with valid JSON matching the specified format. No markdown, no explanations outside the JSON.'
           },
           {
             role: 'user',
@@ -95,11 +100,14 @@ Focus on semantic understanding - don't just match string patterns. Consider:
           }
         ],
         temperature: 0.1,
-        max_tokens: 2000
+        max_tokens: 3000,
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
@@ -107,7 +115,7 @@ Focus on semantic understanding - don't just match string patterns. Consider:
     const aiContent = aiResponse.choices[0]?.message?.content;
 
     if (!aiContent) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response content from OpenAI');
     }
 
     // Parse AI response
@@ -116,27 +124,41 @@ Focus on semantic understanding - don't just match string patterns. Consider:
       aiAnalysis = JSON.parse(aiContent);
     } catch (parseError) {
       console.error('Failed to parse AI response:', aiContent);
-      throw new Error('Invalid AI response format');
+      console.error('Parse error:', parseError);
+      throw new Error('Invalid AI response format - could not parse JSON');
+    }
+
+    // Validate the response structure
+    if (!aiAnalysis.mappings || !aiAnalysis.overallAnalysis) {
+      console.error('Invalid AI response structure:', aiAnalysis);
+      throw new Error('AI response missing required fields');
     }
 
     console.log('AI Analysis completed successfully:', {
       mappingsCount: Object.keys(aiAnalysis.mappings || {}).length,
-      overallQuality: aiAnalysis.overallAnalysis?.dataQuality
+      overallQuality: aiAnalysis.overallAnalysis?.dataQuality,
+      issuesFound: aiAnalysis.overallAnalysis?.issues?.length || 0
     });
 
     return new Response(JSON.stringify({
       success: true,
       analysis: aiAnalysis,
-      timestamp: new Date().toISOString()
+      metadata: {
+        columnsAnalyzed: columns?.length || 0,
+        sampleRowsUsed: sampleData?.length || 0,
+        timestamp: new Date().toISOString()
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in AI data analyzer:', error);
+    
     return new Response(JSON.stringify({ 
       success: false,
       error: error.message,
+      details: 'Check the function logs for more information',
       timestamp: new Date().toISOString()
     }), {
       status: 500,

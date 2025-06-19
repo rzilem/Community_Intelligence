@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import ColumnMappingField from './ColumnMappingField';
+import EnhancedColumnMappingField from './EnhancedColumnMappingField';
 import { MappingOption } from './types/mapping-types';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, Zap, AlertCircle } from 'lucide-react';
 import { useAIMappingSuggestions } from '@/hooks/import-export/useAIMappingSuggestions';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ColumnMappingListProps {
   fileColumns: string[];
@@ -13,6 +16,8 @@ interface ColumnMappingListProps {
   mappings: Record<string, string>;
   onMappingChange: (column: string, field: string) => void;
   previewData: any[];
+  dataType?: string;
+  associationId?: string;
 }
 
 const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
@@ -20,15 +25,21 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   systemFields,
   mappings,
   onMappingChange,
-  previewData
+  previewData,
+  dataType,
+  associationId
 }) => {
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   
   const { 
     suggestions, 
     isGenerating, 
-    generateSuggestions 
-  } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
+    analysisQuality,
+    analysisIssues,
+    overallRecommendations,
+    generateSuggestions,
+    applyBulkSuggestions
+  } = useAIMappingSuggestions(fileColumns, systemFields, previewData, dataType, associationId);
 
   console.log('ColumnMappingList RENDER:', {
     fileColumns,
@@ -42,7 +53,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   // Generate suggestions when component mounts and we have data
   useEffect(() => {
     if (fileColumns?.length > 0 && systemFields?.length > 0 && previewData?.length > 0) {
-      console.log("Auto-generating suggestions on mount");
+      console.log("Auto-generating AI suggestions on mount");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, previewData, generateSuggestions]);
@@ -63,44 +74,22 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }));
   };
   
-  const handleAutoMapColumns = () => {
-    console.log("Smart auto-mapping columns triggered");
-    const newSuggestions = generateSuggestions();
+  const handleSmartAutoMap = () => {
+    console.log("Smart AI auto-mapping triggered");
+    const appliedCount = applyBulkSuggestions(onMappingChange);
     
-    // Track updates for toast message
-    let updateCount = 0;
-    const usedFields = new Set<string>();
-    
-    // First, preserve existing mappings
-    Object.values(mappings).forEach(field => {
-      if (field) usedFields.add(field);
-    });
-    
-    // Create a list of unmapped columns
-    const unmappedColumns = fileColumns.filter(column => !mappings[column]);
-    
-    // Sort unmapped columns by suggestion confidence (highest first)
-    const sortedUnmappedColumns = unmappedColumns.sort((a, b) => {
-      const aConfidence = newSuggestions[a]?.confidence || 0;
-      const bConfidence = newSuggestions[b]?.confidence || 0;
-      return bConfidence - aConfidence;
-    });
-    
-    // Apply suggestions for unmapped columns, ensuring no duplicates
-    sortedUnmappedColumns.forEach(column => {
-      const suggestion = newSuggestions[column];
-      if (suggestion && suggestion.confidence >= 0.6 && !usedFields.has(suggestion.fieldValue)) {
-        console.log(`Smart auto-mapping: ${column} -> ${suggestion.fieldValue} (confidence: ${suggestion.confidence})`);
-        onMappingChange(column, suggestion.fieldValue);
-        usedFields.add(suggestion.fieldValue);
-        updateCount++;
-      }
-    });
-    
-    if (updateCount > 0) {
-      toast.success(`Smart-mapped ${updateCount} columns with no duplicates`);
-    } else {
-      toast.info("No additional columns could be automatically mapped");
+    if (appliedCount === 0) {
+      toast.info("No high-confidence AI suggestions available for automatic mapping");
+    }
+  };
+
+  const getQualityBadgeVariant = (quality: string) => {
+    switch (quality) {
+      case 'excellent': return 'default';
+      case 'good': return 'secondary';
+      case 'fair': return 'outline';
+      case 'poor': return 'destructive';
+      default: return 'outline';
     }
   };
 
@@ -127,51 +116,100 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   }
 
   return (
-    <div className="space-y-3 pb-4">
-      {/* Header with Smart Auto-Map button - more compact */}
-      <div className="flex items-center justify-between py-2 border-b">
-        <h3 className="text-sm font-medium">Map File Columns to System Fields</h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleAutoMapColumns}
-          disabled={isGenerating || !hasSystemFields}
-          className="flex items-center gap-1 text-xs px-2 py-1 h-7"
-        >
-          <Sparkles className="h-3 w-3" />
-          {isGenerating ? 'Analyzing...' : 'Smart Auto-Map'}
-        </Button>
-      </div>
+    <div className="space-y-4">
+      {/* AI Analysis Summary Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-lg">AI-Powered Column Mapping</CardTitle>
+              {analysisQuality && (
+                <Badge variant={getQualityBadgeVariant(analysisQuality)}>
+                  {analysisQuality} quality
+                </Badge>
+              )}
+            </div>
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleSmartAutoMap}
+              disabled={isGenerating || !hasSystemFields || Object.keys(suggestions).length === 0}
+              className="flex items-center gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              {isGenerating ? 'Analyzing...' : 'Smart Auto-Map'}
+            </Button>
+          </div>
+          <CardDescription>
+            AI is analyzing your data to suggest the best field mappings with reasoning and confidence scores.
+          </CardDescription>
+        </CardHeader>
+        
+        {/* Analysis Issues and Recommendations */}
+        {(analysisIssues.length > 0 || overallRecommendations.length > 0) && (
+          <CardContent className="pt-0 space-y-3">
+            {analysisIssues.length > 0 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Issues Found:</strong> {analysisIssues.join(', ')}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {overallRecommendations.length > 0 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Recommendations:</strong> {overallRecommendations.join(', ')}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        )}
+      </Card>
       
-      {/* Mapping fields - more compact spacing */}
-      <div className="space-y-2">
+      {/* Mapping fields */}
+      <div className="space-y-3">
         {fileColumns.map((column, index) => {
-          console.log(`Rendering mapping field ${index + 1}/${fileColumns.length} for column: "${column}"`);
+          console.log(`Rendering enhanced mapping field ${index + 1}/${fileColumns.length} for column: "${column}"`);
           return (
-            <ColumnMappingField
+            <EnhancedColumnMappingField
               key={`column-${column}-${index}`}
               column={column}
               systemFields={hasSystemFields ? systemFields : []}
               selectedValue={mappings[column] || ''}
-              onMappingChange={(col, field) => handleMappingChange(col, field)}
+              onMappingChange={handleMappingChange}
               isOpen={!!openState[column]}
               setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
-              suggestion={suggestions[column]?.fieldValue || ''}
-              confidence={suggestions[column]?.confidence || 0}
+              aiSuggestion={suggestions[column]}
             />
           );
         })}
       </div>
       
-      {/* Footer info - more compact */}
-      <div className="text-[10px] text-muted-foreground pt-2 border-t">
-        <div>Found {fileColumns.length} columns. Smart auto-mapping prevents duplicate field assignments.</div>
-        {!hasSystemFields && (
-          <div className="text-amber-600 mt-1">
-            ⚠️ System fields are still loading...
+      {/* Footer info */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div>Found {fileColumns.length} columns. AI suggestions include confidence scores and reasoning.</div>
+            <div>Smart auto-mapping applies only high-confidence suggestions to prevent conflicts.</div>
+            {!hasSystemFields && (
+              <div className="text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                System fields are still loading...
+              </div>
+            )}
+            {isGenerating && (
+              <div className="text-blue-600 flex items-center gap-1">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                AI is analyzing your data...
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

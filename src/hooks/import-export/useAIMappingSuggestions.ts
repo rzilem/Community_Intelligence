@@ -15,6 +15,7 @@ export function useAIMappingSuggestions(
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisQuality, setAnalysisQuality] = useState<string>('');
   const [analysisIssues, setAnalysisIssues] = useState<string[]>([]);
+  const [overallRecommendations, setOverallRecommendations] = useState<string[]>([]);
 
   const generateSuggestions = useCallback(async (): Promise<Record<string, AIMappingSuggestion>> => {
     if (!fileColumns.length || !systemFields.length) {
@@ -48,9 +49,10 @@ export function useAIMappingSuggestions(
       setSuggestions(newSuggestions);
 
       // Extract analysis quality information
-      const qualityInfo = this.extractQualityInfo(newSuggestions);
+      const qualityInfo = extractQualityInfo(newSuggestions);
       setAnalysisQuality(qualityInfo.quality);
       setAnalysisIssues(qualityInfo.issues);
+      setOverallRecommendations(qualityInfo.recommendations);
 
       const mappedCount = Object.keys(newSuggestions).length;
       if (mappedCount > 0) {
@@ -77,7 +79,7 @@ export function useAIMappingSuggestions(
 
   const extractQualityInfo = (suggestions: Record<string, AIMappingSuggestion>) => {
     const qualities = Object.values(suggestions).map(s => s.dataQuality);
-    const issues = Object.values(suggestions).flatMap(s => s.suggestions);
+    const allSuggestions = Object.values(suggestions).flatMap(s => s.suggestions);
     
     const hasErrors = qualities.includes('error');
     const hasWarnings = qualities.includes('warning');
@@ -86,14 +88,49 @@ export function useAIMappingSuggestions(
     if (hasErrors) overallQuality = 'poor';
     else if (hasWarnings) overallQuality = 'good';
     
-    return { quality: overallQuality, issues };
+    // Extract unique recommendations
+    const recommendations = [...new Set(allSuggestions)];
+    
+    return { 
+      quality: overallQuality, 
+      issues: allSuggestions.filter(s => s.includes('issue') || s.includes('problem')),
+      recommendations 
+    };
   };
+
+  const applyBulkSuggestions = useCallback((onMappingChange: (column: string, field: string) => void) => {
+    const usedFields = new Set<string>();
+    let appliedCount = 0;
+    
+    // Sort suggestions by confidence (highest first)
+    const sortedSuggestions = Object.entries(suggestions).sort((a, b) => 
+      b[1].confidence - a[1].confidence
+    );
+    
+    sortedSuggestions.forEach(([column, suggestion]) => {
+      if (suggestion.confidence >= 0.7 && !usedFields.has(suggestion.fieldValue)) {
+        onMappingChange(column, suggestion.fieldValue);
+        usedFields.add(suggestion.fieldValue);
+        appliedCount++;
+      }
+    });
+    
+    if (appliedCount > 0) {
+      toast.success(`Applied ${appliedCount} AI suggestions with high confidence`);
+    } else {
+      toast.info('No high-confidence suggestions available for bulk application');
+    }
+    
+    return appliedCount;
+  }, [suggestions]);
 
   return {
     suggestions,
     isGenerating,
     analysisQuality,
     analysisIssues,
-    generateSuggestions
+    overallRecommendations,
+    generateSuggestions,
+    applyBulkSuggestions
   };
 }
