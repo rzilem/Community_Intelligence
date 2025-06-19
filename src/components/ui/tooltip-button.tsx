@@ -4,9 +4,9 @@ import { Button, ButtonProps } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SafeTooltipProvider } from '@/components/ui/safe-tooltip-provider';
 
 interface TooltipButtonProps extends ButtonProps {
   tooltip: string;
@@ -21,7 +21,7 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
   ...buttonProps 
 }) => {
   return (
-    <TooltipProvider>
+    <SafeTooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
           <Button {...buttonProps}>
@@ -32,7 +32,7 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
           {tooltip}
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
+    </SafeTooltipProvider>
   );
 };
 

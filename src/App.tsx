@@ -2,7 +2,7 @@
 import React, { memo, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { SafeTooltipProvider } from "@/components/ui/safe-tooltip-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
@@ -44,7 +44,7 @@ const App = () => {
     <ErrorBoundary>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
+          <SafeTooltipProvider>
             <ErrorBoundary>
               <AuthProvider>
                 <ErrorBoundary>
@@ -59,7 +59,7 @@ const App = () => {
                 </ErrorBoundary>
               </AuthProvider>
             </ErrorBoundary>
-          </TooltipProvider>
+          </SafeTooltipProvider>
         </QueryClientProvider>
       </BrowserRouter>
     </ErrorBoundary>
