@@ -4,6 +4,6 @@
 
 export type * from '../types';
 
-// Additional exports from domain-specific files if needed
-export type * from './ai-ml-types';
-export type * from './enterprise-types';
+// Note: All types are now consolidated in ../types.ts
+// The domain-specific files (ai-ml-types.ts, enterprise-types.ts) 
+// are kept for documentation but not re-exported to avoid conflicts
