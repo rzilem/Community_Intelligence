@@ -5,6 +5,9 @@ import { documentClassificationService } from './document-classification-service
 import { devLog } from '@/utils/dev-logger';
 import { MultiFormatProcessingResult, ProcessedDocument, ProcessingOptions } from './types';
 
+// Export ProcessedDocument for external use
+export { ProcessedDocument } from './types';
+
 export const multiFormatProcessor = {
   async processWithEnhancedAnalysis(
     files: File[],
@@ -45,13 +48,20 @@ export const multiFormatProcessor = {
         }
         
         // Enhanced classification if enabled
-        if (options.enableQualityAssessment) {
+        if (options.enableQualityAssessment && processedDoc.content) {
           try {
-            const classification = await documentClassificationService.classifyDocument(processedDoc);
-            processedDoc.classification = classification;
+            const classification = await documentClassificationService.classifyDocument(processedDoc.content); // Pass content string
+            const classificationResult = {
+              type: classification.type || 'unknown', // Ensure type exists
+              confidence: classification.confidence,
+              suggestedMapping: classification.suggestedMapping || {}, // Add missing property
+              category: classification.category,
+              metadata: classification.metadata || {}
+            };
+            processedDoc.classification = classificationResult;
             
-            if (classification.suggestedMapping) {
-              recommendations.push(`Suggested field mapping for ${file.name}: ${Object.keys(classification.suggestedMapping).join(', ')}`);
+            if (classificationResult.suggestedMapping && Object.keys(classificationResult.suggestedMapping).length > 0) {
+              recommendations.push(`Suggested field mapping for ${file.name}: ${Object.keys(classificationResult.suggestedMapping).join(', ')}`);
             }
           } catch (classificationError) {
             devLog.warn('Classification failed for', file.name, classificationError);
@@ -144,16 +154,23 @@ export const multiFormatProcessor = {
       const text = await file.text();
       const parseResult = parseService.parseCSV(text);
       
+      // Fix array access for parsed data
+      const data = Array.isArray(parseResult) ? parseResult : parseResult.data || [];
+      
       return {
         filename: file.name,
-        data: parseResult.data,
+        data: data,
         format: 'csv',
+        content: text, // Add content property
         metadata: {
           processingMethod: 'text-parser',
           extractionMethod: 'native-parser',
           confidence: 0.95,
           qualityScore: 90,
-          processingTime: Date.now() - startTime
+          processingTime: Date.now() - startTime,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size
         }
       };
     } catch (error) {
@@ -171,16 +188,24 @@ export const multiFormatProcessor = {
         throw new Error(result.errors.join('; '));
       }
       
+      // Convert data to text content for classification
+      const content = Array.isArray(result.data) ? 
+        result.data.map(row => Object.values(row).join(' ')).join('\n') : '';
+      
       return {
         filename: file.name,
         data: result.data,
         format: 'excel',
+        content: content, // Add content property
         metadata: {
           processingMethod: 'enhanced-excel',
           extractionMethod: 'xlsx-parser',
           confidence: 0.9,
           qualityScore: 85,
-          processingTime: Date.now() - startTime
+          processingTime: Date.now() - startTime,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size
         }
       };
     } catch (error) {

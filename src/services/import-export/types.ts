@@ -68,6 +68,7 @@ export interface ProcessedDocument {
   filename: string;
   data: any[];
   format: string;
+  content: string; // Add missing content property
   metadata: {
     pageCount?: number;
     processingMethod: string;
@@ -77,22 +78,29 @@ export interface ProcessedDocument {
     tables?: number;
     forms?: number;
     processingTime: number;
+    originalName: string;
+    mimeType: string;
+    size: number;
   };
   classification?: DocumentClassification;
   extractedStructures?: any[];
+  extractedData?: Record<string, any>;
+  validationResults?: any;
 }
 
 export interface DocumentClassification {
   type: string;
   confidence: number;
   suggestedMapping?: Record<string, string>;
+  category?: string;
+  metadata?: any;
 }
 
 export interface MultiFormatProcessingResult {
   success: boolean;
   processedDocuments: ProcessedDocument[];
-  duplicateResults?: any;
-  qualityResults?: any;
+  duplicateResults?: any; // Add missing property
+  qualityResults?: any; // Add missing property
   recommendations: string[];
   errors: string[];
   warnings: string[];
@@ -106,7 +114,7 @@ export interface MultiFormatProcessingResult {
 
 export interface DetailedValidationResult {
   valid: boolean;
-  score: number;
+  score: number; // Add missing score property
   totalRows: number;
   validRows: number;
   invalidRows: number;
@@ -128,7 +136,7 @@ export interface DetailedValidationResult {
 export interface OCROptions {
   enableTableExtraction?: boolean;
   enableFormDetection?: boolean;
-  enableLayoutAnalysis?: boolean;
+  enableLayoutAnalysis?: boolean; // Add missing property
   languages?: string[];
   quality?: 'fast' | 'accurate';
 }
@@ -140,4 +148,43 @@ export interface ProcessingOptions {
   enableAutoFix?: boolean;
   fallbackToOCR?: boolean;
   ocrOptions?: OCROptions;
+  validateData?: boolean;
+  extractStructured?: boolean;
+  classifyDocument?: boolean;
+  ocrLanguages?: string[]; // Add missing property
+  processingQuality?: 'draft' | 'standard' | 'high'; // Add missing property
+  includeMetadata?: boolean;
+}
+
+// Advanced OCR Result interface
+export interface AdvancedOCRResult {
+  text: string;
+  confidence: number;
+  language: string;
+  pages: Array<{
+    pageNumber: number;
+    text: string;
+    words: Array<{
+      text: string;
+      confidence: number;
+      bounds: { x: number; y: number; width: number; height: number };
+    }>;
+  }>;
+  tables: Array<{
+    rows: string[][];
+    confidence: number;
+  }>;
+  forms: Array<{
+    fields: Record<string, string>;
+    confidence: number;
+  }>;
+}
+
+// Classification Result interface
+export interface ClassificationResult {
+  type: string; // Add missing type property
+  confidence: number;
+  suggestedMapping?: Record<string, string>; // Add missing property
+  category?: string;
+  metadata?: any;
 }
