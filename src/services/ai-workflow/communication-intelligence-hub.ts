@@ -3,34 +3,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { CommunicationIntelligence } from '@/types/ai-workflow-types';
 import { devLog } from '@/utils/dev-logger';
 
-export class CommunicationIntelligenceHub {
-  private static instance: CommunicationIntelligenceHub;
-  
-  static getInstance(): CommunicationIntelligenceHub {
-    if (!CommunicationIntelligenceHub.instance) {
-      CommunicationIntelligenceHub.instance = new CommunicationIntelligenceHub();
-    }
-    return CommunicationIntelligenceHub.instance;
-  }
+// Helper function to convert database row to CommunicationIntelligence
+function convertToCommunicationIntelligence(row: any): CommunicationIntelligence {
+  return {
+    id: row.id,
+    communication_id: row.communication_id,
+    association_id: row.association_id,
+    message_content: row.message_content,
+    ai_category: row.ai_category,
+    sentiment_score: row.sentiment_score,
+    urgency_level: row.urgency_level as 'low' | 'normal' | 'high' | 'urgent',
+    suggested_responses: typeof row.suggested_responses === 'string'
+      ? JSON.parse(row.suggested_responses)
+      : row.suggested_responses || [],
+    auto_routing_rules: typeof row.auto_routing_rules === 'string'
+      ? JSON.parse(row.auto_routing_rules)
+      : row.auto_routing_rules || {},
+    confidence_metrics: typeof row.confidence_metrics === 'string'
+      ? JSON.parse(row.confidence_metrics)
+      : row.confidence_metrics || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
 
-  async analyzeCommunication(
-    associationId: string,
+export class CommunicationIntelligenceHub {
+  async analyzeMessage(
     messageContent: string,
+    associationId: string,
     communicationId?: string
   ): Promise<CommunicationIntelligence> {
     try {
-      const analysis = await this.performCommunicationAnalysis(messageContent);
-      
-      const intelligenceData: Omit<CommunicationIntelligence, 'id' | 'created_at' | 'updated_at'> = {
+      devLog.info('Analyzing message with AI', { associationId, communicationId });
+
+      // Simulate AI analysis - replace with actual AI service call
+      const analysis = await this.performAIAnalysis(messageContent);
+
+      const intelligenceData = {
         communication_id: communicationId,
         association_id: associationId,
         message_content: messageContent,
         ai_category: analysis.category,
-        sentiment_score: analysis.sentiment_score,
-        urgency_level: analysis.urgency_level,
-        suggested_responses: analysis.suggested_responses,
-        auto_routing_rules: analysis.routing_rules,
-        confidence_metrics: analysis.confidence_metrics
+        sentiment_score: analysis.sentiment,
+        urgency_level: analysis.urgency as 'low' | 'normal' | 'high' | 'urgent',
+        suggested_responses: analysis.suggestedResponses,
+        auto_routing_rules: analysis.routingRules,
+        confidence_metrics: analysis.confidence
       };
 
       const { data, error } = await supabase
@@ -39,518 +57,298 @@ export class CommunicationIntelligenceHub {
         .select()
         .single();
 
-      if (error) throw error;
-
-      // Trigger automatic actions if confidence is high enough
-      if (analysis.confidence_metrics.overall_confidence > 0.8) {
-        await this.executeAutomaticActions(data);
+      if (error) {
+        throw new Error(`Failed to save communication intelligence: ${error.message}`);
       }
 
-      return data;
+      return convertToCommunicationIntelligence(data);
     } catch (error) {
-      devLog.error('Failed to analyze communication', error);
+      devLog.error('Failed to analyze message', error);
       throw error;
     }
   }
 
-  private async performCommunicationAnalysis(messageContent: string): Promise<any> {
-    const analysis = {
-      category: this.categorizeMessage(messageContent),
-      sentiment_score: this.analyzeSentiment(messageContent),
-      urgency_level: this.assessUrgency(messageContent),
-      suggested_responses: await this.generateSuggestedResponses(messageContent),
-      routing_rules: this.determineRoutingRules(messageContent),
-      confidence_metrics: {}
-    };
+  private async performAIAnalysis(messageContent: string): Promise<any> {
+    // Simulate AI analysis - replace with actual OpenAI/AI service integration
+    const words = messageContent.toLowerCase();
+    
+    let category = 'general';
+    let urgency: 'low' | 'normal' | 'high' | 'urgent' = 'normal';
+    let sentiment = 0;
 
-    // Calculate confidence metrics
-    analysis.confidence_metrics = {
-      category_confidence: this.calculateCategoryConfidence(messageContent, analysis.category),
-      sentiment_confidence: this.calculateSentimentConfidence(messageContent),
-      urgency_confidence: this.calculateUrgencyConfidence(messageContent, analysis.urgency_level),
-      overall_confidence: this.calculateOverallConfidence(analysis)
-    };
+    // Simple keyword-based analysis (replace with real AI)
+    if (words.includes('urgent') || words.includes('emergency')) {
+      urgency = 'urgent';
+      category = 'emergency';
+    } else if (words.includes('complaint') || words.includes('problem')) {
+      category = 'complaint';
+      urgency = 'high';
+      sentiment = -0.5;
+    } else if (words.includes('maintenance') || words.includes('repair')) {
+      category = 'maintenance';
+      urgency = 'normal';
+    } else if (words.includes('payment') || words.includes('fee')) {
+      category = 'billing';
+      urgency = 'normal';
+    }
 
-    return analysis;
-  }
-
-  private categorizeMessage(content: string): string {
-    const lowerContent = content.toLowerCase();
+    // Calculate sentiment (simple approach)
+    const positiveWords = ['thank', 'good', 'great', 'excellent', 'pleased'];
+    const negativeWords = ['bad', 'terrible', 'awful', 'angry', 'frustrated'];
     
-    // Maintenance related
-    if (this.containsKeywords(lowerContent, ['repair', 'fix', 'broken', 'maintenance', 'plumbing', 'electrical', 'hvac'])) {
-      return 'maintenance';
-    }
+    positiveWords.forEach(word => {
+      if (words.includes(word)) sentiment += 0.2;
+    });
     
-    // Financial related
-    if (this.containsKeywords(lowerContent, ['payment', 'bill', 'assessment', 'fee', 'invoice', 'budget', 'financial'])) {
-      return 'financial';
-    }
-    
-    // Compliance related
-    if (this.containsKeywords(lowerContent, ['violation', 'fine', 'rule', 'regulation', 'compliance', 'policy'])) {
-      return 'compliance';
-    }
-    
-    // Community related
-    if (this.containsKeywords(lowerContent, ['event', 'meeting', 'community', 'neighbor', 'social', 'announcement'])) {
-      return 'community';
-    }
-    
-    // Emergency related
-    if (this.containsKeywords(lowerContent, ['emergency', 'urgent', 'immediate', 'help', 'crisis', 'danger'])) {
-      return 'emergency';
-    }
-    
-    // Amenity related
-    if (this.containsKeywords(lowerContent, ['pool', 'gym', 'clubhouse', 'amenity', 'facility', 'reservation', 'booking'])) {
-      return 'amenity';
-    }
-    
-    return 'general';
-  }
-
-  private analyzeSentiment(content: string): number {
-    const positiveKeywords = ['thank', 'great', 'excellent', 'wonderful', 'happy', 'satisfied', 'pleased', 'appreciate'];
-    const negativeKeywords = ['angry', 'frustrated', 'disappointed', 'terrible', 'awful', 'unacceptable', 'disgusted', 'furious'];
-    const neutralKeywords = ['question', 'inquiry', 'request', 'information', 'clarification'];
-
-    const lowerContent = content.toLowerCase();
-    let score = 0;
-
-    positiveKeywords.forEach(keyword => {
-      if (lowerContent.includes(keyword)) score += 1;
+    negativeWords.forEach(word => {
+      if (words.includes(word)) sentiment -= 0.3;
     });
 
-    negativeKeywords.forEach(keyword => {
-      if (lowerContent.includes(keyword)) score -= 1;
-    });
+    sentiment = Math.max(-1, Math.min(1, sentiment));
 
-    // Normalize to -1 to 1 scale
-    const maxScore = Math.max(positiveKeywords.length, negativeKeywords.length);
-    return Math.max(-1, Math.min(1, score / maxScore));
-  }
-
-  private assessUrgency(content: string): 'low' | 'normal' | 'high' | 'urgent' {
-    const lowerContent = content.toLowerCase();
-    
-    const urgentKeywords = ['emergency', 'urgent', 'immediate', 'asap', 'crisis', 'danger', 'flooding', 'fire'];
-    const highKeywords = ['important', 'priority', 'soon', 'quickly', 'deadline', 'critical'];
-    const lowKeywords = ['whenever', 'convenient', 'no rush', 'when possible', 'eventually'];
-
-    if (this.containsKeywords(lowerContent, urgentKeywords)) return 'urgent';
-    if (this.containsKeywords(lowerContent, highKeywords)) return 'high';
-    if (this.containsKeywords(lowerContent, lowKeywords)) return 'low';
-    
-    return 'normal';
-  }
-
-  private async generateSuggestedResponses(content: string): Promise<any[]> {
-    const category = this.categorizeMessage(content);
-    const urgency = this.assessUrgency(content);
-    const sentiment = this.analyzeSentiment(content);
-
-    const responses: any[] = [];
-
-    // Generate context-appropriate responses
-    switch (category) {
-      case 'maintenance':
-        responses.push({
-          type: 'acknowledgment',
-          text: 'Thank you for reporting this maintenance issue. We have received your request and will address it promptly.',
-          confidence: 0.9
-        });
-        responses.push({
-          type: 'information_request',
-          text: 'To help us better assist you, could you please provide more details about the location and nature of the problem?',
-          confidence: 0.8
-        });
-        if (urgency === 'urgent') {
-          responses.push({
-            type: 'emergency_response',
-            text: 'We understand this is urgent. Our emergency maintenance team has been notified and will contact you within 2 hours.',
-            confidence: 0.95
-          });
-        }
-        break;
-
-      case 'financial':
-        responses.push({
-          type: 'acknowledgment',
-          text: 'Thank you for your inquiry regarding financial matters. We will review your account and respond within 1-2 business days.',
-          confidence: 0.85
-        });
-        responses.push({
-          type: 'information_request',
-          text: 'Please provide your account number or property address so we can better assist you with your financial inquiry.',
-          confidence: 0.8
-        });
-        break;
-
-      case 'emergency':
-        responses.push({
-          type: 'emergency_response',
-          text: 'We have received your emergency communication. If this is a life-threatening emergency, please call 911 immediately. Our emergency team has been notified.',
-          confidence: 0.98
-        });
-        break;
-
-      default:
-        responses.push({
-          type: 'acknowledgment',
-          text: 'Thank you for contacting us. We have received your message and will respond as soon as possible.',
-          confidence: 0.7
-        });
-    }
-
-    // Adjust responses based on sentiment
-    if (sentiment < -0.5) {
-      responses.push({
-        type: 'empathy',
-        text: 'We understand your frustration and sincerely apologize for any inconvenience. We are committed to resolving this matter quickly.',
-        confidence: 0.85
-      });
-    } else if (sentiment > 0.5) {
-      responses.push({
-        type: 'appreciation',
-        text: 'Thank you for your kind words and positive feedback. We appreciate your understanding and cooperation.',
-        confidence: 0.8
-      });
-    }
-
-    return responses;
-  }
-
-  private determineRoutingRules(content: string): any {
-    const category = this.categorizeMessage(content);
-    const urgency = this.assessUrgency(content);
-    
-    const routingRules: any = {
-      primary_department: this.getPrimaryDepartment(category),
-      escalation_required: urgency === 'urgent',
-      auto_assign: this.shouldAutoAssign(category, urgency),
-      notification_groups: this.getNotificationGroups(category, urgency),
-      sla_hours: this.getSLAHours(category, urgency)
-    };
-
-    return routingRules;
-  }
-
-  private getPrimaryDepartment(category: string): string {
-    const departmentMap: Record<string, string> = {
-      'maintenance': 'maintenance',
-      'financial': 'accounting',
-      'compliance': 'management',
-      'community': 'community_relations',
-      'emergency': 'emergency_response',
-      'amenity': 'amenity_management',
-      'general': 'general_support'
-    };
-
-    return departmentMap[category] || 'general_support';
-  }
-
-  private shouldAutoAssign(category: string, urgency: string): boolean {
-    return urgency === 'urgent' || category === 'emergency';
-  }
-
-  private getNotificationGroups(category: string, urgency: string): string[] {
-    const groups: string[] = [];
-    
-    if (urgency === 'urgent' || category === 'emergency') {
-      groups.push('emergency_team', 'management');
-    }
-    
-    groups.push(`${category}_team`);
-    
-    if (urgency === 'high') {
-      groups.push('supervisors');
-    }
-    
-    return groups;
-  }
-
-  private getSLAHours(category: string, urgency: string): number {
-    if (urgency === 'urgent' || category === 'emergency') return 2;
-    if (urgency === 'high') return 8;
-    if (category === 'maintenance') return 24;
-    if (category === 'financial') return 48;
-    return 72;
-  }
-
-  private containsKeywords(content: string, keywords: string[]): boolean {
-    return keywords.some(keyword => content.includes(keyword));
-  }
-
-  private calculateCategoryConfidence(content: string, category: string): number {
-    const categoryKeywords = this.getCategoryKeywords(category);
-    const matches = categoryKeywords.filter(keyword => 
-      content.toLowerCase().includes(keyword)
-    ).length;
-    
-    return Math.min(1.0, matches / Math.max(1, categoryKeywords.length) * 2);
-  }
-
-  private getCategoryKeywords(category: string): string[] {
-    const keywordMap: Record<string, string[]> = {
-      'maintenance': ['repair', 'fix', 'broken', 'maintenance', 'plumbing', 'electrical'],
-      'financial': ['payment', 'bill', 'assessment', 'fee', 'invoice', 'budget'],
-      'compliance': ['violation', 'fine', 'rule', 'regulation', 'compliance'],
-      'community': ['event', 'meeting', 'community', 'neighbor', 'social'],
-      'emergency': ['emergency', 'urgent', 'immediate', 'help', 'crisis'],
-      'amenity': ['pool', 'gym', 'clubhouse', 'amenity', 'facility']
-    };
-
-    return keywordMap[category] || [];
-  }
-
-  private calculateSentimentConfidence(content: string): number {
-    const sentimentWords = ['happy', 'sad', 'angry', 'frustrated', 'pleased', 'disappointed'];
-    const matches = sentimentWords.filter(word => 
-      content.toLowerCase().includes(word)
-    ).length;
-    
-    return Math.min(1.0, matches * 0.3 + 0.4);
-  }
-
-  private calculateUrgencyConfidence(content: string, urgency: string): number {
-    const urgencyKeywords = this.getUrgencyKeywords(urgency);
-    const matches = urgencyKeywords.filter(keyword => 
-      content.toLowerCase().includes(keyword)
-    ).length;
-    
-    return matches > 0 ? Math.min(1.0, matches * 0.4 + 0.6) : 0.5;
-  }
-
-  private getUrgencyKeywords(urgency: string): string[] {
-    const keywordMap: Record<string, string[]> = {
-      'urgent': ['emergency', 'urgent', 'immediate', 'asap', 'crisis'],
-      'high': ['important', 'priority', 'soon', 'quickly', 'deadline'],
-      'low': ['whenever', 'convenient', 'no rush', 'when possible'],
-      'normal': []
-    };
-
-    return keywordMap[urgency] || [];
-  }
-
-  private calculateOverallConfidence(analysis: any): number {
-    const confidences = [
-      analysis.confidence_metrics.category_confidence || 0,
-      analysis.confidence_metrics.sentiment_confidence || 0,
-      analysis.confidence_metrics.urgency_confidence || 0
-    ];
-
-    return confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
-  }
-
-  private async executeAutomaticActions(intelligence: CommunicationIntelligence): Promise<void> {
-    try {
-      const actions = this.determineAutomaticActions(intelligence);
-      
-      for (const action of actions) {
-        await this.executeAction(action, intelligence);
+    return {
+      category,
+      urgency,
+      sentiment,
+      suggestedResponses: this.generateSuggestedResponses(category, urgency),
+      routingRules: this.generateRoutingRules(category, urgency),
+      confidence: {
+        overall: 0.8,
+        category: 0.75,
+        sentiment: 0.7,
+        urgency: 0.85
       }
-    } catch (error) {
-      devLog.error('Failed to execute automatic actions', error);
+    };
+  }
+
+  private generateSuggestedResponses(category: string, urgency: string): string[] {
+    const responses: Record<string, string[]> = {
+      emergency: [
+        "Thank you for reaching out. We're treating this as urgent and will respond within 1 hour.",
+        "We've received your emergency request and are dispatching help immediately."
+      ],
+      complaint: [
+        "We apologize for any inconvenience. Let us investigate this matter and get back to you.",
+        "Thank you for bringing this to our attention. We take all concerns seriously."
+      ],
+      maintenance: [
+        "We've received your maintenance request. A work order has been created.",
+        "Thank you for reporting this. We'll schedule an inspection within 2 business days."
+      ],
+      billing: [
+        "Thank you for your payment inquiry. Let us review your account and respond shortly.",
+        "We've received your billing question and will have accounting review it."
+      ],
+      general: [
+        "Thank you for contacting us. We'll review your message and respond appropriately.",
+        "We appreciate you reaching out and will get back to you soon."
+      ]
+    };
+
+    return responses[category] || responses.general;
+  }
+
+  private generateRoutingRules(category: string, urgency: string): Record<string, any> {
+    const rules: Record<string, any> = {
+      emergency: {
+        assignTo: 'emergency_team',
+        priority: 'urgent',
+        escalate: true,
+        notifyManagement: true
+      },
+      complaint: {
+        assignTo: 'customer_service',
+        priority: 'high',
+        escalate: false,
+        requireManagerReview: true
+      },
+      maintenance: {
+        assignTo: 'maintenance_team',
+        priority: urgency === 'urgent' ? 'high' : 'normal',
+        createWorkOrder: true
+      },
+      billing: {
+        assignTo: 'accounting_team',
+        priority: 'normal',
+        requireAccountReview: true
+      },
+      general: {
+        assignTo: 'general_inbox',
+        priority: 'normal'
+      }
+    };
+
+    return rules[category] || rules.general;
+  }
+
+  async getCommunicationIntelligence(communicationId: string): Promise<CommunicationIntelligence | null> {
+    const { data, error } = await supabase
+      .from('communication_intelligence')
+      .select('*')
+      .eq('communication_id', communicationId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // No record found
+      }
+      throw new Error(`Failed to get communication intelligence: ${error.message}`);
     }
+
+    return convertToCommunicationIntelligence(data);
   }
 
-  private determineAutomaticActions(intelligence: CommunicationIntelligence): any[] {
-    const actions: any[] = [];
+  async getIntelligenceByAssociation(
+    associationId: string,
+    filters?: {
+      category?: string;
+      urgencyLevel?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ): Promise<CommunicationIntelligence[]> {
+    let query = supabase
+      .from('communication_intelligence')
+      .select('*')
+      .eq('association_id', associationId);
 
-    // Auto-routing based on category and urgency
-    if (intelligence.urgency_level === 'urgent' || intelligence.ai_category === 'emergency') {
-      actions.push({
-        type: 'immediate_notification',
-        target: 'emergency_team',
-        priority: 'high'
-      });
+    if (filters?.category) {
+      query = query.eq('ai_category', filters.category);
     }
 
-    // Auto-assign based on category
-    if (intelligence.auto_routing_rules.auto_assign) {
-      actions.push({
-        type: 'auto_assign',
-        department: intelligence.auto_routing_rules.primary_department
-      });
+    if (filters?.urgencyLevel) {
+      query = query.eq('urgency_level', filters.urgencyLevel);
     }
 
-    // Send notifications to relevant groups
-    if (intelligence.auto_routing_rules.notification_groups?.length > 0) {
-      actions.push({
-        type: 'group_notification',
-        groups: intelligence.auto_routing_rules.notification_groups
-      });
+    if (filters?.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom);
     }
 
-    // Auto-respond with suggested response if confidence is very high
-    const highConfidenceResponses = intelligence.suggested_responses.filter(
-      (response: any) => response.confidence > 0.9
-    );
-    
-    if (highConfidenceResponses.length > 0) {
-      actions.push({
-        type: 'auto_respond',
-        response: highConfidenceResponses[0]
-      });
+    if (filters?.dateTo) {
+      query = query.lte('created_at', filters.dateTo);
     }
 
-    return actions;
-  }
+    const { data, error } = await query.order('created_at', { ascending: false });
 
-  private async executeAction(action: any, intelligence: CommunicationIntelligence): Promise<void> {
-    switch (action.type) {
-      case 'immediate_notification':
-        await this.sendImmediateNotification(action, intelligence);
-        break;
-      case 'auto_assign':
-        await this.autoAssignCommunication(action, intelligence);
-        break;
-      case 'group_notification':
-        await this.sendGroupNotification(action, intelligence);
-        break;
-      case 'auto_respond':
-        await this.sendAutoResponse(action, intelligence);
-        break;
-      default:
-        devLog.warn(`Unknown action type: ${action.type}`);
+    if (error) {
+      throw new Error(`Failed to get communication intelligence: ${error.message}`);
     }
+
+    return data ? data.map(convertToCommunicationIntelligence) : [];
   }
 
-  private async sendImmediateNotification(action: any, intelligence: CommunicationIntelligence): Promise<void> {
-    devLog.info(`Sending immediate notification to ${action.target} for urgent communication ${intelligence.id}`);
-    // Implementation would integrate with notification system
-  }
+  async getAnalytics(associationId: string): Promise<any> {
+    const intelligence = await this.getIntelligenceByAssociation(associationId);
 
-  private async autoAssignCommunication(action: any, intelligence: CommunicationIntelligence): Promise<void> {
-    devLog.info(`Auto-assigning communication ${intelligence.id} to ${action.department}`);
-    // Implementation would update communication assignment
-  }
-
-  private async sendGroupNotification(action: any, intelligence: CommunicationIntelligence): Promise<void> {
-    devLog.info(`Sending group notification to ${action.groups.join(', ')} for communication ${intelligence.id}`);
-    // Implementation would send notifications to specified groups
-  }
-
-  private async sendAutoResponse(action: any, intelligence: CommunicationIntelligence): Promise<void> {
-    devLog.info(`Sending auto-response for communication ${intelligence.id}: ${action.response.text}`);
-    // Implementation would send automatic response
-  }
-
-  async getCommunicationAnalytics(associationId: string, timeframe: string = '30d'): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('communication_intelligence')
-        .select('*')
-        .eq('association_id', associationId)
-        .gte('created_at', this.getTimeframeStart(timeframe));
-
-      if (error) throw error;
-
-      return this.generateAnalytics(data || []);
-    } catch (error) {
-      devLog.error('Failed to get communication analytics', error);
-      return {};
-    }
-  }
-
-  private getTimeframeStart(timeframe: string): string {
-    const now = new Date();
-    const days = parseInt(timeframe.replace('d', '')) || 30;
-    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
-  }
-
-  private generateAnalytics(data: CommunicationIntelligence[]): any {
     const analytics = {
-      total_communications: data.length,
-      category_breakdown: this.getCategoryBreakdown(data),
-      urgency_distribution: this.getUrgencyDistribution(data),
-      sentiment_analysis: this.getSentimentAnalysis(data),
-      response_time_metrics: this.getResponseTimeMetrics(data),
-      auto_routing_effectiveness: this.getAutoRoutingEffectiveness(data),
-      trending_topics: this.getTrendingTopics(data),
-      performance_insights: this.getPerformanceInsights(data)
+      totalMessages: intelligence.length,
+      categoryBreakdown: this.calculateCategoryBreakdown(intelligence),
+      urgencyDistribution: this.calculateUrgencyDistribution(intelligence),
+      sentimentAnalysis: this.calculateSentimentAnalysis(intelligence),
+      averageConfidence: this.calculateAverageConfidence(intelligence),
+      trendsOverTime: this.calculateTrends(intelligence)
     };
 
     return analytics;
   }
 
-  private getCategoryBreakdown(data: CommunicationIntelligence[]): any {
+  private calculateCategoryBreakdown(intelligence: CommunicationIntelligence[]): Record<string, number> {
     const breakdown: Record<string, number> = {};
-    data.forEach(item => {
-      breakdown[item.ai_category || 'uncategorized'] = (breakdown[item.ai_category || 'uncategorized'] || 0) + 1;
+    intelligence.forEach(item => {
+      const category = item.ai_category || 'uncategorized';
+      breakdown[category] = (breakdown[category] || 0) + 1;
     });
     return breakdown;
   }
 
-  private getUrgencyDistribution(data: CommunicationIntelligence[]): any {
+  private calculateUrgencyDistribution(intelligence: CommunicationIntelligence[]): Record<string, number> {
     const distribution: Record<string, number> = {};
-    data.forEach(item => {
+    intelligence.forEach(item => {
       distribution[item.urgency_level] = (distribution[item.urgency_level] || 0) + 1;
     });
     return distribution;
   }
 
-  private getSentimentAnalysis(data: CommunicationIntelligence[]): any {
-    const sentiments = data.map(item => item.sentiment_score);
-    const avgSentiment = sentiments.reduce((sum, score) => sum + score, 0) / sentiments.length;
+  private calculateSentimentAnalysis(intelligence: CommunicationIntelligence[]): any {
+    if (intelligence.length === 0) return { average: 0, positive: 0, neutral: 0, negative: 0 };
+
+    const sentiments = intelligence.map(item => item.sentiment_score);
+    const average = sentiments.reduce((sum, score) => sum + score, 0) / sentiments.length;
     
-    return {
-      average_sentiment: avgSentiment,
-      positive_count: sentiments.filter(s => s > 0.2).length,
-      negative_count: sentiments.filter(s => s < -0.2).length,
-      neutral_count: sentiments.filter(s => s >= -0.2 && s <= 0.2).length
-    };
+    const positive = sentiments.filter(score => score > 0.1).length;
+    const negative = sentiments.filter(score => score < -0.1).length;
+    const neutral = intelligence.length - positive - negative;
+
+    return { average, positive, neutral, negative };
   }
 
-  private getResponseTimeMetrics(data: CommunicationIntelligence[]): any {
-    // This would calculate actual response times if we had that data
-    return {
-      average_response_time_hours: 4.2,
-      sla_compliance_rate: 0.85,
-      urgent_response_time_hours: 1.1
-    };
+  private calculateAverageConfidence(intelligence: CommunicationIntelligence[]): number {
+    if (intelligence.length === 0) return 0;
+
+    const confidenceScores = intelligence
+      .map(item => item.confidence_metrics?.overall || 0)
+      .filter(score => score > 0);
+
+    return confidenceScores.length > 0
+      ? confidenceScores.reduce((sum, score) => sum + score, 0) / confidenceScores.length
+      : 0;
   }
 
-  private getAutoRoutingEffectiveness(data: CommunicationIntelligence[]): any {
-    const autoRouted = data.filter(item => 
-      item.auto_routing_rules && Object.keys(item.auto_routing_rules).length > 0
-    ).length;
+  private calculateTrends(intelligence: CommunicationIntelligence[]): any {
+    // Group by day and calculate trends
+    const dailyData: Record<string, any> = {};
     
-    return {
-      auto_routing_rate: autoRouted / data.length,
-      routing_accuracy: 0.92, // Would be calculated based on actual routing success
-      manual_intervention_rate: 0.08
-    };
-  }
-
-  private getTrendingTopics(data: CommunicationIntelligence[]): string[] {
-    // Simple implementation - would use more sophisticated topic modeling
-    const categories = data.map(item => item.ai_category).filter(Boolean);
-    const categoryCounts: Record<string, number> = {};
-    
-    categories.forEach(category => {
-      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    intelligence.forEach(item => {
+      const date = item.created_at.split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { count: 0, sentiment: 0, urgent: 0 };
+      }
+      dailyData[date].count++;
+      dailyData[date].sentiment += item.sentiment_score;
+      if (item.urgency_level === 'urgent') {
+        dailyData[date].urgent++;
+      }
     });
-    
-    return Object.entries(categoryCounts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([category]) => category);
+
+    // Convert to array format for charting
+    const trends = Object.entries(dailyData).map(([date, data]: [string, any]) => ({
+      date,
+      messageCount: data.count,
+      averageSentiment: data.sentiment / data.count,
+      urgentCount: data.urgent
+    }));
+
+    return trends.sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  private getPerformanceInsights(data: CommunicationIntelligence[]): any {
-    return {
-      ai_accuracy_score: 0.87,
-      processing_efficiency: 0.92,
-      user_satisfaction_score: 4.2,
-      improvement_opportunities: [
-        'Enhance emergency detection accuracy',
-        'Improve sentiment analysis for complex messages',
-        'Expand auto-response capabilities'
-      ]
-    };
+  async updateIntelligence(
+    id: string,
+    updates: Partial<CommunicationIntelligence>
+  ): Promise<CommunicationIntelligence> {
+    const { data, error } = await supabase
+      .from('communication_intelligence')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update communication intelligence: ${error.message}`);
+    }
+
+    return convertToCommunicationIntelligence(data);
+  }
+
+  async deleteIntelligence(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('communication_intelligence')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to delete communication intelligence: ${error.message}`);
+    }
   }
 }
 
-export const communicationIntelligenceHub = CommunicationIntelligenceHub.getInstance();
+export const communicationIntelligenceHub = new CommunicationIntelligenceHub();

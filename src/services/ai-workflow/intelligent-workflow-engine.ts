@@ -1,404 +1,442 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkflowTemplate, WorkflowExecution, WorkflowEvent } from '@/types/ai-workflow-types';
+import { WorkflowTemplate, WorkflowExecution } from '@/types/ai-workflow-types';
 import { devLog } from '@/utils/dev-logger';
 
+// Helper functions to convert database rows to our types
+function convertToWorkflowTemplate(row: any): WorkflowTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    category: row.category,
+    workflow_type: row.workflow_type,
+    template_data: typeof row.template_data === 'string' 
+      ? JSON.parse(row.template_data) 
+      : row.template_data || {},
+    ai_optimization_score: row.ai_optimization_score || 0,
+    usage_count: row.usage_count || 0,
+    is_ai_recommended: row.is_ai_recommended || false,
+    created_by: row.created_by,
+    association_id: row.association_id,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function convertToWorkflowExecution(row: any): WorkflowExecution {
+  return {
+    id: row.id,
+    workflow_template_id: row.workflow_template_id,
+    association_id: row.association_id,
+    status: row.status as 'pending' | 'running' | 'completed' | 'failed' | 'cancelled',
+    execution_data: typeof row.execution_data === 'string'
+      ? JSON.parse(row.execution_data)
+      : row.execution_data || {},
+    performance_metrics: typeof row.performance_metrics === 'string'
+      ? JSON.parse(row.performance_metrics)
+      : row.performance_metrics || {},
+    ai_insights: typeof row.ai_insights === 'string'
+      ? JSON.parse(row.ai_insights)
+      : row.ai_insights || {},
+    started_at: row.started_at,
+    completed_at: row.completed_at,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
 export class IntelligentWorkflowEngine {
-  private static instance: IntelligentWorkflowEngine;
-  
-  static getInstance(): IntelligentWorkflowEngine {
-    if (!IntelligentWorkflowEngine.instance) {
-      IntelligentWorkflowEngine.instance = new IntelligentWorkflowEngine();
+  async createWorkflowTemplate(templateData: Omit<WorkflowTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<Workflow
+Template> {
+    const { data, error } = await supabase
+      .from('workflow_templates')
+      .insert({
+        name: templateData.name,
+        description: templateData.description,
+        category: templateData.category,
+        workflow_type: templateData.workflow_type,
+        template_data: templateData.template_data,
+        ai_optimization_score: templateData.ai_optimization_score,
+        usage_count: templateData.usage_count,
+        is_ai_recommended: templateData.is_ai_recommended,
+        created_by: templateData.created_by,
+        association_id: templateData.association_id
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create workflow template: ${error.message}`);
     }
-    return IntelligentWorkflowEngine.instance;
+
+    return convertToWorkflowTemplate(data);
   }
 
-  async createWorkflowTemplate(
-    template: Omit<WorkflowTemplate, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<WorkflowTemplate> {
-    try {
-      const { data, error } = await supabase
-        .from('workflow_templates')
-        .insert(template)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await this.logWorkflowEvent({
-        event_type: 'template_created',
-        entity_type: 'workflow_template',
-        entity_id: data.id,
-        event_data: { template_name: template.name, category: template.category },
-        association_id: template.association_id
-      });
-
-      return data;
-    } catch (error) {
-      devLog.error('Failed to create workflow template', error);
-      throw error;
+  async getWorkflowTemplates(associationId?: string): Promise<WorkflowTemplate[]> {
+    let query = supabase.from('workflow_templates').select('*');
+    
+    if (associationId) {
+      query = query.eq('association_id', associationId);
     }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch workflow templates: ${error.message}`);
+    }
+
+    return data ? data.map(convertToWorkflowTemplate) : [];
   }
 
-  async executeWorkflow(
-    templateId: string,
-    associationId: string,
-    executionData: Record<string, any> = {}
-  ): Promise<WorkflowExecution> {
+  async executeWorkflow(templateId: string, associationId: string, executionData: Record<string, any>): Promise<WorkflowExecution> {
     try {
-      const template = await this.getWorkflowTemplate(templateId);
-      if (!template) {
-        throw new Error('Workflow template not found');
-      }
+      devLog.info(`Starting workflow execution for template ${templateId}`);
 
-      const execution: Omit<WorkflowExecution, 'id' | 'created_at' | 'updated_at'> = {
-        workflow_template_id: templateId,
-        association_id: associationId,
-        status: 'pending',
-        execution_data: executionData,
-        performance_metrics: {},
-        ai_insights: {}
-      };
-
-      const { data, error } = await supabase
+      // Create execution record
+      const { data: executionRecord, error: createError } = await supabase
         .from('workflow_executions')
-        .insert(execution)
+        .insert({
+          workflow_template_id: templateId,
+          association_id: associationId,
+          status: 'running',
+          execution_data: executionData,
+          started_at: new Date().toISOString()
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (createError) {
+        throw new Error(`Failed to create workflow execution: ${createError.message}`);
+      }
 
-      await this.logWorkflowEvent({
-        event_type: 'workflow_started',
-        entity_type: 'workflow_execution',
-        entity_id: data.id,
-        event_data: { template_name: template.name, execution_data: executionData },
-        association_id: associationId
-      });
+      const execution = convertToWorkflowExecution(executionRecord);
 
-      // Start asynchronous workflow processing
-      this.processWorkflowAsync(data);
+      // Execute workflow steps (simplified for demo)
+      try {
+        await this.processWorkflowSteps(execution);
+        
+        // Update execution as completed
+        const { data: updatedExecution, error: updateError } = await supabase
+          .from('workflow_executions')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            performance_metrics: { executionTime: Date.now() - new Date(execution.started_at!).getTime() }
+          })
+          .eq('id', execution.id)
+          .select()
+          .single();
 
-      return data;
+        if (updateError) {
+          throw new Error(`Failed to update workflow execution: ${updateError.message}`);
+        }
+
+        return convertToWorkflowExecution(updatedExecution);
+      } catch (processingError) {
+        // Update execution as failed
+        await supabase
+          .from('workflow_executions')
+          .update({
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            ai_insights: { error: processingError.message }
+          })
+          .eq('id', execution.id);
+
+        throw processingError;
+      }
     } catch (error) {
-      devLog.error('Failed to execute workflow', error);
+      devLog.error(`Workflow execution failed for template ${templateId}`, error);
       throw error;
     }
   }
 
-  private async processWorkflowAsync(execution: WorkflowExecution): Promise<void> {
-    try {
-      await this.updateWorkflowStatus(execution.id, 'running');
-      
-      const template = await this.getWorkflowTemplate(execution.workflow_template_id);
-      if (!template) return;
+  private async processWorkflowSteps(execution: WorkflowExecution): Promise<void> {
+    // Get the workflow template
+    const { data: template, error } = await supabase
+      .from('workflow_templates')
+      .select('*')
+      .eq('id', execution.workflow_template_id)
+      .single();
 
-      const startTime = Date.now();
-      
-      // Process workflow steps based on template data
-      const steps = template.template_data.steps || [];
-      const results: any[] = [];
+    if (error) {
+      throw new Error(`Failed to fetch workflow template: ${error.message}`);
+    }
 
-      for (const step of steps) {
-        const stepResult = await this.executeWorkflowStep(step, execution);
-        results.push(stepResult);
-      }
+    const templateData = convertToWorkflowTemplate(template);
+    const steps = templateData.template_data.steps || [];
 
-      const processingTime = Date.now() - startTime;
-      
-      // Generate AI insights
-      const aiInsights = await this.generateAIInsights(execution, results, processingTime);
-      
-      // Update execution with results
-      await this.updateWorkflowExecution(execution.id, {
-        status: 'completed',
-        performance_metrics: {
-          processing_time_ms: processingTime,
-          steps_completed: results.filter(r => r.success).length,
-          total_steps: steps.length,
-          success_rate: (results.filter(r => r.success).length / steps.length) * 100
-        },
-        ai_insights: aiInsights,
-        completed_at: new Date().toISOString()
-      });
+    devLog.info(`Processing ${steps.length} workflow steps`);
 
-      await this.logWorkflowEvent({
-        event_type: 'workflow_completed',
-        entity_type: 'workflow_execution',
-        entity_id: execution.id,
-        event_data: { processing_time_ms: processingTime, success_rate: aiInsights.success_rate },
-        association_id: execution.association_id
-      });
-
-    } catch (error) {
-      devLog.error('Workflow processing failed', error);
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      devLog.info(`Executing step ${i + 1}: ${step.name}`);
       
-      await this.updateWorkflowStatus(execution.id, 'failed');
-      
-      await this.logWorkflowEvent({
-        event_type: 'workflow_failed',
-        entity_type: 'workflow_execution',
-        entity_id: execution.id,
-        event_data: { error: error.message },
-        association_id: execution.association_id
-      });
+      // Simulate step execution
+      await this.executeWorkflowStep(step, execution.execution_data);
     }
   }
 
-  private async executeWorkflowStep(step: any, execution: WorkflowExecution): Promise<any> {
-    const stepStartTime = Date.now();
-    
-    try {
-      let result: any = { success: false, data: null };
-      
-      switch (step.type) {
-        case 'notification':
-          result = await this.executeNotificationStep(step, execution);
-          break;
-        case 'api_call':
-          result = await this.executeApiCallStep(step, execution);
-          break;
-        case 'data_transformation':
-          result = await this.executeDataTransformationStep(step, execution);
-          break;
-        case 'conditional':
-          result = await this.executeConditionalStep(step, execution);
-          break;
-        case 'delay':
-          result = await this.executeDelayStep(step);
-          break;
-        default:
-          devLog.warn(`Unknown workflow step type: ${step.type}`);
-          result = { success: false, error: 'Unknown step type' };
-      }
-
-      const processingTime = Date.now() - stepStartTime;
-      
-      return {
-        ...result,
-        step_name: step.name,
-        step_type: step.type,
-        processing_time_ms: processingTime
-      };
-    } catch (error) {
-      devLog.error(`Workflow step failed: ${step.name}`, error);
-      return {
-        success: false,
-        error: error.message,
-        step_name: step.name,
-        step_type: step.type,
-        processing_time_ms: Date.now() - stepStartTime
-      };
+  private async executeWorkflowStep(step: any, executionData: Record<string, any>): Promise<void> {
+    // Simulate different types of workflow steps
+    switch (step.type) {
+      case 'notification':
+        await this.sendNotification(step.config, executionData);
+        break;
+      case 'data_processing':
+        await this.processData(step.config, executionData);
+        break;
+      case 'approval':
+        await this.requestApproval(step.config, executionData);
+        break;
+      case 'integration':
+        await this.callIntegration(step.config, executionData);
+        break;
+      default:
+        devLog.warn(`Unknown step type: ${step.type}`);
     }
+
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  private async executeNotificationStep(step: any, execution: WorkflowExecution): Promise<any> {
-    // Implementation for notification step
-    return { success: true, data: { notification_sent: true } };
+  private async sendNotification(config: any, executionData: Record<string, any>): Promise<void> {
+    devLog.info('Sending notification', { config, executionData });
+    // Implementation for sending notifications
   }
 
-  private async executeApiCallStep(step: any, execution: WorkflowExecution): Promise<any> {
-    // Implementation for API call step
-    return { success: true, data: { api_response: 'success' } };
+  private async processData(config: any, executionData: Record<string, any>): Promise<void> {
+    devLog.info('Processing data', { config, executionData });
+    // Implementation for data processing
   }
 
-  private async executeDataTransformationStep(step: any, execution: WorkflowExecution): Promise<any> {
-    // Implementation for data transformation step
-    return { success: true, data: { transformed: true } };
+  private async requestApproval(config: any, executionData: Record<string, any>): Promise<void> {
+    devLog.info('Requesting approval', { config, executionData });
+    // Implementation for approval requests
   }
 
-  private async executeConditionalStep(step: any, execution: WorkflowExecution): Promise<any> {
-    // Implementation for conditional step
-    const condition = step.condition || {};
-    const result = this.evaluateCondition(condition, execution.execution_data);
-    return { success: true, data: { condition_result: result } };
+  private async callIntegration(config: any, executionData: Record<string, any>): Promise<void> {
+    devLog.info('Calling integration', { config, executionData });
+    // Implementation for external integrations
   }
 
-  private async executeDelayStep(step: any): Promise<any> {
-    const delayMs = step.delay_ms || 1000;
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-    return { success: true, data: { delayed_ms: delayMs } };
-  }
+  async getWorkflowExecutions(associationId: string, filters?: {
+    status?: string;
+    templateId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<WorkflowExecution[]> {
+    let query = supabase
+      .from('workflow_executions')
+      .select('*')
+      .eq('association_id', associationId);
 
-  private evaluateCondition(condition: any, data: any): boolean {
-    // Simple condition evaluation logic
-    if (condition.field && condition.operator && condition.value) {
-      const fieldValue = data[condition.field];
-      switch (condition.operator) {
-        case 'equals':
-          return fieldValue === condition.value;
-        case 'greater_than':
-          return fieldValue > condition.value;
-        case 'less_than':
-          return fieldValue < condition.value;
-        case 'contains':
-          return String(fieldValue).includes(condition.value);
-        default:
-          return false;
-      }
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
     }
-    return true;
+
+    if (filters?.templateId) {
+      query = query.eq('workflow_template_id', filters.templateId);
+    }
+
+    if (filters?.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom);
+    }
+
+    if (filters?.dateTo) {
+      query = query.lte('created_at', filters.dateTo);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch workflow executions: ${error.message}`);
+    }
+
+    return data ? data.map(convertToWorkflowExecution) : [];
   }
 
-  private async generateAIInsights(
-    execution: WorkflowExecution,
-    results: any[],
-    processingTime: number
-  ): Promise<any> {
-    const successfulSteps = results.filter(r => r.success).length;
-    const totalSteps = results.length;
-    const successRate = totalSteps > 0 ? (successfulSteps / totalSteps) * 100 : 0;
-    
-    const insights = {
-      success_rate: successRate,
-      performance_score: this.calculatePerformanceScore(processingTime, successRate),
-      optimization_suggestions: this.generateOptimizationSuggestions(results, processingTime),
-      anomalies_detected: this.detectAnomalies(results),
-      predicted_improvements: this.predictImprovements(execution, results)
+  async getWorkflowAnalytics(associationId: string): Promise<any> {
+    const executions = await this.getWorkflowExecutions(associationId);
+    const templates = await this.getWorkflowTemplates(associationId);
+
+    const analytics = {
+      totalExecutions: executions.length,
+      successfulExecutions: executions.filter(e => e.status === 'completed').length,
+      failedExecutions: executions.filter(e => e.status === 'failed').length,
+      averageExecutionTime: this.calculateAverageExecutionTime(executions),
+      mostUsedTemplates: this.getMostUsedTemplates(templates, executions),
+      executionTrends: this.getExecutionTrends(executions),
+      performanceMetrics: this.getPerformanceMetrics(executions)
     };
 
-    return insights;
+    return analytics;
   }
 
-  private calculatePerformanceScore(processingTime: number, successRate: number): number {
-    // Calculate a performance score based on processing time and success rate
-    const timeScore = Math.max(0, 100 - (processingTime / 1000)); // Penalize longer processing times
-    const combinedScore = (timeScore * 0.3 + successRate * 0.7);
-    return Math.round(combinedScore * 100) / 100;
+  private calculateAverageExecutionTime(executions: WorkflowExecution[]): number {
+    const completedExecutions = executions.filter(e => 
+      e.status === 'completed' && e.started_at && e.completed_at
+    );
+
+    if (completedExecutions.length === 0) return 0;
+
+    const totalTime = completedExecutions.reduce((sum, execution) => {
+      const startTime = new Date(execution.started_at!).getTime();
+      const endTime = new Date(execution.completed_at!).getTime();
+      return sum + (endTime - startTime);
+    }, 0);
+
+    return totalTime / completedExecutions.length;
   }
 
-  private generateOptimizationSuggestions(results: any[], processingTime: number): string[] {
-    const suggestions: string[] = [];
-    
-    if (processingTime > 30000) { // More than 30 seconds
-      suggestions.push('Consider optimizing workflow steps to reduce processing time');
-    }
-    
-    const failedSteps = results.filter(r => !r.success);
-    if (failedSteps.length > 0) {
-      suggestions.push(`Review and fix ${failedSteps.length} failed workflow steps`);
-    }
-    
-    const slowSteps = results.filter(r => r.processing_time_ms > 5000);
-    if (slowSteps.length > 0) {
-      suggestions.push(`Optimize ${slowSteps.length} slow-performing steps`);
-    }
-    
-    return suggestions;
-  }
+  private getMostUsedTemplates(templates: WorkflowTemplate[], executions: WorkflowExecution[]): any[] {
+    const templateUsage: Record<string, { template: WorkflowTemplate; count: number }> = {};
 
-  private detectAnomalies(results: any[]): any[] {
-    const anomalies: any[] = [];
-    
-    // Detect unusually long processing times
-    const avgProcessingTime = results.reduce((sum, r) => sum + (r.processing_time_ms || 0), 0) / results.length;
-    const threshold = avgProcessingTime * 3; // 3x average is considered anomalous
-    
-    results.forEach(result => {
-      if (result.processing_time_ms > threshold) {
-        anomalies.push({
-          type: 'slow_processing',
-          step_name: result.step_name,
-          processing_time_ms: result.processing_time_ms,
-          threshold: threshold
-        });
+    templates.forEach(template => {
+      templateUsage[template.id] = { template, count: 0 };
+    });
+
+    executions.forEach(execution => {
+      if (templateUsage[execution.workflow_template_id]) {
+        templateUsage[execution.workflow_template_id].count++;
       }
     });
-    
-    return anomalies;
+
+    return Object.values(templateUsage)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
   }
 
-  private predictImprovements(execution: WorkflowExecution, results: any[]): any {
+  private getExecutionTrends(executions: WorkflowExecution[]): any[] {
+    const dailyData: Record<string, any> = {};
+
+    executions.forEach(execution => {
+      const date = execution.created_at.split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { date, total: 0, successful: 0, failed: 0 };
+      }
+      dailyData[date].total++;
+      if (execution.status === 'completed') {
+        dailyData[date].successful++;
+      } else if (execution.status === 'failed') {
+        dailyData[date].failed++;
+      }
+    });
+
+    return Object.values(dailyData).sort((a: any, b: any) => a.date.localeCompare(b.date));
+  }
+
+  private getPerformanceMetrics(executions: WorkflowExecution[]): any {
+    const now = new Date();
+    const last24Hours = executions.filter(e => 
+      new Date(e.created_at).getTime() > now.getTime() - 24 * 60 * 60 * 1000
+    );
+    const last7Days = executions.filter(e => 
+      new Date(e.created_at).getTime() > now.getTime() - 7 * 24 * 60 * 60 * 1000
+    );
+
     return {
-      estimated_time_savings: Math.round(Math.random() * 20), // Placeholder: AI would calculate this
-      recommended_optimizations: [
-        'Parallelize independent steps',
-        'Cache frequently accessed data',
-        'Optimize database queries'
-      ],
-      confidence_level: 0.75
+      last24Hours: {
+        total: last24Hours.length,
+        successful: last24Hours.filter(e => e.status === 'completed').length,
+        failed: last24Hours.filter(e => e.status === 'failed').length
+      },
+      last7Days: {
+        total: last7Days.length,
+        successful: last7Days.filter(e => e.status === 'completed').length,
+        failed: last7Days.filter(e => e.status === 'failed').length
+      }
     };
   }
 
-  async getWorkflowTemplate(id: string): Promise<WorkflowTemplate | null> {
-    try {
-      const { data, error } = await supabase
-        .from('workflow_templates')
-        .select('*')
-        .eq('id', id)
-        .single();
+  async optimizeWorkflowTemplate(templateId: string): Promise<WorkflowTemplate> {
+    // Get execution history for this template
+    const { data: executions, error } = await supabase
+      .from('workflow_executions')
+      .select('*')
+      .eq('workflow_template_id', templateId);
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      devLog.error('Failed to get workflow template', error);
-      return null;
+    if (error) {
+      throw new Error(`Failed to fetch execution history: ${error.message}`);
     }
+
+    // Analyze performance and generate optimization suggestions
+    const optimizations = this.generateOptimizations(executions || []);
+    
+    // Update template with AI optimization score
+    const { data: updatedTemplate, error: updateError } = await supabase
+      .from('workflow_templates')
+      .update({
+        ai_optimization_score: optimizations.score,
+        template_data: optimizations.optimizedTemplate
+      })
+      .eq('id', templateId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new Error(`Failed to update workflow template: ${updateError.message}`);
+    }
+
+    return convertToWorkflowTemplate(updatedTemplate);
   }
 
-  async updateWorkflowStatus(executionId: string, status: WorkflowExecution['status']): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('workflow_executions')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', executionId);
+  private generateOptimizations(executions: any[]): any {
+    // Simple optimization logic - can be enhanced with ML
+    const successRate = executions.length > 0 
+      ? executions.filter(e => e.status === 'completed').length / executions.length 
+      : 1;
 
-      if (error) throw error;
-    } catch (error) {
-      devLog.error('Failed to update workflow status', error);
-      throw error;
-    }
+    const averageTime = executions.length > 0
+      ? executions.reduce((sum, e) => {
+          if (e.started_at && e.completed_at) {
+            return sum + (new Date(e.completed_at).getTime() - new Date(e.started_at).getTime());
+          }
+          return sum;
+        }, 0) / executions.length
+      : 0;
+
+    const score = Math.round((successRate * 0.7 + (averageTime > 0 ? Math.min(1, 10000 / averageTime) : 1) * 0.3) * 100);
+
+    return {
+      score,
+      optimizedTemplate: {
+        // Template optimizations would go here
+        optimizations: [
+          'Parallel execution where possible',
+          'Reduce unnecessary wait times',
+          'Optimize step ordering'
+        ]
+      }
+    };
   }
 
-  async updateWorkflowExecution(
-    executionId: string,
-    updates: Partial<WorkflowExecution>
-  ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('workflow_executions')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', executionId);
+  async updateWorkflowTemplate(templateId: string, updates: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+    const { data, error } = await supabase
+      .from('workflow_templates')
+      .update(updates)
+      .eq('id', templateId)
+      .select()
+      .single();
 
-      if (error) throw error;
-    } catch (error) {
-      devLog.error('Failed to update workflow execution', error);
-      throw error;
+    if (error) {
+      throw new Error(`Failed to update workflow template: ${error.message}`);
     }
+
+    return convertToWorkflowTemplate(data);
   }
 
-  async logWorkflowEvent(event: Omit<WorkflowEvent, 'id' | 'timestamp' | 'correlation_id'>): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('workflow_events')
-        .insert({
-          ...event,
-          timestamp: new Date().toISOString()
-        });
+  async deleteWorkflowTemplate(templateId: string): Promise<void> {
+    const { error } = await supabase
+      .from('workflow_templates')
+      .delete()
+      .eq('id', templateId);
 
-      if (error) throw error;
-    } catch (error) {
-      devLog.error('Failed to log workflow event', error);
-    }
-  }
-
-  async getAIRecommendedTemplates(associationId: string): Promise<WorkflowTemplate[]> {
-    try {
-      const { data, error } = await supabase
-        .from('workflow_templates')
-        .select('*')
-        .eq('association_id', associationId)
-        .eq('is_ai_recommended', true)
-        .order('ai_optimization_score', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      devLog.error('Failed to get AI recommended templates', error);
-      return [];
+    if (error) {
+      throw new Error(`Failed to delete workflow template: ${error.message}`);
     }
   }
 }
 
-export const intelligentWorkflowEngine = IntelligentWorkflowEngine.getInstance();
+export const intelligentWorkflowEngine = new IntelligentWorkflowEngine();
