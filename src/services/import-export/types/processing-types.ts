@@ -2,21 +2,12 @@
 import { ProcessedDocument } from './document-types';
 
 // Processing options and results
-export interface OCROptions {
-  enableTableExtraction?: boolean;
-  enableFormDetection?: boolean;
-  enableLayoutAnalysis?: boolean;
-  languages?: string[];
-  quality?: 'fast' | 'accurate';
-}
-
-export interface ProcessingOptions {
+export interface EnhancedProcessingOptions {
   enableOCR?: boolean;
   enableDuplicateDetection?: boolean;
   enableQualityAssessment?: boolean;
   enableAutoFix?: boolean;
   fallbackToOCR?: boolean;
-  ocrOptions?: OCROptions;
   validateData?: boolean;
   extractStructured?: boolean;
   classifyDocument?: boolean;
@@ -31,9 +22,6 @@ export interface ProcessingOptions {
   createRollbackPoints?: boolean;
   enableBusinessIntelligence?: boolean;
   generatePredictiveInsights?: boolean;
-}
-
-export interface EnhancedProcessingOptions extends ProcessingOptions {
   associationId?: string;
   addressIntelligence?: {
     enableValidation?: boolean;

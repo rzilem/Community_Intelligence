@@ -18,14 +18,6 @@ export interface ParsedData {
   };
 }
 
-export interface ProcessingResult {
-  success: boolean;
-  data?: any[];
-  errors: string[];
-  warnings: string[];
-  metadata?: any;
-}
-
 export interface ValidationConfig {
   required_fields?: string[];
   optional_fields?: string[];

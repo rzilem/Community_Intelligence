@@ -5,7 +5,7 @@ import { advancedOCRService } from './advanced-ocr-service';
 export class InvoiceIntelligenceService {
   async processInvoice(file: File): Promise<ProcessedDocument> {
     const ocrOptions: OCROptions = {
-      enableTableDetection: true, // Fixed: was enableTableExtraction
+      enableTableDetection: true,
       languages: ['eng'],
       enhanceImage: true
     };
