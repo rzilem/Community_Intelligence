@@ -11,7 +11,13 @@ export interface DocumentStorageResult {
   associationName: string;
   totalDocuments: number;
   errors: string[];
+  warnings: string[];
   summary: Record<string, number>;
+  skippedFiles: Array<{
+    name: string;
+    reason: string;
+    size?: number;
+  }>;
 }
 
 export interface DocumentFile {
@@ -21,7 +27,23 @@ export interface DocumentFile {
   category: string;
   data: ArrayBuffer;
   mimeType: string;
+  size: number;
 }
+
+export interface ProcessingProgress {
+  stage: 'analyzing' | 'processing' | 'storing' | 'complete' | 'error';
+  message: string;
+  progress: number;
+  currentUnit?: string;
+  currentCategory?: string;
+  currentFile?: string;
+  filesProcessed: number;
+  totalFiles: number;
+  unitsProcessed: number;
+  totalUnits: number;
+}
+
+export type ProgressCallback = (progress: ProcessingProgress) => void;
 
 class DocumentStorageProcessor {
   private supportedTypes = [
@@ -34,10 +56,52 @@ class DocumentStorageProcessor {
     'image/gif'
   ];
 
+  private readonly MAX_FILE_SIZE = 300 * 1024 * 1024; // 300 MB
+  private readonly BATCH_SIZE = 5; // Process files in batches
+  private isCancelled = false;
+  private progressCallback?: ProgressCallback;
+
+  setProgressCallback(callback: ProgressCallback) {
+    this.progressCallback = callback;
+  }
+
+  cancel() {
+    this.isCancelled = true;
+  }
+
+  private updateProgress(update: Partial<ProcessingProgress>) {
+    if (this.progressCallback) {
+      const progress = {
+        stage: 'processing' as const,
+        message: 'Processing files...',
+        progress: 0,
+        filesProcessed: 0,
+        totalFiles: 0,
+        unitsProcessed: 0,
+        totalUnits: 0,
+        ...update
+      };
+      
+      // Calculate progress percentage
+      if (progress.totalFiles > 0) {
+        progress.progress = Math.round((progress.filesProcessed / progress.totalFiles) * 100);
+      }
+      
+      this.progressCallback(progress);
+    }
+  }
+
   async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
     try {
+      this.isCancelled = false;
       devLog.info('Starting hierarchical ZIP processing:', zipFile.name);
       
+      this.updateProgress({
+        stage: 'analyzing',
+        message: 'Analyzing ZIP file structure...',
+        progress: 5
+      });
+
       const zip = new JSZip();
       const zipData = await zip.loadAsync(zipFile);
       
@@ -49,7 +113,9 @@ class DocumentStorageProcessor {
         associationName: '',
         totalDocuments: 0,
         errors: [],
-        summary: {}
+        warnings: [],
+        summary: {},
+        skippedFiles: []
       };
       
       // Analyze ZIP structure
@@ -59,52 +125,136 @@ class DocumentStorageProcessor {
       result.associationName = structure.associationName;
       result.totalDocuments = structure.totalFiles;
       
+      const totalUnits = Object.keys(structure.units).length;
+      let filesProcessed = 0;
+      
+      this.updateProgress({
+        stage: 'processing',
+        message: 'Processing documents...',
+        progress: 10,
+        totalFiles: structure.totalFiles,
+        totalUnits,
+        filesProcessed: 0,
+        unitsProcessed: 0
+      });
+
       // Process documents by unit
-      for (const unit of Object.keys(structure.units)) {
+      for (const [unitIndex, unit] of Object.keys(structure.units).entries()) {
+        if (this.isCancelled) {
+          result.errors.push('Processing was cancelled by user');
+          break;
+        }
+
         try {
           devLog.info(`Processing unit: ${unit}`);
           const unitFiles = structure.units[unit];
           
+          this.updateProgress({
+            currentUnit: unit,
+            message: `Processing unit: ${unit}`,
+            unitsProcessed: unitIndex,
+            filesProcessed
+          });
+
           for (const category of Object.keys(unitFiles)) {
+            if (this.isCancelled) break;
+
             devLog.info(`Processing category: ${category} for unit: ${unit}`);
             const files = unitFiles[category];
             
-            for (const file of files) {
-              try {
-                await this.processDocument(file);
-                result.documentsImported++;
-                
-                // Update summary
-                if (!result.summary[category]) {
-                  result.summary[category] = 0;
+            this.updateProgress({
+              currentCategory: category,
+              message: `Processing ${category} documents for ${unit}`,
+              filesProcessed
+            });
+
+            // Process files in batches
+            for (let i = 0; i < files.length; i += this.BATCH_SIZE) {
+              if (this.isCancelled) break;
+
+              const batch = files.slice(i, i + this.BATCH_SIZE);
+              
+              for (const file of batch) {
+                if (this.isCancelled) break;
+
+                try {
+                  this.updateProgress({
+                    currentFile: file.name,
+                    message: `Uploading ${file.name}...`,
+                    filesProcessed
+                  });
+
+                  // Check file size
+                  if (file.size > this.MAX_FILE_SIZE) {
+                    const sizeMB = Math.round(file.size / (1024 * 1024));
+                    result.skippedFiles.push({
+                      name: file.name,
+                      reason: `File too large (${sizeMB}MB, max 300MB)`,
+                      size: file.size
+                    });
+                    result.warnings.push(`Skipped ${file.name}: File too large (${sizeMB}MB)`);
+                    filesProcessed++;
+                    continue;
+                  }
+
+                  await this.processDocument(file);
+                  result.documentsImported++;
+                  
+                  // Update summary
+                  if (!result.summary[category]) {
+                    result.summary[category] = 0;
+                  }
+                  result.summary[category]++;
+                  
+                  // Track categories
+                  if (!result.categoriesFound.includes(category)) {
+                    result.categoriesFound.push(category);
+                  }
+
+                  filesProcessed++;
+                  
+                } catch (error) {
+                  const errorMsg = `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                  result.errors.push(errorMsg);
+                  devLog.error(errorMsg);
+                  filesProcessed++;
                 }
-                result.summary[category]++;
-                
-                // Track categories
-                if (!result.categoriesFound.includes(category)) {
-                  result.categoriesFound.push(category);
-                }
-              } catch (error) {
-                const errorMsg = `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-                result.errors.push(errorMsg);
-                devLog.error(errorMsg);
               }
+
+              // Small delay between batches to prevent overwhelming the system
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
           }
           
           result.unitsProcessed++;
+          
         } catch (error) {
           const errorMsg = `Failed to process unit ${unit}: ${error instanceof Error ? error.message : 'Unknown error'}`;
           result.errors.push(errorMsg);
           devLog.error(errorMsg);
         }
       }
+
+      this.updateProgress({
+        stage: 'complete',
+        message: `Processing complete! Imported ${result.documentsImported} documents`,
+        progress: 100,
+        filesProcessed,
+        unitsProcessed: result.unitsProcessed
+      });
       
       devLog.info('ZIP processing complete:', result);
       return result;
       
     } catch (error) {
       devLog.error('ZIP processing failed:', error);
+      
+      this.updateProgress({
+        stage: 'error',
+        message: `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        progress: 0
+      });
+
       return {
         success: false,
         documentsImported: 0,
@@ -113,7 +263,9 @@ class DocumentStorageProcessor {
         associationName: '',
         totalDocuments: 0,
         errors: [error instanceof Error ? error.message : 'Unknown error'],
-        summary: {}
+        warnings: [],
+        summary: {},
+        skippedFiles: []
       };
     }
   }
@@ -129,10 +281,24 @@ class DocumentStorageProcessor {
       totalFiles: 0
     };
 
+    const totalEntries = Object.keys(zipData.files).length;
+    let processedEntries = 0;
+
     // Process each file in the ZIP
     for (const [filePath, zipObject] of Object.entries(zipData.files)) {
       if (zipObject.dir || this.shouldIgnoreFile(filePath)) {
+        processedEntries++;
         continue;
+      }
+
+      // Update progress during analysis
+      if (processedEntries % 10 === 0) {
+        const analysisProgress = Math.round((processedEntries / totalEntries) * 5) + 5; // 5-10%
+        this.updateProgress({
+          stage: 'analyzing',
+          message: `Analyzing files... (${processedEntries}/${totalEntries})`,
+          progress: analysisProgress
+        });
       }
 
       try {
@@ -140,6 +306,7 @@ class DocumentStorageProcessor {
         
         if (pathParts.length < 3) {
           devLog.warn(`Skipping file with insufficient path depth: ${filePath}`);
+          processedEntries++;
           continue;
         }
 
@@ -157,9 +324,11 @@ class DocumentStorageProcessor {
         // Get file data and determine MIME type
         const fileData = await zipObject.async('arraybuffer');
         const mimeType = this.determineMimeType(fileName);
+        const fileSize = fileData.byteLength;
 
         if (!this.supportedTypes.includes(mimeType)) {
           devLog.warn(`Skipping unsupported file type: ${fileName} (${mimeType})`);
+          processedEntries++;
           continue;
         }
 
@@ -178,7 +347,8 @@ class DocumentStorageProcessor {
           unit: unitName,
           category: categoryName,
           data: fileData,
-          mimeType
+          mimeType,
+          size: fileSize
         });
 
         structure.totalFiles++;
@@ -186,6 +356,8 @@ class DocumentStorageProcessor {
       } catch (error) {
         devLog.error(`Error processing file ${filePath}:`, error);
       }
+
+      processedEntries++;
     }
 
     return structure;
@@ -226,7 +398,7 @@ class DocumentStorageProcessor {
       // Generate storage path
       const storagePath = `${file.unit}/${file.category}/${file.name}`;
       
-      devLog.info(`Uploading document: ${storagePath}`);
+      devLog.info(`Uploading document: ${storagePath} (${Math.round(file.size / 1024)}KB)`);
       
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
@@ -241,6 +413,10 @@ class DocumentStorageProcessor {
       }
 
       devLog.info(`Successfully uploaded: ${storagePath}`);
+      
+      // Release memory
+      // @ts-ignore
+      file.data = null;
       
     } catch (error) {
       devLog.error(`Failed to process document ${file.name}:`, error);

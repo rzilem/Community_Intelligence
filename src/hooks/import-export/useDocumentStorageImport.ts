@@ -1,20 +1,12 @@
 
 import { useState } from 'react';
-import { documentStorageProcessor, DocumentStorageResult } from '@/services/import-export/document-storage-processor';
+import { documentStorageProcessor, DocumentStorageResult, ProcessingProgress } from '@/services/import-export/document-storage-processor';
 import { toast } from 'sonner';
 import { devLog } from '@/utils/dev-logger';
 
-export interface DocumentStorageProgress {
-  stage: 'analyzing' | 'processing' | 'storing' | 'complete' | 'error';
-  message: string;
-  progress: number;
-  currentUnit?: string;
-  currentCategory?: string;
-}
-
 export function useDocumentStorageImport() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState<DocumentStorageProgress | null>(null);
+  const [progress, setProgress] = useState<ProcessingProgress | null>(null);
   const [result, setResult] = useState<DocumentStorageResult | null>(null);
 
   const processDocumentZip = async (zipFile: File) => {
@@ -22,26 +14,35 @@ export function useDocumentStorageImport() {
     setResult(null);
     
     try {
+      // Set up progress tracking
+      documentStorageProcessor.setProgressCallback((progressUpdate) => {
+        setProgress(progressUpdate);
+      });
+
       setProgress({
         stage: 'analyzing',
-        message: 'Analyzing ZIP file structure...',
-        progress: 10
+        message: 'Starting document analysis...',
+        progress: 0,
+        filesProcessed: 0,
+        totalFiles: 0,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
 
       const importResult = await documentStorageProcessor.processHierarchicalZip(zipFile);
       
-      setProgress({
-        stage: 'complete',
-        message: `Successfully imported ${importResult.documentsImported} documents`,
-        progress: 100
-      });
-
       setResult(importResult);
       
       if (importResult.success) {
-        toast.success(
-          `Document import complete! Imported ${importResult.documentsImported} documents for ${importResult.associationName}`
-        );
+        const successMessage = `Document import complete! Imported ${importResult.documentsImported} documents for ${importResult.associationName}`;
+        
+        if (importResult.warnings.length > 0) {
+          toast.success(successMessage, {
+            description: `${importResult.warnings.length} files were skipped due to size or type restrictions`
+          });
+        } else {
+          toast.success(successMessage);
+        }
       } else {
         toast.error('Document import completed with errors. Please check the results.');
       }
@@ -55,7 +56,11 @@ export function useDocumentStorageImport() {
       setProgress({
         stage: 'error',
         message: `Import failed: ${errorMessage}`,
-        progress: 0
+        progress: 0,
+        filesProcessed: 0,
+        totalFiles: 0,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
       
       toast.error(`Document import failed: ${errorMessage}`);
@@ -66,10 +71,26 @@ export function useDocumentStorageImport() {
     }
   };
 
+  const cancelImport = () => {
+    documentStorageProcessor.cancel();
+    setIsProcessing(false);
+    setProgress({
+      stage: 'error',
+      message: 'Import cancelled by user',
+      progress: 0,
+      filesProcessed: 0,
+      totalFiles: 0,
+      unitsProcessed: 0,
+      totalUnits: 0
+    });
+    toast.info('Document import cancelled');
+  };
+
   const resetImport = () => {
     setResult(null);
     setProgress(null);
     setIsProcessing(false);
+    documentStorageProcessor.cancel();
   };
 
   return {
@@ -77,6 +98,7 @@ export function useDocumentStorageImport() {
     progress,
     result,
     processDocumentZip,
+    cancelImport,
     resetImport
   };
 }
