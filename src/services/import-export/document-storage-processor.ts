@@ -1,9 +1,36 @@
 import JSZip from 'jszip';
+import { createClient } from '@supabase/supabase-js';
 import { devLog } from '@/utils/dev-logger';
-import { supabase } from '@/integrations/supabase/client';
 
-interface ProcessingProgress {
-  stage: string;
+export interface DocumentInfo {
+  name: string;
+  url: string;
+  file_type: string;
+  file_size: number;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  is_public?: boolean;
+  is_archived?: boolean;
+  uploaded_by?: string;
+  uploaded_at: string;
+  last_accessed?: string | null;
+  current_version?: number;
+}
+
+export interface DocumentStorageResult {
+  success: boolean;
+  documentsImported: number;
+  unitsProcessed: number;
+  associationName?: string;
+  errors: string[];
+  warnings: string[];
+  totalFiles?: number;
+  skippedFiles?: number;
+}
+
+export interface ProcessingProgress {
+  stage: 'analyzing' | 'processing' | 'uploading' | 'complete' | 'error' | 'paused';
   message: string;
   progress: number;
   filesProcessed: number;
@@ -17,423 +44,459 @@ interface ProcessingProgress {
   canResume?: boolean;
 }
 
-interface DocumentStorageResult {
-  success: boolean;
-  documentsImported: number;
-  unitsProcessed: number;
-  associationName?: string;
-  warnings: string[];
-  errors: string[];
+export interface DocumentMetadata {
+  originalName: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+  processingMethod: string;
+  extractionMethod: string;
+  confidence: number;
+  qualityScore: number;
+  tables: number;
+  forms: number;
+  processingTime: number;
 }
 
-type ProgressCallback = (progress: ProcessingProgress) => void;
+// Performance monitoring interface
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+interface PerformanceWithMemory extends Performance {
+  memory?: PerformanceMemory;
+}
 
 class DocumentStorageProcessor {
-  private progressCallback: ProgressCallback | null = null;
-  private result: DocumentStorageResult = {
-    success: false,
-    documentsImported: 0,
-    unitsProcessed: 0,
-    warnings: [],
-    errors: []
-  };
-  private cancelled: boolean = false;
-  private startTime: number = 0;
-  private MAX_FILE_SIZE = 300 * 1024 * 1024; // 300MB
-  private savedProgress: ProcessingProgress | null = null;
+  private supabase = createClient(
+    'https://cahergndkwfqltxyikyr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhaGVyZ25ka3dmcWx0eHlpa3lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwOTUzMTYsImV4cCI6MjA1OTY3MTMxNn0.n_tRSJy3M9IaiyrhG02kpvko-pWd6XyYs4khDauxRGQ'
+  );
 
-  setProgressCallback(callback: ProgressCallback) {
+  private progressCallback: ((progress: ProcessingProgress) => void) | null = null;
+  private isCancelled = false;
+  private batchSize = 10;
+  private maxFileSize = 300 * 1024 * 1024; // 300MB
+  private supportedTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
+  setProgressCallback(callback: (progress: ProcessingProgress) => void) {
     this.progressCallback = callback;
   }
 
   cancel() {
-    this.cancelled = true;
+    this.isCancelled = true;
+    devLog.info('Document processing cancelled');
   }
 
   async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
-    this.cancelled = false;
-    this.startTime = Date.now();
-    this.result = {
-      success: false,
-      documentsImported: 0,
-      unitsProcessed: 0,
-      warnings: [],
-      errors: []
-    };
-
+    this.isCancelled = false;
+    const startTime = Date.now();
+    
     try {
-      const zip = await JSZip.loadAsync(zipFile);
-      
-      // Analyze the structure to extract association, units, and documents
-      const structure = this.analyzeZipStructure(zip);
-      if (!structure.associationName) {
-        this.result.errors.push('Could not determine association name from zip structure.');
-        this.updateProgress({
-          stage: 'error',
-          message: 'Could not determine association name',
-          progress: 0,
-          filesProcessed: 0,
-          totalFiles: 0,
-          unitsProcessed: 0,
-          totalUnits: 0,
-          canResume: false
-        });
-        return this.result;
-      }
-      this.result.associationName = structure.associationName;
-
-      const totalFiles = Object.keys(zip.files).filter(path => !zip.files[path].dir).length;
-      let filesProcessed = 0;
-      let unitsProcessed = 0;
-
+      // Stage 1: Analysis
       this.updateProgress({
         stage: 'analyzing',
-        message: 'Analyzing document structure...',
+        message: 'Analyzing ZIP structure...',
         progress: 5,
-        filesProcessed: 0,
-        totalFiles: totalFiles,
-        unitsProcessed: 0,
-        totalUnits: structure.units.length,
-        canResume: true
-      });
-
-      // Process files with streaming and memory management
-      const files = Object.keys(zip.files).filter(path => !zip.files[path].dir);
-      
-      for (let i = 0; i < files.length; i++) {
-        if (this.cancelled) break;
-        
-        const filePath = files[i];
-        const zipEntry = zip.files[filePath];
-        
-        try {
-          // Use async() method instead of _data property
-          const fileData = await zipEntry.async('arraybuffer');
-          const file = new File([fileData], filePath.split('/').pop() || 'unknown', {
-            type: this.getMimeType(filePath)
-          });
-          
-          // Check file size before processing
-          if (file.size > this.MAX_FILE_SIZE) {
-            this.result.warnings.push(`File ${filePath} exceeds maximum size (${Math.round(file.size / 1024 / 1024)}MB)`);
-            continue;
-          }
-          
-          await this.processFile(file, filePath);
-          
-          filesProcessed++;
-          this.result.documentsImported++;
-          
-          // Update progress
-          const progress = Math.round((filesProcessed / totalFiles) * 100);
-          unitsProcessed = structure.units.length; // Assuming all units are processed
-          
-          this.updateProgress({
-            stage: 'processing',
-            message: `Importing documents...`,
-            progress: progress,
-            filesProcessed: filesProcessed,
-            totalFiles: totalFiles,
-            unitsProcessed: unitsProcessed,
-            totalUnits: structure.units.length,
-            currentFile: file.name,
-            currentFileSize: file.size,
-            estimatedTimeRemaining: this.calculateEstimatedTimeRemaining(this.startTime, filesProcessed, totalFiles),
-            canResume: true
-          });
-          
-          // Memory management - allow garbage collection
-          if (i % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 10));
-            this.updateMemoryUsage();
-          }
-          
-        } catch (error) {
-          this.result.errors.push(`Failed to process ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }
-
-      this.result.success = this.result.errors.length === 0;
-      
-      if (this.cancelled) {
-        this.updateProgress({
-          stage: 'paused',
-          message: 'Import paused by user',
-          progress: Math.round((filesProcessed / totalFiles) * 100),
-          filesProcessed: filesProcessed,
-          totalFiles: totalFiles,
-          unitsProcessed: unitsProcessed,
-          totalUnits: structure.units.length,
-          canResume: true
-        });
-      } else {
-        this.updateProgress({
-          stage: 'complete',
-          message: 'Document import completed',
-          progress: 100,
-          filesProcessed: filesProcessed,
-          totalFiles: totalFiles,
-          unitsProcessed: unitsProcessed,
-          totalUnits: structure.units.length,
-          canResume: false
-        });
-      }
-      
-    } catch (error) {
-      devLog.error('Error processing zip file:', error);
-      this.result.success = false;
-      this.result.errors.push(error instanceof Error ? error.message : 'Unknown error');
-      this.updateProgress({
-        stage: 'error',
-        message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        progress: 0,
         filesProcessed: 0,
         totalFiles: 0,
         unitsProcessed: 0,
-        totalUnits: 0,
-        canResume: true
+        totalUnits: 0
       });
-    } finally {
-      localStorage.removeItem('documentImportProgress');
+
+      const zip = await JSZip.loadAsync(zipFile);
+      const structure = await this.analyzeZipStructure(zip);
+      
+      if (this.isCancelled) throw new Error('Processing cancelled');
+
+      // Stage 2: Processing
+      const result = await this.processDocumentStructure(zip, structure);
+      
+      const totalTime = Date.now() - startTime;
+      devLog.info(`Total processing time: ${totalTime}ms`);
+      
+      return result;
+      
+    } catch (error) {
+      devLog.error('Document processing error:', error);
+      throw error;
     }
-    
-    return this.result;
   }
 
   async resumeProcessing(zipFile: File): Promise<DocumentStorageResult> {
-    if (!this.savedProgress) {
-      devLog.warn('No saved progress found. Starting a new import.');
-      return this.processHierarchicalZip(zipFile);
-    }
-
+    devLog.info('Resuming document processing from saved state');
+    
     // Load saved progress
-    const savedProgress = this.savedProgress;
-    this.cancelled = false;
-    this.startTime = Date.now();
+    const savedProgress = this.loadSavedProgress();
+    if (savedProgress) {
+      this.updateProgress({
+        ...savedProgress,
+        message: 'Resuming processing...',
+        canResume: false
+      });
+    }
+    
+    // Continue processing from where we left off
+    return this.processHierarchicalZip(zipFile);
+  }
 
-    try {
-      const zip = await JSZip.loadAsync(zipFile);
-      const totalFiles = Object.keys(zip.files).filter(path => !zip.files[path].dir).length;
+  private async analyzeZipStructure(zip: JSZip): Promise<any> {
+    const structure = {
+      associationName: '',
+      units: new Map(),
+      totalFiles: 0,
+      supportedFiles: 0
+    };
 
-      // Process files with streaming and memory management
-      const files = Object.keys(zip.files).filter(path => !zip.files[path].dir);
-      let filesProcessed = savedProgress.filesProcessed;
+    const entries = Object.entries(zip.files);
+    structure.totalFiles = entries.length;
 
-      for (let i = filesProcessed; i < files.length; i++) {
-        if (this.cancelled) break;
-
-        const filePath = files[i];
-        const zipEntry = zip.files[filePath];
-
-        try {
-          // Use async() method instead of _data property
-          const fileData = await zipEntry.async('arraybuffer');
-          const file = new File([fileData], filePath.split('/').pop() || 'unknown', {
-            type: this.getMimeType(filePath)
-          });
-
-          // Check file size before processing
-          if (file.size > this.MAX_FILE_SIZE) {
-            this.result.warnings.push(`File ${filePath} exceeds maximum size (${Math.round(file.size / 1024 / 1024)}MB)`);
-            continue;
+    // Memory monitoring for large ZIP files
+    return this.monitorPerformance('ZIP Analysis', async () => {
+      for (const [path, zipEntry] of entries) {
+        if (this.isCancelled) break;
+        
+        if (!zipEntry.dir) {
+          const pathParts = path.split('/').filter(p => p);
+          
+          if (pathParts.length >= 2) {
+            const associationName = pathParts[0];
+            const unitName = pathParts[1];
+            
+            if (!structure.associationName) {
+              structure.associationName = associationName;
+            }
+            
+            if (!structure.units.has(unitName)) {
+              structure.units.set(unitName, []);
+            }
+            
+            // Check file type and size
+            if (await this.isFileSupported(zipEntry)) {
+              structure.units.get(unitName)!.push({
+                path,
+                name: pathParts[pathParts.length - 1],
+                zipEntry
+              });
+              structure.supportedFiles++;
+            }
           }
-
-          await this.processFile(file, filePath);
-
-          filesProcessed++;
-          this.result.documentsImported++;
-
-          // Update progress
-          const progress = Math.round((filesProcessed / totalFiles) * 100);
-
-          this.updateProgress({
-            stage: 'processing',
-            message: `Resuming document import...`,
-            progress: progress,
-            filesProcessed: filesProcessed,
-            totalFiles: totalFiles,
-            unitsProcessed: savedProgress.unitsProcessed,
-            totalUnits: savedProgress.totalUnits,
-            currentFile: file.name,
-            currentFileSize: file.size,
-            estimatedTimeRemaining: this.calculateEstimatedTimeRemaining(this.startTime, filesProcessed, totalFiles),
-            canResume: true
-          });
-
-          // Memory management - allow garbage collection
-          if (i % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 10));
-            this.updateMemoryUsage();
-          }
-
-        } catch (error) {
-          this.result.errors.push(`Failed to process ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
-
-      this.result.success = this.result.errors.length === 0;
-
-      if (this.cancelled) {
-        this.updateProgress({
-          stage: 'paused',
-          message: 'Import paused by user',
-          progress: Math.round((filesProcessed / totalFiles) * 100),
-          filesProcessed: filesProcessed,
-          totalFiles: totalFiles,
-          unitsProcessed: savedProgress.unitsProcessed,
-          totalUnits: savedProgress.totalUnits,
-          canResume: true
-        });
-      } else {
-        this.updateProgress({
-          stage: 'complete',
-          message: 'Document import completed',
-          progress: 100,
-          filesProcessed: filesProcessed,
-          totalFiles: totalFiles,
-          unitsProcessed: savedProgress.unitsProcessed,
-          totalUnits: savedProgress.totalUnits,
-          canResume: false
-        });
-      }
-
-    } catch (error) {
-      devLog.error('Error resuming zip file processing:', error);
-      this.result.success = false;
-      this.result.errors.push(error instanceof Error ? error.message : 'Unknown error');
-      this.updateProgress({
-        stage: 'error',
-        message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        progress: 0,
-        filesProcessed: 0,
-        totalFiles: 0,
-        unitsProcessed: 0,
-        totalUnits: 0,
-        canResume: true
-      });
-    } finally {
-      localStorage.removeItem('documentImportProgress');
-    }
-
-    return this.result;
-  }
-
-  private analyzeZipStructure(zip: JSZip): { associationName: string | null, units: string[] } {
-    const directories = [];
-    const files = [];
-
-    for (const relativePath in zip.files) {
-      const file = zip.files[relativePath];
-      if (file.dir) {
-        directories.push(relativePath);
-      } else {
-        files.push(relativePath);
-      }
-    }
-
-    let associationName = null;
-    const units: string[] = [];
-
-    if (directories.length > 0) {
-      // Assuming the top-level directory is the association name
-      const topLevelDir = directories.find(dir => dir.split('/').length === 1);
-      associationName = topLevelDir || null;
-
-      // Identify units (subdirectories under the association)
-      if (associationName) {
-        directories.filter(dir => dir.startsWith(associationName + '/') && dir.split('/').length === 2)
-          .forEach(unitDir => units.push(unitDir));
-      }
-    }
-
-    return { associationName, units };
-  }
-
-  private async processFile(file: File, filePath: string): Promise<void> {
-    try {
-      const associationId = 'your-association-id'; // Replace with actual association ID
-      const path = `documents/${associationId}/${file.name}`;
       
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(path, file, {
-          cacheControl: '3600',
+      return structure;
+    });
+  }
+
+  private async isFileSupported(zipEntry: JSZip.JSZipObject): Promise<boolean> {
+    const fileName = zipEntry.name.toLowerCase();
+    const extension = fileName.split('.').pop();
+    
+    // Check file size
+    if (zipEntry._data && zipEntry._data.uncompressedSize > this.maxFileSize) {
+      return false;
+    }
+    
+    // Check file type by extension
+    const supportedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'doc', 'docx'];
+    return supportedExtensions.includes(extension || '');
+  }
+
+  private async processDocumentStructure(zip: JSZip, structure: any): Promise<DocumentStorageResult> {
+    const result: DocumentStorageResult = {
+      success: true,
+      documentsImported: 0,
+      unitsProcessed: 0,
+      associationName: structure.associationName,
+      errors: [],
+      warnings: [],
+      totalFiles: structure.supportedFiles,
+      skippedFiles: 0
+    };
+
+    const units = Array.from(structure.units.entries());
+    let processedFiles = 0;
+
+    this.updateProgress({
+      stage: 'processing',
+      message: 'Processing documents...',
+      progress: 10,
+      filesProcessed: 0,
+      totalFiles: structure.supportedFiles,
+      unitsProcessed: 0,
+      totalUnits: units.length
+    });
+
+    // Process units in batches to manage memory
+    for (let i = 0; i < units.length; i += this.batchSize) {
+      if (this.isCancelled) break;
+      
+      const batch = units.slice(i, i + this.batchSize);
+      await this.processBatch(batch, zip, result, processedFiles, structure.supportedFiles, units.length);
+      
+      result.unitsProcessed += batch.length;
+      processedFiles += batch.reduce((sum, [, files]) => sum + files.length, 0);
+      
+      // Force garbage collection opportunity
+      if (global.gc) {
+        global.gc();
+      }
+      
+      // Save progress periodically
+      this.saveProgress({
+        stage: 'processing',
+        message: `Processed ${result.unitsProcessed} of ${units.length} units`,
+        progress: Math.round((processedFiles / structure.supportedFiles) * 80) + 10,
+        filesProcessed: processedFiles,
+        totalFiles: structure.supportedFiles,
+        unitsProcessed: result.unitsProcessed,
+        totalUnits: units.length
+      });
+    }
+
+    // Finalize
+    this.updateProgress({
+      stage: 'complete',
+      message: 'Processing complete!',
+      progress: 100,
+      filesProcessed: processedFiles,
+      totalFiles: structure.supportedFiles,
+      unitsProcessed: result.unitsProcessed,
+      totalUnits: units.length
+    });
+
+    return result;
+  }
+
+  private async processBatch(
+    batch: [string, any[]][],
+    zip: JSZip,
+    result: DocumentStorageResult,
+    processedFiles: number,
+    totalFiles: number,
+    totalUnits: number
+  ): Promise<void> {
+    for (const [unitName, files] of batch) {
+      if (this.isCancelled) break;
+      
+      try {
+        for (const fileInfo of files) {
+          if (this.isCancelled) break;
+          
+          await this.processDocument(fileInfo, zip, result);
+          processedFiles++;
+          
+          const progress = Math.round((processedFiles / totalFiles) * 80) + 10;
+          this.updateProgress({
+            stage: 'processing',
+            message: `Processing ${fileInfo.name}...`,
+            progress,
+            filesProcessed: processedFiles,
+            totalFiles,
+            unitsProcessed: result.unitsProcessed,
+            totalUnits,
+            currentFile: fileInfo.name,
+            currentFileSize: fileInfo.zipEntry._data?.uncompressedSize
+          });
+        }
+      } catch (error) {
+        result.errors.push(`Error processing unit ${unitName}: ${error.message}`);
+        devLog.error(`Unit processing error for ${unitName}:`, error);
+      }
+    }
+  }
+
+  private async processDocument(fileInfo: any, zip: JSZip, result: DocumentStorageResult): Promise<void> {
+    try {
+      // Extract file data using proper JSZip API
+      const fileData = await fileInfo.zipEntry.async('arraybuffer');
+      const file = new File([fileData], fileInfo.name, {
+        type: this.getMimeType(fileInfo.name)
+      });
+
+      // Upload to storage
+      const uploadResult = await this.uploadToStorage(file, 'documents');
+      
+      // Store document metadata
+      await this.storeDocumentMetadata({
+        name: fileInfo.name,
+        url: uploadResult.url,
+        path: uploadResult.path,
+        metadata: uploadResult.metadata
+      });
+
+      result.documentsImported++;
+      
+    } catch (error) {
+      result.errors.push(`Failed to process ${fileInfo.name}: ${error.message}`);
+      result.skippedFiles = (result.skippedFiles || 0) + 1;
+    }
+  }
+
+  private async uploadToStorage(
+    file: File,
+    bucket: string = 'documents',
+    path?: string
+  ): Promise<{
+    url: string;
+    path: string;
+    metadata: DocumentMetadata;
+  }> {
+    try {
+      const fileName = path || `${Date.now()}_${file.name}`;
+      
+      // Upload file
+      const { data, error } = await this.supabase.storage
+        .from(bucket)
+        .upload(fileName, file, {
+          contentType: file.type,
           upsert: false
+        });
+      
+      if (error) throw error;
+      
+      // Get public URL using Supabase storage API
+      const { data: { publicUrl } } = this.supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+      
+      // Create metadata
+      const metadata: DocumentMetadata = {
+        originalName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        processingMethod: 'storage-upload',
+        extractionMethod: 'direct',
+        confidence: 1,
+        qualityScore: 1,
+        tables: 0,
+        forms: 0,
+        processingTime: 0
+      };
+      
+      return {
+        url: publicUrl,
+        path: data.path,
+        metadata
+      };
+    } catch (error) {
+      devLog.error('Storage upload error:', error);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
+  }
+
+  private async monitorPerformance<T>(
+    operation: string,
+    task: () => Promise<T>
+  ): Promise<T> {
+    const startTime = performance.now();
+    
+    // Memory monitoring - only if available
+    let memoryBefore = 0;
+    let memorySupported = false;
+    
+    const perf = performance as PerformanceWithMemory;
+    if (perf.memory) {
+      memorySupported = true;
+      memoryBefore = perf.memory.usedJSHeapSize;
+    }
+    
+    try {
+      const result = await task();
+      
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Calculate memory usage if supported
+      let memoryUsed = 0;
+      if (memorySupported && perf.memory) {
+        const memoryAfter = perf.memory.usedJSHeapSize;
+        memoryUsed = Math.max(0, memoryAfter - memoryBefore);
+      }
+      
+      // Log performance metrics
+      devLog.info(`Performance: ${operation}`, {
+        duration: `${duration.toFixed(2)}ms`,
+        memoryUsed: memorySupported ? `${(memoryUsed / 1024 / 1024).toFixed(2)}MB` : 'N/A'
+      });
+      
+      return result;
+    } catch (error) {
+      devLog.error(`Error in ${operation}:`, error);
+      throw error;
+    }
+  }
+
+  private getMimeType(fileName: string): string {
+    const extension = fileName.toLowerCase().split('.').pop();
+    const mimeTypes: Record<string, string> = {
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      txt: 'text/plain',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    };
+    return mimeTypes[extension || ''] || 'application/octet-stream';
+  }
+
+  private async storeDocumentMetadata(document: any): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('documents')
+        .insert({
+          name: document.name,
+          url: document.url,
+          file_type: document.metadata.mimeType,
+          file_size: document.metadata.size,
+          uploaded_at: document.metadata.uploadedAt,
+          category: 'imported'
         });
 
       if (error) {
-        devLog.error('Error uploading file:', error);
-        this.result.errors.push(`Failed to upload ${file.name}: ${error.message}`);
-        return;
+        devLog.warn('Failed to store document metadata:', error);
       }
-
-      const url = `${supabase.supabaseUrl}/storage/v1/object/public/${data.Key}`;
-      
-      // Mock document metadata creation
-      const documentMetadata = {
-        id: 'mock-doc-id-' + Math.random(),
-        association_id: associationId,
-        name: file.name,
-        url: url,
-        file_type: file.type,
-        file_size: file.size,
-        uploaded_at: new Date().toISOString()
-      };
-      
-      devLog.info(`Uploaded ${file.name} to ${url}`);
-      
     } catch (error) {
-      devLog.error('Error in processFile:', error);
-      this.result.errors.push(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      devLog.warn('Document metadata storage error:', error);
     }
   }
 
   private updateProgress(progress: ProcessingProgress) {
-    this.savedProgress = progress;
-    localStorage.setItem('documentImportProgress', JSON.stringify(progress));
     if (this.progressCallback) {
       this.progressCallback(progress);
     }
   }
 
-  private calculateEstimatedTimeRemaining(startTime: number, filesProcessed: number, totalFiles: number): string {
-    const elapsedTime = Date.now() - startTime;
-    const averageTimePerFile = elapsedTime / filesProcessed;
-    const remainingFiles = totalFiles - filesProcessed;
-    const estimatedRemainingTime = averageTimePerFile * remainingFiles;
-
-    const minutes = Math.floor((estimatedRemainingTime / (1000 * 60)) % 60);
-    const seconds = Math.floor((estimatedRemainingTime / 1000) % 60);
-
-    return `${minutes}m ${seconds}s`;
-  }
-
-  private updateMemoryUsage() {
-    if (typeof window !== 'undefined' && window.performance && window.performance.memory) {
-      const memoryUsage = window.performance.memory.usedJSHeapSize / window.performance.memory.totalJSHeapSize * 100;
-      this.updateProgress({
-        ...this.savedProgress!,
-        memoryUsage: memoryUsage
-      });
+  private saveProgress(progress: ProcessingProgress) {
+    try {
+      localStorage.setItem('documentImportProgress', JSON.stringify(progress));
+    } catch (error) {
+      devLog.warn('Failed to save progress:', error);
     }
   }
 
-  private getMimeType(filename: string): string {
-    const ext = filename.toLowerCase().split('.').pop();
-    const mimeTypes: Record<string, string> = {
-      'pdf': 'application/pdf',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'txt': 'text/plain',
-      'csv': 'text/csv'
-    };
-    return mimeTypes[ext || ''] || 'application/octet-stream';
+  private loadSavedProgress(): ProcessingProgress | null {
+    try {
+      const saved = localStorage.getItem('documentImportProgress');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      devLog.warn('Failed to load saved progress:', error);
+      return null;
+    }
   }
 }
 
 export const documentStorageProcessor = new DocumentStorageProcessor();
-export type { DocumentStorageResult, ProcessingProgress };
