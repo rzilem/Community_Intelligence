@@ -6,6 +6,7 @@ import { AssociationDeleteDialog } from './table/dialogs/AssociationDeleteDialog
 import AssociationTableLayout from './table/AssociationTableLayout';
 import { useAssociationTable } from '@/hooks/associations/useAssociationTable';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AssociationTableProps {
   associations: Association[];
@@ -28,6 +29,8 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   onViewProfile,
   onRefresh
 }) => {
+  const navigate = useNavigate();
+  
   const {
     visibleColumns,
     deleteDialogOpen,
@@ -52,7 +55,15 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
         if (onRefresh) {
           onRefresh();
         }
-        toast.success('Association deleted successfully');
+        
+        // Navigate away from the deleted association's profile page
+        const currentPath = window.location.pathname;
+        if (currentPath.includes(`/system/associations/${id}`)) {
+          navigate('/system/data-management');
+          toast.success('Association deleted successfully. Redirected to data management.');
+        } else {
+          toast.success('Association deleted successfully');
+        }
       } catch (error: any) {
         console.error('Failed to delete association:', error);
         toast.error(`Failed to delete association: ${error.message}`);

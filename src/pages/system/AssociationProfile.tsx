@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,14 +24,29 @@ const AssociationProfile = () => {
     queryKey: ['association', id],
     queryFn: () => fetchAssociationById(id || ''),
     enabled: !!id,
+    retry: (failureCount, error: any) => {
+      // Don't retry if the association was not found (likely deleted)
+      if (error?.code === 'PGRST116' || error?.message?.includes('not found')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   useEffect(() => {
     if (error) {
       console.error('Error fetching association:', error);
+      
+      // Handle case where association was deleted
+      if (error?.code === 'PGRST116' || error?.message?.includes('not found')) {
+        toast.error('Association not found. It may have been deleted.');
+        navigate('/system/data-management');
+        return;
+      }
+      
       toast.error('Failed to load association data');
     }
-  }, [error]);
+  }, [error, navigate]);
   
   // Mock AI issues - in a real app, these would be fetched from an API
   const aiIssues: AssociationAIIssue[] = [
@@ -79,7 +93,7 @@ const AssociationProfile = () => {
   ];
 
   const handleBack = () => {
-    navigate('/system/associations');
+    navigate('/system/data-management');
   };
 
   if (isLoading) {

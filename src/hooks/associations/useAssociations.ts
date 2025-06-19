@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,6 +27,7 @@ export const useAssociations = () => {
   const fetchAssociations = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
       // Using the provided function to get user's associations
       const { data, error } = await supabase
@@ -35,7 +35,32 @@ export const useAssociations = () => {
 
       if (error) throw error;
       
-      setAssociations(data || []);
+      // Filter out any null or invalid associations and deduplicate by name
+      const validAssociations = (data || []).filter(Boolean);
+      
+      // Remove duplicates by keeping the newest version of each association name
+      const uniqueAssociations = validAssociations.reduce((acc: Association[], current: Association) => {
+        const existingIndex = acc.findIndex(item => 
+          item.name?.toLowerCase().trim() === current.name?.toLowerCase().trim()
+        );
+        
+        if (existingIndex === -1) {
+          acc.push(current);
+        } else {
+          // Keep the newer association (by created_at date)
+          const existing = acc[existingIndex];
+          const currentDate = new Date(current.created_at);
+          const existingDate = new Date(existing.created_at);
+          
+          if (currentDate > existingDate) {
+            acc[existingIndex] = current;
+          }
+        }
+        
+        return acc;
+      }, []);
+      
+      setAssociations(uniqueAssociations);
     } catch (error: any) {
       console.error('Error fetching associations:', error);
       setError(error);
@@ -60,6 +85,8 @@ export const useAssociations = () => {
 
       if (error) throw error;
       
+      // Refresh the associations list after creation
+      await fetchAssociations();
       toast.success('Association created successfully');
       return data;
     } catch (error: any) {
