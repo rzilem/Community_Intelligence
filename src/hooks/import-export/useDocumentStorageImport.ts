@@ -8,8 +8,9 @@ export function useDocumentStorageImport() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<ProcessingProgress | null>(null);
   const [result, setResult] = useState<DocumentStorageResult | null>(null);
+  const [canResume, setCanResume] = useState(false);
 
-  const processDocumentZip = async (zipFile: File) => {
+  const processDocumentZip = async (zipFile: File, resumeFromSaved = false) => {
     setIsProcessing(true);
     setResult(null);
     
@@ -17,11 +18,12 @@ export function useDocumentStorageImport() {
       // Set up progress tracking
       documentStorageProcessor.setProgressCallback((progressUpdate) => {
         setProgress(progressUpdate);
+        setCanResume(progressUpdate.canResume || false);
       });
 
       setProgress({
         stage: 'analyzing',
-        message: 'Starting document analysis...',
+        message: resumeFromSaved ? 'Resuming document analysis...' : 'Starting document analysis...',
         progress: 0,
         filesProcessed: 0,
         totalFiles: 0,
@@ -29,7 +31,9 @@ export function useDocumentStorageImport() {
         totalUnits: 0
       });
 
-      const importResult = await documentStorageProcessor.processHierarchicalZip(zipFile);
+      const importResult = resumeFromSaved 
+        ? await documentStorageProcessor.resumeProcessing(zipFile)
+        : await documentStorageProcessor.processHierarchicalZip(zipFile);
       
       setResult(importResult);
       
@@ -60,15 +64,22 @@ export function useDocumentStorageImport() {
         filesProcessed: 0,
         totalFiles: 0,
         unitsProcessed: 0,
-        totalUnits: 0
+        totalUnits: 0,
+        canResume: true
       });
       
       toast.error(`Document import failed: ${errorMessage}`);
+      setCanResume(true);
       
       return null;
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const resumeImport = async (zipFile: File) => {
+    devLog.info('Resuming import from saved progress');
+    return processDocumentZip(zipFile, true);
   };
 
   const cancelImport = () => {
@@ -81,23 +92,30 @@ export function useDocumentStorageImport() {
       filesProcessed: 0,
       totalFiles: 0,
       unitsProcessed: 0,
-      totalUnits: 0
+      totalUnits: 0,
+      canResume: true
     });
-    toast.info('Document import cancelled');
+    setCanResume(true);
+    toast.info('Document import cancelled - you can resume later');
   };
 
   const resetImport = () => {
     setResult(null);
     setProgress(null);
     setIsProcessing(false);
+    setCanResume(false);
     documentStorageProcessor.cancel();
+    // Clear any saved progress
+    localStorage.removeItem('documentImportProgress');
   };
 
   return {
     isProcessing,
     progress,
     result,
+    canResume,
     processDocumentZip,
+    resumeImport,
     cancelImport,
     resetImport
   };
