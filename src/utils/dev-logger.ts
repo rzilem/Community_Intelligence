@@ -1,35 +1,30 @@
 
-/**
- * Development-only logging utility
- * Logs only show in development mode to reduce console pollution in production
- */
+class DevLogger {
+  private isEnabled = process.env.NODE_ENV === 'development';
 
-const isDevelopment = import.meta.env.DEV;
-
-export const devLog = {
-  info: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+  info(message: string, ...args: any[]) {
+    if (this.isEnabled) {
       console.log(`[INFO] ${message}`, ...args);
     }
-  },
-  
-  warn: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
-      console.warn(`[WARN] ${message}`, ...args);
-    }
-  },
-  
-  error: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+  }
+
+  error(message: string, ...args: any[]) {
+    if (this.isEnabled) {
       console.error(`[ERROR] ${message}`, ...args);
     }
-  },
-  
-  debug: (message: string, ...args: any[]) => {
-    if (isDevelopment) {
+  }
+
+  warn(message: string, ...args: any[]) {
+    if (this.isEnabled) {
+      console.warn(`[WARN] ${message}`, ...args);
+    }
+  }
+
+  debug(message: string, ...args: any[]) {
+    if (this.isEnabled) {
       console.debug(`[DEBUG] ${message}`, ...args);
     }
   }
-};
+}
 
-export default devLog;
+export const devLog = new DevLogger();

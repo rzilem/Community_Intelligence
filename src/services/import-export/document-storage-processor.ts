@@ -3,301 +3,333 @@ import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
 
-export interface DocumentHierarchy {
-  associationCode: string;
-  associationName: string;
-  units: Map<string, UnitDocuments>;
-}
-
-export interface UnitDocuments {
-  unitNumber: string;
-  documentCategories: Map<string, DocumentFile[]>;
-}
-
-export interface DocumentFile {
-  filename: string;
-  path: string;
-  content: ArrayBuffer;
-  size: number;
-  category: string;
-  unitNumber: string;
-  associationCode: string;
-}
-
 export interface DocumentStorageResult {
   success: boolean;
-  associationId: string;
   associationName: string;
-  totalDocuments: number;
   documentsImported: number;
   unitsProcessed: number;
   categoriesFound: string[];
+  totalDocuments: number;
   errors: string[];
-  warnings: string[];
-  summary: {
-    [category: string]: number;
-  };
+  summary: Record<string, number>;
 }
 
-export class DocumentStorageProcessor {
+export interface ProcessingProgress {
+  stage: 'analyzing' | 'processing' | 'storing' | 'complete' | 'error';
+  message: string;
+  progress: number;
+  currentUnit?: string;
+  currentCategory?: string;
+}
+
+class DocumentStorageProcessor {
+  private supportedExtensions = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.gif'];
+
   async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
     try {
+      devLog.info('Starting document storage processing for:', zipFile.name);
+      
       const zip = await JSZip.loadAsync(zipFile);
-      const hierarchy = await this.analyzeZipStructure(zip);
+      const result = await this.analyzeAndProcessZip(zip);
       
-      // Create or find association
-      const associationId = await this.createOrFindAssociation(
-        hierarchy.associationCode, 
-        hierarchy.associationName
-      );
-      
-      // Process units and documents
-      const result = await this.processDocumentHierarchy(hierarchy, associationId);
-      
-      return {
-        success: true,
-        associationId,
-        associationName: hierarchy.associationName,
-        ...result
-      };
-      
+      devLog.info('Document storage processing completed:', result);
+      return result;
     } catch (error) {
-      devLog.error('Document storage processing failed:', error);
-      throw new Error(`Failed to process document ZIP: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      devLog.error('Document storage processing error:', error);
+      throw error;
     }
   }
 
-  private async analyzeZipStructure(zip: JSZip): Promise<DocumentHierarchy> {
-    const hierarchy: DocumentHierarchy = {
-      associationCode: '',
+  private async analyzeAndProcessZip(zip: JSZip): Promise<DocumentStorageResult> {
+    const result: DocumentStorageResult = {
+      success: false,
       associationName: '',
-      units: new Map()
+      documentsImported: 0,
+      unitsProcessed: 0,
+      categoriesFound: [],
+      totalDocuments: 0,
+      errors: [],
+      summary: {}
     };
 
-    // Find the top-level association folder
-    const topLevelFolders = Object.keys(zip.files)
-      .filter(path => path.includes('/') && !path.startsWith('__MACOSX'))
-      .map(path => path.split('/')[0])
-      .filter((folder, index, arr) => arr.indexOf(folder) === index);
+    try {
+      // Analyze ZIP structure
+      const structure = this.analyzeZipStructure(zip);
+      result.associationName = structure.associationName;
+      result.totalDocuments = structure.totalDocuments;
+      result.categoriesFound = Array.from(structure.categories);
 
-    if (topLevelFolders.length === 0) {
-      throw new Error('No association folder found in ZIP file');
-    }
+      devLog.info('ZIP structure analyzed:', structure);
 
-    const associationCode = topLevelFolders[0];
-    hierarchy.associationCode = associationCode;
-    hierarchy.associationName = this.generateAssociationName(associationCode);
+      // Find or create association
+      const association = await this.findOrCreateAssociation(structure.associationName);
+      devLog.info('Association resolved:', association);
 
-    // Analyze unit structure
-    for (const [path, zipObject] of Object.entries(zip.files)) {
-      if (zipObject.dir || path.startsWith('__MACOSX') || path.startsWith('.')) {
-        continue;
+      // Process each unit and its documents
+      let documentsProcessed = 0;
+      for (const [unitName, unitData] of structure.units.entries()) {
+        try {
+          devLog.info(`Processing unit: ${unitName}`);
+          
+          // Find or create property for this unit
+          const property = await this.findOrCreateProperty(association.id, unitName);
+          
+          // Process documents for this unit
+          for (const [category, files] of unitData.categories.entries()) {
+            for (const fileInfo of files) {
+              try {
+                await this.processDocument(zip, fileInfo, association.id, property.id, category);
+                documentsProcessed++;
+                
+                // Update summary
+                result.summary[category] = (result.summary[category] || 0) + 1;
+              } catch (error) {
+                const errorMsg = `Failed to process ${fileInfo.path}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                result.errors.push(errorMsg);
+                devLog.error(errorMsg);
+              }
+            }
+          }
+          
+          result.unitsProcessed++;
+        } catch (error) {
+          const errorMsg = `Failed to process unit ${unitName}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          result.errors.push(errorMsg);
+          devLog.error(errorMsg);
+        }
       }
 
-      const parts = path.split('/');
-      if (parts.length < 3) continue; // Need at least: association/unit/category/file
+      result.documentsImported = documentsProcessed;
+      result.success = true;
 
-      const unitNumber = parts[1];
-      const category = parts[2];
-      const filename = parts[parts.length - 1];
+      return result;
+    } catch (error) {
+      result.errors.push(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  }
 
-      if (!hierarchy.units.has(unitNumber)) {
-        hierarchy.units.set(unitNumber, {
-          unitNumber,
-          documentCategories: new Map()
+  private analyzeZipStructure(zip: JSZip) {
+    const structure = {
+      associationName: '',
+      totalDocuments: 0,
+      categories: new Set<string>(),
+      units: new Map<string, {
+        categories: Map<string, Array<{
+          path: string;
+          name: string;
+          size: number;
+        }>>
+      }>()
+    };
+
+    zip.forEach((relativePath, file) => {
+      if (file.dir) return;
+
+      const pathParts = relativePath.split('/').filter(part => part.length > 0);
+      
+      // Skip files that aren't in the expected structure (Association/Unit/Category/File)
+      if (pathParts.length < 3) return;
+
+      const [associationName, unitName, categoryName, ...fileNameParts] = pathParts;
+      const fileName = fileNameParts.join('/');
+
+      // Set association name from the first file we encounter
+      if (!structure.associationName) {
+        structure.associationName = associationName;
+      }
+
+      // Check if file has supported extension
+      const hasValidExtension = this.supportedExtensions.some(ext => 
+        fileName.toLowerCase().endsWith(ext.toLowerCase())
+      );
+      
+      if (!hasValidExtension) return;
+
+      // Initialize unit if not exists
+      if (!structure.units.has(unitName)) {
+        structure.units.set(unitName, {
+          categories: new Map()
         });
       }
 
-      const unit = hierarchy.units.get(unitNumber)!;
-      if (!unit.documentCategories.has(category)) {
-        unit.documentCategories.set(category, []);
+      const unit = structure.units.get(unitName)!;
+
+      // Initialize category if not exists
+      if (!unit.categories.has(categoryName)) {
+        unit.categories.set(categoryName, []);
       }
 
-      const content = await zipObject.async('arraybuffer');
-      unit.documentCategories.get(category)!.push({
-        filename,
-        path,
-        content,
-        size: content.byteLength,
-        category,
-        unitNumber,
-        associationCode
+      // Add file to category
+      unit.categories.get(categoryName)!.push({
+        path: relativePath,
+        name: fileName,
+        size: file._data?.uncompressedSize || 0
       });
-    }
 
-    return hierarchy;
+      structure.categories.add(categoryName);
+      structure.totalDocuments++;
+    });
+
+    return structure;
   }
 
-  private generateAssociationName(code: string): string {
-    // Convert codes like 'GOC' to readable names
-    const codeMap: Record<string, string> = {
-      'GOC': 'Gattis Office Condos',
-      'HOA': 'Homeowners Association',
-      'CC': 'Country Club'
-    };
+  private async findOrCreateAssociation(name: string) {
+    try {
+      // First, try to find existing association
+      const { data: existing, error: findError } = await supabase
+        .from('associations')
+        .select('id, name')
+        .ilike('name', name)
+        .maybeSingle();
 
-    return codeMap[code] || code.replace(/([A-Z])/g, ' $1').trim();
-  }
-
-  private async createOrFindAssociation(code: string, name: string): Promise<string> {
-    // First try to find existing association by code
-    const { data: existing } = await supabase
-      .from('associations')
-      .select('id')
-      .eq('code', code)
-      .single();
-
-    if (existing) {
-      devLog.info(`Found existing association: ${code}`);
-      return existing.id;
-    }
-
-    // Create new association
-    const { data: newAssoc, error } = await supabase
-      .from('associations')
-      .insert({
-        name,
-        code,
-        status: 'active'
-      })
-      .select('id')
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create association: ${error.message}`);
-    }
-
-    devLog.info(`Created new association: ${name} (${code})`);
-    return newAssoc.id;
-  }
-
-  private async processDocumentHierarchy(
-    hierarchy: DocumentHierarchy, 
-    associationId: string
-  ): Promise<Omit<DocumentStorageResult, 'success' | 'associationId' | 'associationName'>> {
-    let totalDocuments = 0;
-    let documentsImported = 0;
-    const unitsProcessed = hierarchy.units.size;
-    const categoriesFound = new Set<string>();
-    const errors: string[] = [];
-    const warnings: string[] = [];
-    const summary: Record<string, number> = {};
-
-    for (const [unitNumber, unitData] of hierarchy.units) {
-      try {
-        // Create or find property for this unit
-        const propertyId = await this.createOrFindProperty(unitNumber, associationId);
-
-        for (const [category, documents] of unitData.documentCategories) {
-          categoriesFound.add(category);
-          
-          for (const doc of documents) {
-            totalDocuments++;
-            
-            try {
-              await this.storeDocument(doc, propertyId, associationId);
-              documentsImported++;
-              summary[category] = (summary[category] || 0) + 1;
-            } catch (error) {
-              errors.push(`Failed to store ${doc.filename}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-          }
-        }
-      } catch (error) {
-        errors.push(`Failed to process unit ${unitNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (findError && findError.code !== 'PGRST116') {
+        throw findError;
       }
-    }
 
-    return {
-      totalDocuments,
-      documentsImported,
-      unitsProcessed,
-      categoriesFound: Array.from(categoriesFound),
-      errors,
-      warnings,
-      summary
-    };
+      if (existing) {
+        devLog.info('Found existing association:', existing);
+        return existing;
+      }
+
+      // Create new association
+      const { data: newAssociation, error: createError } = await supabase
+        .from('associations')
+        .insert({
+          name: name,
+          status: 'active'
+        })
+        .select('id, name')
+        .single();
+
+      if (createError) {
+        throw createError;
+      }
+
+      devLog.info('Created new association:', newAssociation);
+      return newAssociation;
+    } catch (error) {
+      devLog.error('Error finding/creating association:', error);
+      throw new Error(`Failed to process association "${name}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
-  private async createOrFindProperty(unitNumber: string, associationId: string): Promise<string> {
-    // Try to find existing property
-    const { data: existing } = await supabase
-      .from('properties')
-      .select('id')
-      .eq('unit_number', unitNumber)
-      .eq('association_id', associationId)
-      .single();
+  private async findOrCreateProperty(associationId: string, unitName: string) {
+    try {
+      // First, try to find existing property
+      const { data: existing, error: findError } = await supabase
+        .from('properties')
+        .select('id, unit_number, address')
+        .eq('association_id', associationId)
+        .or(`unit_number.ilike.${unitName},address.ilike.%${unitName}%`)
+        .maybeSingle();
 
-    if (existing) {
-      return existing.id;
+      if (findError && findError.code !== 'PGRST116') {
+        throw findError;
+      }
+
+      if (existing) {
+        devLog.info('Found existing property:', existing);
+        return existing;
+      }
+
+      // Create new property
+      const { data: newProperty, error: createError } = await supabase
+        .from('properties')
+        .insert({
+          association_id: associationId,
+          unit_number: unitName,
+          address: `Unit ${unitName}`,
+          status: 'active'
+        })
+        .select('id, unit_number, address')
+        .single();
+
+      if (createError) {
+        throw createError;
+      }
+
+      devLog.info('Created new property:', newProperty);
+      return newProperty;
+    } catch (error) {
+      devLog.error('Error finding/creating property:', error);
+      throw new Error(`Failed to process unit "${unitName}": ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // Create new property
-    const { data: newProperty, error } = await supabase
-      .from('properties')
-      .insert({
-        association_id: associationId,
-        unit_number: unitNumber,
-        address: `Unit ${unitNumber}`,
-        property_type: 'condo',
-        status: 'occupied'
-      })
-      .select('id')
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create property for unit ${unitNumber}: ${error.message}`);
-    }
-
-    return newProperty.id;
   }
 
-  private async storeDocument(
-    doc: DocumentFile, 
-    propertyId: string, 
-    associationId: string
-  ): Promise<void> {
-    // Upload file to storage
-    const fileName = `${associationId}/${propertyId}/${doc.category}/${doc.filename}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(fileName, doc.content, {
-        contentType: this.getContentType(doc.filename),
-        upsert: false
+  private async processDocument(
+    zip: JSZip, 
+    fileInfo: { path: string; name: string; size: number },
+    associationId: string,
+    propertyId: string,
+    category: string
+  ) {
+    try {
+      const file = zip.file(fileInfo.path);
+      if (!file) {
+        throw new Error('File not found in ZIP');
+      }
+
+      // Get file content as blob
+      const blob = await file.async('blob');
+      
+      // Create file object for upload
+      const uploadFile = new File([blob], fileInfo.name, {
+        type: this.getMimeType(fileInfo.name)
       });
 
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
+      // Generate unique file path
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `${associationId}/${propertyId}/${category}/${timestamp}-${fileInfo.name}`;
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(fileName);
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, uploadFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    // Store document metadata
-    const { error: dbError } = await supabase
-      .from('documents')
-      .insert({
-        association_id: associationId,
-        name: doc.filename,
-        url: publicUrl,
-        file_type: this.getFileExtension(doc.filename),
-        file_size: doc.size,
-        category: this.normalizeCategory(doc.category),
-        description: `Document from unit ${doc.unitNumber} - ${doc.category}`,
-        tags: [doc.unitNumber, doc.category, doc.associationCode],
-        is_public: false
-      });
+      if (uploadError) {
+        throw uploadError;
+      }
 
-    if (dbError) {
-      throw new Error(`Database insert failed: ${dbError.message}`);
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      // Create document record in database
+      const { error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          association_id: associationId,
+          name: fileInfo.name,
+          url: urlData.publicUrl,
+          file_type: this.getFileExtension(fileInfo.name),
+          file_size: fileInfo.size,
+          category: category,
+          description: `Imported from ZIP archive - ${category} for property`,
+          is_public: false,
+          uploaded_at: new Date().toISOString()
+        });
+
+      if (dbError) {
+        // If database insert fails, try to clean up the uploaded file
+        await supabase.storage.from('documents').remove([fileName]);
+        throw dbError;
+      }
+
+      devLog.info(`Successfully processed document: ${fileInfo.name}`);
+    } catch (error) {
+      devLog.error(`Error processing document ${fileInfo.name}:`, error);
+      throw error;
     }
   }
 
-  private getContentType(filename: string): string {
-    const ext = filename.toLowerCase().split('.').pop();
-    const contentTypes: Record<string, string> = {
+  private getMimeType(fileName: string): string {
+    const ext = fileName.toLowerCase().split('.').pop();
+    const mimeTypes: Record<string, string> = {
       'pdf': 'application/pdf',
       'doc': 'application/msword',
       'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -307,26 +339,11 @@ export class DocumentStorageProcessor {
       'png': 'image/png',
       'gif': 'image/gif'
     };
-    return contentTypes[ext || ''] || 'application/octet-stream';
+    return mimeTypes[ext || ''] || 'application/octet-stream';
   }
 
-  private getFileExtension(filename: string): string {
-    return filename.toLowerCase().split('.').pop() || 'unknown';
-  }
-
-  private normalizeCategory(category: string): string {
-    const categoryMap: Record<string, string> = {
-      'emails': 'Communication',
-      'letters': 'Communication',
-      'notices': 'Legal',
-      'invoices': 'Financial',
-      'receipts': 'Financial',
-      'contracts': 'Legal',
-      'photos': 'Media',
-      'reports': 'Administrative'
-    };
-
-    return categoryMap[category.toLowerCase()] || 'General';
+  private getFileExtension(fileName: string): string {
+    return fileName.toLowerCase().split('.').pop() || 'unknown';
   }
 }
 
