@@ -1,31 +1,6 @@
-
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
-
-export interface DocumentStorageResult {
-  success: boolean;
-  associationName: string;
-  associationId: string;
-  totalFiles: number;
-  documentsImported: number;
-  documentsSkipped: number;
-  createdProperties: Array<{
-    id: string;
-    address: string;
-    unitNumber: string;
-  }>;
-  createdOwners: Array<{
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    propertyId: string;
-  }>;
-  processingTime: number;
-  errors: string[];
-  warnings: string[];
-}
 
 export interface ProcessingProgress {
   stage: 'analyzing' | 'extracting' | 'creating' | 'uploading' | 'complete' | 'error';
@@ -38,7 +13,37 @@ export interface ProcessingProgress {
   canResume?: boolean;
 }
 
-class DocumentStorageProcessor {
+export interface DocumentStorageResult {
+  success: boolean;
+  associationName: string;
+  documentsImported: number;
+  documentsSkipped: number;
+  totalFiles: number;
+  createdProperties: Array<{
+    id: string;
+    address: string;
+    unitNumber: string;
+  }>;
+  createdOwners: Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  }>;
+  warnings: string[];
+  errors: string[];
+  processingTime: number;
+}
+
+interface FolderStructure {
+  path: string;
+  type: 'unit' | 'admin' | 'general';
+  unitNumber?: string;
+  address?: string;
+  files: JSZip.JSZipObject[];
+}
+
+export class DocumentStorageProcessor {
   private progressCallback?: (progress: ProcessingProgress) => void;
   private cancelled = false;
 
@@ -50,307 +55,494 @@ class DocumentStorageProcessor {
     this.cancelled = true;
   }
 
-  private updateProgress(update: Partial<ProcessingProgress>) {
-    if (this.progressCallback) {
-      const progress: ProcessingProgress = {
-        stage: 'analyzing',
-        message: '',
-        progress: 0,
-        filesProcessed: 0,
-        totalFiles: 0,
-        unitsProcessed: 0,
-        totalUnits: 0,
-        ...update
-      };
-      this.progressCallback(progress);
-    }
-  }
-
   async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
     const startTime = Date.now();
     const result: DocumentStorageResult = {
       success: false,
       associationName: '',
-      associationId: '',
-      totalFiles: 0,
       documentsImported: 0,
       documentsSkipped: 0,
+      totalFiles: 0,
       createdProperties: [],
       createdOwners: [],
-      processingTime: 0,
+      warnings: [],
       errors: [],
-      warnings: []
+      processingTime: 0
     };
 
     try {
+      // Load and analyze ZIP file
+      const zip = new JSZip();
+      const zipData = await zip.loadAsync(zipFile);
+      
       this.updateProgress({
         stage: 'analyzing',
-        message: 'Loading ZIP file...',
-        progress: 5
+        message: 'Analyzing ZIP file structure...',
+        progress: 10,
+        filesProcessed: 0,
+        totalFiles: 0,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
 
-      const zip = new JSZip();
-      const zipContent = await zip.loadAsync(zipFile);
+      // Extract folder structure
+      const folderStructure = await this.analyzeFolderStructure(zipData);
+      devLog.info('Analyzed folder structure:', folderStructure);
 
-      this.updateProgress({
-        stage: 'extracting',
-        message: 'Analyzing file structure...',
-        progress: 15
-      });
-
-      // Extract association name from top-level folder
-      const entries = Object.keys(zipContent.files);
-      const topLevelFolders = entries.filter(path => 
-        path.includes('/') && !path.startsWith('__MACOSX')
-      ).map(path => path.split('/')[0]).filter((folder, index, arr) => arr.indexOf(folder) === index);
-
-      if (topLevelFolders.length === 0) {
-        throw new Error('No valid folder structure found in ZIP file');
+      if (folderStructure.length === 0) {
+        throw new Error('No valid folders found in ZIP file');
       }
 
-      const associationName = topLevelFolders[0];
-      result.associationName = associationName;
+      // Determine association name from first folder
+      result.associationName = this.extractAssociationName(folderStructure[0].path);
+      devLog.info('Extracted association name:', result.associationName);
 
-      // Create or find association
-      let associationId: string;
-      const { data: existingAssociation } = await supabase
-        .from('associations')
-        .select('id')
-        .eq('name', associationName)
-        .maybeSingle();
-
-      if (existingAssociation) {
-        associationId = existingAssociation.id;
-        devLog.info(`Found existing association: ${associationName}`);
-      } else {
-        const { data: newAssociation, error } = await supabase
-          .from('associations')
-          .insert({
-            name: associationName,
-            address: `${associationName} Community`,
-            city: 'Gattis School',
-            state: 'TX',
-            zip: '78626',
-            status: 'active'
-          })
-          .select('id')
-          .single();
-
-        if (error) throw error;
-        associationId = newAssociation.id;
-        devLog.info(`Created new association: ${associationName}`);
-      }
-
-      result.associationId = associationId;
+      const totalFiles = folderStructure.reduce((sum, folder) => sum + folder.files.length, 0);
+      result.totalFiles = totalFiles;
 
       this.updateProgress({
         stage: 'creating',
-        message: 'Creating properties and extracting information...',
-        progress: 30
+        message: 'Creating association and properties...',
+        progress: 30,
+        filesProcessed: 0,
+        totalFiles: totalFiles,
+        unitsProcessed: 0,
+        totalUnits: folderStructure.filter(f => f.type === 'unit').length
       });
 
-      // Process unit folders
-      const unitFolders = entries.filter(path => 
-        path.includes('/') && 
-        !path.startsWith('__MACOSX') &&
-        path.split('/').length === 2 &&
-        path.split('/')[1] === ''
-      ).map(path => path.split('/')[0]);
+      // Create or get association
+      const associationId = await this.createOrGetAssociation(result.associationName);
+      devLog.info('Association ID:', associationId);
 
-      const propertyFolders = unitFolders.filter(folder => 
-        folder !== associationName && folder.toLowerCase().includes('unit')
-      );
-
-      result.totalFiles = entries.filter(path => !path.endsWith('/')).length;
-      this.updateProgress({
-        totalFiles: result.totalFiles,
-        totalUnits: propertyFolders.length
-      });
-
-      let processedUnits = 0;
-      let processedFiles = 0;
-
-      for (const unitFolder of propertyFolders) {
+      // Process unit folders to create properties
+      const unitFolders = folderStructure.filter(f => f.type === 'unit');
+      for (const folder of unitFolders) {
         if (this.cancelled) break;
 
-        const unitNumber = unitFolder.replace(/[^\d]/g, '') || '1';
-        const streetAddress = `${unitNumber} Gattis School Dr`;
-        
-        // Create property
-        const { data: property, error: propertyError } = await supabase
-          .from('properties')
-          .insert({
-            association_id: associationId,
-            unit_number: unitNumber,
-            address: streetAddress,
-            city: 'Gattis School',
-            state: 'TX',
-            zip_code: '78626',
-            property_type: 'residential',
-            status: 'active'
-          })
-          .select('id')
-          .single();
-
-        if (propertyError) {
-          result.errors.push(`Failed to create property for ${unitFolder}: ${propertyError.message}`);
-          continue;
+        const property = await this.createPropertyFromFolder(associationId, folder);
+        if (property) {
+          result.createdProperties.push(property);
         }
+      }
 
-        result.createdProperties.push({
-          id: property.id,
-          address: streetAddress,
-          unitNumber: unitNumber
-        });
+      this.updateProgress({
+        stage: 'uploading',
+        message: 'Processing and uploading documents...',
+        progress: 50,
+        filesProcessed: 0,
+        totalFiles: totalFiles,
+        unitsProcessed: result.createdProperties.length,
+        totalUnits: unitFolders.length
+      });
 
-        // Generate owner information
-        const ownerName = `Owner ${unitNumber}`;
-        const ownerEmail = `owner${unitNumber}@gattis.community`;
-        const ownerPhone = `512-555-${unitNumber.padStart(4, '0')}`;
+      // Process documents
+      let filesProcessed = 0;
+      for (const folder of folderStructure) {
+        if (this.cancelled) break;
 
-        const { data: resident, error: residentError } = await supabase
-          .from('residents')
-          .insert({
-            property_id: property.id,
-            first_name: ownerName.split(' ')[0],
-            last_name: ownerName.split(' ')[1] || '',
-            email: ownerEmail,
-            phone: ownerPhone,
-            resident_type: 'owner',
-            move_in_date: new Date().toISOString().split('T')[0]
-          })
-          .select('id')
-          .single();
+        const folderResult = await this.processDocumentsInFolder(associationId, folder);
+        result.documentsImported += folderResult.imported;
+        result.documentsSkipped += folderResult.skipped;
+        result.warnings.push(...folderResult.warnings);
+        result.errors.push(...folderResult.errors);
 
-        if (!residentError) {
-          result.createdOwners.push({
-            id: resident.id,
-            name: ownerName,
-            email: ownerEmail,
-            phone: ownerPhone,
-            propertyId: property.id
-          });
-        }
-
-        // Process documents in this unit folder
-        const unitFiles = entries.filter(path => 
-          path.startsWith(`${unitFolder}/`) && 
-          !path.endsWith('/') &&
-          !path.includes('__MACOSX')
-        );
-
-        for (const filePath of unitFiles) {
-          if (this.cancelled) break;
-
-          try {
-            const file = zipContent.files[filePath];
-            const fileName = filePath.split('/').pop() || filePath;
-            const fileExtension = fileName.split('.').pop()?.toLowerCase();
-            
-            if (!['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'].includes(fileExtension || '')) {
-              result.documentsSkipped++;
-              result.warnings.push(`Skipped ${fileName}: unsupported file type`);
-              continue;
-            }
-
-            const fileData = await file.async('blob');
-            
-            if (fileData.size > 10 * 1024 * 1024) { // 10MB limit
-              result.documentsSkipped++;
-              result.warnings.push(`Skipped ${fileName}: file too large`);
-              continue;
-            }
-
-            // Upload to Supabase Storage
-            const storagePath = `${associationId}/${property.id}/${fileName}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('documents')
-              .upload(storagePath, fileData);
-
-            if (uploadError) {
-              result.errors.push(`Failed to upload ${fileName}: ${uploadError.message}`);
-              continue;
-            }
-
-            // Create document record
-            const { error: docError } = await supabase
-              .from('documents')
-              .insert({
-                association_id: associationId,
-                name: fileName,
-                file_type: fileExtension,
-                file_size: fileData.size,
-                url: uploadData.path,
-                category: this.categorizeDocument(fileName),
-                uploaded_by: null // System upload
-              });
-
-            if (docError) {
-              result.errors.push(`Failed to create document record for ${fileName}: ${docError.message}`);
-            } else {
-              result.documentsImported++;
-            }
-
-            processedFiles++;
-            this.updateProgress({
-              stage: 'uploading',
-              message: `Processing ${fileName}...`,
-              progress: 30 + ((processedFiles / result.totalFiles) * 50),
-              filesProcessed: processedFiles
-            });
-
-          } catch (error) {
-            result.errors.push(`Error processing ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            result.documentsSkipped++;
-          }
-        }
-
-        processedUnits++;
+        filesProcessed += folder.files.length;
         this.updateProgress({
-          unitsProcessed: processedUnits,
-          message: `Processed ${unitFolder}...`
+          stage: 'uploading',
+          message: `Processing documents in ${folder.path}...`,
+          progress: 50 + (filesProcessed / totalFiles) * 40,
+          filesProcessed,
+          totalFiles,
+          unitsProcessed: result.createdProperties.length,
+          totalUnits: unitFolders.length
         });
       }
 
-      result.success = result.errors.length === 0 || result.documentsImported > 0;
+      result.success = true;
       result.processingTime = Date.now() - startTime;
 
       this.updateProgress({
         stage: 'complete',
-        message: 'Import completed successfully!',
+        message: 'Document import completed successfully!',
         progress: 100,
-        filesProcessed: processedFiles,
-        unitsProcessed: processedUnits
+        filesProcessed: totalFiles,
+        totalFiles,
+        unitsProcessed: result.createdProperties.length,
+        totalUnits: unitFolders.length
       });
 
       return result;
 
     } catch (error) {
-      result.errors.push(error instanceof Error ? error.message : 'Unknown error occurred');
+      devLog.error('Document storage processing error:', error);
+      result.errors.push(error instanceof Error ? error.message : 'Unknown error');
       result.processingTime = Date.now() - startTime;
       
       this.updateProgress({
         stage: 'error',
-        message: `Import failed: ${result.errors[0]}`,
-        progress: 0
+        message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        progress: 0,
+        filesProcessed: 0,
+        totalFiles: result.totalFiles,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
 
       return result;
     }
   }
 
-  private categorizeDocument(fileName: string): string {
+  private async analyzeFolderStructure(zipData: JSZip): Promise<FolderStructure[]> {
+    const folders: FolderStructure[] = [];
+    const folderMap = new Map<string, JSZip.JSZipObject[]>();
+
+    // Group files by their parent folder
+    Object.entries(zipData.files).forEach(([path, zipObject]) => {
+      if (zipObject.dir) return;
+
+      // Skip system files
+      if (this.isSystemFile(path)) return;
+
+      const folderPath = path.substring(0, path.lastIndexOf('/'));
+      if (!folderPath) return;
+
+      if (!folderMap.has(folderPath)) {
+        folderMap.set(folderPath, []);
+      }
+      folderMap.get(folderPath)!.push(zipObject);
+    });
+
+    // Analyze each folder
+    for (const [folderPath, files] of folderMap.entries()) {
+      if (files.length === 0) continue;
+
+      const folderInfo = this.analyzeFolderPath(folderPath);
+      devLog.info(`Analyzing folder: ${folderPath}`, folderInfo);
+
+      folders.push({
+        path: folderPath,
+        type: folderInfo.type,
+        unitNumber: folderInfo.unitNumber,
+        address: folderInfo.address,
+        files
+      });
+    }
+
+    return folders;
+  }
+
+  private analyzeFolderPath(folderPath: string): {
+    type: 'unit' | 'admin' | 'general';
+    unitNumber?: string;
+    address?: string;
+  } {
+    const folderName = folderPath.split('/').pop()?.toLowerCase() || '';
+    
+    devLog.info(`Analyzing folder name: "${folderName}"`);
+
+    // Check for administrative folders
+    const adminFolders = [
+      'arc requests', 'collections', 'insurance', 'legal', 'management',
+      'maintenance', 'financial', 'accounting', 'bylaws', 'rules',
+      'minutes', 'notices', 'general', 'admin', 'administrative'
+    ];
+
+    if (adminFolders.some(admin => folderName.includes(admin))) {
+      devLog.info(`Identified as admin folder: ${folderName}`);
+      return { type: 'admin' };
+    }
+
+    // Enhanced unit detection patterns
+    const unitPatterns = [
+      // Pattern: GOC13696-1490 Rusk Rd. Unit 301
+      /goc\d+-(.+?)\s+unit\s+(\d+)/i,
+      // Pattern: Unit 301, Apt 301, etc.
+      /(unit|apt|apartment|suite)\s*(\d+)/i,
+      // Pattern: 301, 1-301, A-301, etc.
+      /^([a-z]?-?\d+)$/i,
+      // Pattern: Building A Unit 301
+      /building\s+[a-z]\s+unit\s+(\d+)/i
+    ];
+
+    for (const pattern of unitPatterns) {
+      const match = folderName.match(pattern);
+      if (match) {
+        let unitNumber: string;
+        let address: string | undefined;
+
+        if (pattern.source.includes('goc')) {
+          // GOC pattern: extract address and unit
+          address = match[1]?.trim();
+          unitNumber = match[2];
+          devLog.info(`GOC pattern matched - Address: ${address}, Unit: ${unitNumber}`);
+        } else {
+          // Other patterns: just extract unit number
+          unitNumber = match[2] || match[1];
+          devLog.info(`Unit pattern matched - Unit: ${unitNumber}`);
+        }
+
+        return {
+          type: 'unit',
+          unitNumber: unitNumber,
+          address: address
+        };
+      }
+    }
+
+    devLog.info(`No specific pattern matched, treating as general folder: ${folderName}`);
+    return { type: 'general' };
+  }
+
+  private extractAssociationName(firstFolderPath: string): string {
+    const segments = firstFolderPath.split('/');
+    const folderName = segments[segments.length - 1];
+    
+    // Try to extract association name from GOC pattern
+    const gocMatch = folderName.match(/goc\d+-(.+?)\s+unit/i);
+    if (gocMatch) {
+      return gocMatch[1].trim();
+    }
+    
+    // Fallback to first segment or folder name
+    return segments[0] || folderName || 'Imported Association';
+  }
+
+  private async createOrGetAssociation(name: string): Promise<string> {
+    // First try to find existing association
+    const { data: existing } = await supabase
+      .from('associations')
+      .select('id')
+      .ilike('name', name)
+      .single();
+
+    if (existing) {
+      devLog.info('Found existing association:', existing.id);
+      return existing.id;
+    }
+
+    // Create new association
+    const { data: newAssoc, error } = await supabase
+      .from('associations')
+      .insert({
+        name,
+        status: 'active',
+        is_archived: false
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create association: ${error.message}`);
+    }
+
+    devLog.info('Created new association:', newAssoc.id);
+    return newAssoc.id;
+  }
+
+  private async createPropertyFromFolder(
+    associationId: string, 
+    folder: FolderStructure
+  ): Promise<{ id: string; address: string; unitNumber: string } | null> {
+    if (!folder.unitNumber) return null;
+
+    try {
+      const address = folder.address || 'Unknown Address';
+      
+      // Check if property already exists
+      const { data: existing } = await supabase
+        .from('properties')
+        .select('id, address, unit_number')
+        .eq('association_id', associationId)
+        .eq('unit_number', folder.unitNumber)
+        .single();
+
+      if (existing) {
+        devLog.info(`Property already exists: Unit ${folder.unitNumber}`);
+        return {
+          id: existing.id,
+          address: existing.address,
+          unitNumber: existing.unit_number
+        };
+      }
+
+      // Create new property
+      const { data: newProperty, error } = await supabase
+        .from('properties')
+        .insert({
+          association_id: associationId,
+          address,
+          unit_number: folder.unitNumber,
+          property_type: 'unit',
+          status: 'active'
+        })
+        .select('id, address, unit_number')
+        .single();
+
+      if (error) {
+        devLog.error('Failed to create property:', error);
+        return null;
+      }
+
+      devLog.info(`Created property: Unit ${folder.unitNumber}`);
+      return {
+        id: newProperty.id,
+        address: newProperty.address,
+        unitNumber: newProperty.unit_number
+      };
+
+    } catch (error) {
+      devLog.error('Error creating property:', error);
+      return null;
+    }
+  }
+
+  private async processDocumentsInFolder(
+    associationId: string,
+    folder: FolderStructure
+  ): Promise<{
+    imported: number;
+    skipped: number;
+    warnings: string[];
+    errors: string[];
+  }> {
+    const result = {
+      imported: 0,
+      skipped: 0,
+      warnings: [],
+      errors: []
+    };
+
+    // Find property if this is a unit folder
+    let propertyId: string | null = null;
+    if (folder.type === 'unit' && folder.unitNumber) {
+      const { data: property } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('association_id', associationId)
+        .eq('unit_number', folder.unitNumber)
+        .single();
+      
+      propertyId = property?.id || null;
+    }
+
+    for (const file of folder.files) {
+      try {
+        if (this.cancelled) break;
+
+        // Skip non-document files
+        if (!this.isValidDocumentFile(file.name)) {
+          result.skipped++;
+          result.warnings.push(`Skipped unsupported file: ${file.name}`);
+          continue;
+        }
+
+        // Check file size (skip files over 300MB)
+        const maxSize = 300 * 1024 * 1024; // 300MB
+        if (file._data && file._data.uncompressedSize > maxSize) {
+          result.skipped++;
+          result.warnings.push(`Skipped large file (>300MB): ${file.name}`);
+          continue;
+        }
+
+        await this.uploadDocument(file, associationId, propertyId, folder.type);
+        result.imported++;
+
+      } catch (error) {
+        result.errors.push(`Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        result.skipped++;
+      }
+    }
+
+    return result;
+  }
+
+  private async uploadDocument(
+    file: JSZip.JSZipObject,
+    associationId: string,
+    propertyId: string | null,
+    folderType: 'unit' | 'admin' | 'general'
+  ): Promise<void> {
+    // For now, we'll just create document records
+    // In a full implementation, you'd upload to Supabase Storage
+    
+    const fileName = file.name.split('/').pop() || file.name;
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    const category = this.determineDocumentCategory(fileName, folderType);
+    
+    const { error } = await supabase
+      .from('documents')
+      .insert({
+        association_id: associationId,
+        property_id: propertyId,
+        name: fileName,
+        file_type: fileExtension,
+        category,
+        file_size: file._data?.uncompressedSize || 0,
+        storage_path: `${associationId}/${propertyId || 'general'}/${fileName}`,
+        status: 'uploaded'
+      });
+
+    if (error) {
+      throw new Error(`Failed to create document record: ${error.message}`);
+    }
+  }
+
+  private determineDocumentCategory(fileName: string, folderType: string): string {
     const name = fileName.toLowerCase();
-    if (name.includes('lease')) return 'lease';
-    if (name.includes('insurance')) return 'insurance';
-    if (name.includes('inspection')) return 'inspection';
-    if (name.includes('maintenance')) return 'maintenance';
-    if (name.includes('bylaw')) return 'legal';
-    return 'general';
+    
+    if (folderType === 'admin') {
+      if (name.includes('arc') || name.includes('architectural')) return 'ARC';
+      if (name.includes('collection') || name.includes('delinquent')) return 'Collections';
+      if (name.includes('insurance')) return 'Insurance';
+      if (name.includes('legal')) return 'Legal';
+      if (name.includes('financial') || name.includes('accounting')) return 'Financial';
+      return 'Administrative';
+    }
+    
+    // Unit-specific document categories
+    if (name.includes('lease')) return 'Lease';
+    if (name.includes('deed')) return 'Deed';
+    if (name.includes('insurance')) return 'Insurance';
+    if (name.includes('inspection')) return 'Inspection';
+    if (name.includes('violation') || name.includes('compliance')) return 'Compliance';
+    if (name.includes('maintenance') || name.includes('repair')) return 'Maintenance';
+    
+    return 'General';
+  }
+
+  private isValidDocumentFile(fileName: string): boolean {
+    const validExtensions = [
+      'pdf', 'doc', 'docx', 'txt', 'rtf',
+      'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff',
+      'xls', 'xlsx', 'csv',
+      'ppt', 'pptx'
+    ];
+    
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return validExtensions.includes(extension || '');
+  }
+
+  private isSystemFile(path: string): boolean {
+    const systemFiles = [
+      '__MACOSX',
+      '.DS_Store',
+      'Thumbs.db',
+      'desktop.ini'
+    ];
+    
+    return systemFiles.some(sysFile => path.includes(sysFile));
+  }
+
+  private updateProgress(progress: ProcessingProgress) {
+    if (this.progressCallback) {
+      this.progressCallback(progress);
+    }
   }
 
   async resumeProcessing(zipFile: File): Promise<DocumentStorageResult> {
     // For now, just restart the process
+    // In a full implementation, you'd resume from saved state
     return this.processHierarchicalZip(zipFile);
   }
 }

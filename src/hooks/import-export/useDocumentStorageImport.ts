@@ -17,6 +17,7 @@ export function useDocumentStorageImport() {
     try {
       // Set up progress tracking
       documentStorageProcessor.setProgressCallback((progressUpdate) => {
+        devLog.info('Progress update:', progressUpdate);
         setProgress(progressUpdate);
         setCanResume(progressUpdate.canResume || false);
       });
@@ -38,7 +39,13 @@ export function useDocumentStorageImport() {
       setResult(importResult);
       
       if (importResult.success) {
-        const successMessage = `Document import complete! Imported ${importResult.documentsImported} documents for ${importResult.associationName}`;
+        let successMessage = `Document import complete! Imported ${importResult.documentsImported} documents`;
+        
+        if (importResult.createdProperties.length > 0) {
+          successMessage += ` and created ${importResult.createdProperties.length} properties`;
+        }
+        
+        successMessage += ` for ${importResult.associationName}`;
         
         if (importResult.warnings.length > 0) {
           toast.success(successMessage, {
@@ -47,8 +54,11 @@ export function useDocumentStorageImport() {
         } else {
           toast.success(successMessage);
         }
+        
+        devLog.info('Import completed successfully:', importResult);
       } else {
         toast.error('Document import completed with errors. Please check the results.');
+        devLog.error('Import completed with errors:', importResult.errors);
       }
       
       return importResult;
