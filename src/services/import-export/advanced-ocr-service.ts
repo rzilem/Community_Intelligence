@@ -1,14 +1,32 @@
 import Tesseract from 'tesseract.js';
-import { GlobalWorkerOptions, getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { devLog } from '@/utils/dev-logger';
 import { ProcessedDocument, OCROptions, AdvancedOCRResult } from './types';
 
-// Configure PDF.js worker - wrapped in a check to prevent runtime errors
-if (typeof window !== 'undefined' && GlobalWorkerOptions) {
-  GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
 export class AdvancedOCRService {
+  private pdfjs: any = null;
+
+  // Dynamically initialize PDF.js when needed
+  private async initPdfJs() {
+    if (!this.pdfjs && typeof window !== 'undefined') {
+      try {
+        // Dynamic import for better browser compatibility
+        const pdfjsModule = await import('pdfjs-dist');
+        
+        // Set worker source after successful import
+        if (pdfjsModule.GlobalWorkerOptions) {
+          pdfjsModule.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        
+        this.pdfjs = pdfjsModule;
+        devLog.info('PDF.js initialized successfully');
+      } catch (error) {
+        devLog.error('Failed to initialize PDF.js:', error);
+        this.pdfjs = null;
+      }
+    }
+    return this.pdfjs;
+  }
+
   // Add the missing processDocument method that calls processDocumentWithOCR
   async processDocument(file: File, options?: OCROptions): Promise<ProcessedDocument> {
     return this.processDocumentWithOCR(file, options);
@@ -69,11 +87,18 @@ export class AdvancedOCRService {
 
   async extractFromPDF(file: File): Promise<{ text: string; pages: Array<{ pageNumber: number; text: string }> }> {
     try {
+      const pdfjsLib = await this.initPdfJs();
+      
+      if (!pdfjsLib) {
+        devLog.warn('PDF.js not available, returning empty text');
+        return { text: '', pages: [] };
+      }
+
       const arrayBuffer = await file.arrayBuffer();
       
       // Use getDocument function with proper error handling
-      const loadingTask = getDocument({ data: arrayBuffer });
-      const pdfDoc: PDFDocumentProxy = await loadingTask.promise;
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdfDoc = await loadingTask.promise;
       
       let fullText = '';
       const pages: Array<{ pageNumber: number; text: string }> = [];
@@ -81,7 +106,7 @@ export class AdvancedOCRService {
       
       for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
         try {
-          const page: PDFPageProxy = await pdfDoc.getPage(pageNum);
+          const page = await pdfDoc.getPage(pageNum);
           const textContent = await page.getTextContent();
           
           const pageText = textContent.items
