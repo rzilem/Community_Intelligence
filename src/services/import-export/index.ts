@@ -1,11 +1,16 @@
 
-// Import/Export Services barrel file
-export * from './data-import-service';
-export * from './data-export-service';
-export * from './parse-service';
-export * from './validation-service';
-export * from './job-service';
-export * from './mapping-service';
-export * from './template-service';
-export * from './processor-service';
-export * from './types';
+// Main export file - now uses enhanced services by default
+export { enhancedDataImportService as dataImportService } from './enhanced-data-import-service';
+export { dataExportService } from './data-export-service';
+
+// Legacy exports for backward compatibility
+export { dataImportService as legacyDataImportService } from './data-import-service';
+
+// Enhanced exports
+export { enhancedDataImportService } from './enhanced-data-import-service';
+export { enhancedProcessorService } from './processors/enhanced-processor-service';
+export { EnhancedErrorHandler } from './enhanced-error-handler';
+export { TransactionManager } from './transaction-manager';
+
+// Type exports
+export type * from './types';

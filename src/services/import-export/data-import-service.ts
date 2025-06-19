@@ -1,7 +1,8 @@
+
 import { ImportResult, ImportJob, ImportOptions } from '@/types/import-types';
 import { supabase } from '@/integrations/supabase/client';
 import { jobService } from './job-service';
-import { processorService } from './processor-service';
+import { enhancedProcessorService } from './processors/enhanced-processor-service';
 import { templateService } from './template-service';
 import { devLog } from '@/utils/dev-logger';
 
@@ -38,8 +39,8 @@ export const dataImportService = {
         recordCount: processedData.length
       });
 
-      // Process the import
-      const result = await processorService.processImportData(
+      // Use enhanced processor service
+      const result = await enhancedProcessorService.processImportData(
         job.id,
         associationId,
         dataType,
