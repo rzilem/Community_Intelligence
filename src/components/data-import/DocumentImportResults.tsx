@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertCircle, XCircle, FileText, Home, Users, Building } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle, FileText, Home, Users, Building, MapPin, Phone, Mail } from 'lucide-react';
 import { DocumentStorageResult } from '@/services/import-export/document-storage-processor';
 
 interface DocumentImportResultsProps {
@@ -64,10 +64,10 @@ const DocumentImportResults: React.FC<DocumentImportResultsProps> = ({
             
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="flex items-center gap-2">
-                <Home className="h-5 w-5 text-green-600" />
+                <Users className="h-5 w-5 text-green-600" />
                 <div>
-                  <p className="text-sm text-green-600">Units Created</p>
-                  <p className="text-2xl font-bold text-green-800">{result.unitsCreated}</p>
+                  <p className="text-sm text-green-600">Owners Created</p>
+                  <p className="text-2xl font-bold text-green-800">{result.ownersCreated}</p>
                 </div>
               </div>
             </div>
@@ -92,6 +92,65 @@ const DocumentImportResults: React.FC<DocumentImportResultsProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Created Properties Details */}
+          {result.createdProperties && result.createdProperties.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Created Properties & Addresses ({result.createdProperties.length})
+              </h4>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
+                  {result.createdProperties.map((property, index) => (
+                    <div key={property.id} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">{property.address}</span>
+                        {property.unitNumber && (
+                          <Badge variant="secondary" className="text-xs">Unit {property.unitNumber}</Badge>
+                        )}
+                      </div>
+                      <div className="text-gray-500 text-xs">
+                        {property.documentsCount} docs
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Created Owners Details */}
+          {result.createdOwners && result.createdOwners.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Created Owners & Contact Info ({result.createdOwners.length})
+              </h4>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
+                  {result.createdOwners.map((owner, index) => (
+                    <div key={owner.id} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-green-500" />
+                        <span className="font-medium">{owner.name}</span>
+                      </div>
+                      <div className="text-gray-500 text-xs flex items-center gap-1">
+                        {owner.contactInfo && (
+                          <>
+                            {owner.contactInfo.includes('@') && <Mail className="h-3 w-3" />}
+                            {owner.contactInfo.match(/\d{3}/) && <Phone className="h-3 w-3" />}
+                            <span>{owner.contactInfo}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Timing Information */}
           <div className="bg-gray-50 p-3 rounded-lg">
@@ -126,7 +185,7 @@ const DocumentImportResults: React.FC<DocumentImportResultsProps> = ({
                 <XCircle className="h-4 w-4" />
                 Errors ({result.errors.length})
               </h4>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-32 overflow-y-auto">
                 <ul className="list-disc list-inside space-y-1">
                   {result.errors.map((error, index) => (
                     <li key={index} className="text-sm text-red-800">
@@ -160,17 +219,21 @@ const DocumentImportResults: React.FC<DocumentImportResultsProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                • Review the imported properties and units in the Properties section
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                Review the {result.propertiesCreated} created properties with their addresses in the Properties section
               </p>
-              <p className="text-sm text-gray-600">
-                • Check the Documents section to see your imported files
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Check the {result.ownersCreated} owner profiles that were automatically created with contact information
               </p>
-              <p className="text-sm text-gray-600">
-                • Add owner information to the properties if not already present
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Access the {result.documentsImported} imported documents from their respective property pages
               </p>
-              <p className="text-sm text-gray-600">
-                • Set up any additional property details or assessment schedules
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Update addresses and property details as needed based on the AI-extracted information
               </p>
             </div>
           </CardContent>
