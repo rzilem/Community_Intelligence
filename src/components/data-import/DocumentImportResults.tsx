@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, FileText, Home, User, Clock, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertCircle, XCircle, FileText, Home, Users, Building, MapPin, Phone, Mail } from 'lucide-react';
 import { DocumentStorageResult } from '@/services/import-export/document-storage-processor';
 
 interface DocumentImportResultsProps {
@@ -17,229 +17,182 @@ const DocumentImportResults: React.FC<DocumentImportResultsProps> = ({
   onImportAnother,
   onResume
 }) => {
-  const getStatusIcon = () => {
-    if (result.success) {
-      return <CheckCircle className="h-8 w-8 text-green-500" />;
-    } else if (result.warnings.length > 0) {
-      return <AlertCircle className="h-8 w-8 text-yellow-500" />;
-    } else {
-      return <XCircle className="h-8 w-8 text-red-500" />;
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
     }
-  };
-
-  const getStatusMessage = () => {
-    if (result.success) {
-      return 'Document import completed successfully!';
-    } else {
-      return 'Document import failed. Please check the errors below.';
-    }
+    return `${seconds}s`;
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            {getStatusIcon()}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          {result.success ? (
+            <CheckCircle className="h-6 w-6 text-green-500" />
+          ) : (
+            <AlertCircle className="h-6 w-6 text-orange-500" />
+          )}
+          <div>
+            <CardTitle>
+              Document Import {result.success ? 'Completed' : 'Completed with Issues'}
+            </CardTitle>
+            <CardDescription>
+              Successfully processed {result.documentsImported} documents for {result.associationName}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Summary Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-blue-50 rounded-lg p-4 text-center">
+            <FileText className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold text-blue-600">{result.documentsImported}</div>
+            <div className="text-sm text-blue-700">Documents</div>
+          </div>
+          
+          <div className="bg-green-50 rounded-lg p-4 text-center">
+            <Home className="h-8 w-8 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold text-green-600">{result.createdProperties.length}</div>
+            <div className="text-sm text-green-700">Properties</div>
+          </div>
+          
+          <div className="bg-purple-50 rounded-lg p-4 text-center">
+            <User className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold text-purple-600">{result.createdOwners.length}</div>
+            <div className="text-sm text-purple-700">Owners</div>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-4 text-center">
+            <Clock className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+            <div className="text-2xl font-bold text-gray-600">{formatTime(result.processingTime)}</div>
+            <div className="text-sm text-gray-700">Processing Time</div>
+          </div>
+        </div>
+
+        {/* Created Properties */}
+        {result.createdProperties.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Home className="h-5 w-5" />
+              Created Properties ({result.createdProperties.length})
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+              {result.createdProperties.map((property) => (
+                <div key={property.id} className="border rounded-lg p-3">
+                  <div className="font-medium">{property.address}</div>
+                  <div className="text-sm text-gray-600">Unit {property.unitNumber}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Created Owners */}
+        {result.createdOwners.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Created Owners ({result.createdOwners.length})
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+              {result.createdOwners.map((owner) => (
+                <div key={owner.id} className="border rounded-lg p-3">
+                  <div className="font-medium">{owner.name}</div>
+                  <div className="text-sm text-gray-600">{owner.email}</div>
+                  {owner.phone && (
+                    <div className="text-sm text-gray-600">{owner.phone}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Processing Summary */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="font-medium mb-2">Processing Summary</h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <CardTitle>{getStatusMessage()}</CardTitle>
-              <CardDescription>
-                {result.associationName && `Association: ${result.associationName}`}
-              </CardDescription>
+              <span className="text-gray-600">Total Files:</span>
+              <span className="ml-2 font-medium">{result.totalFiles}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Documents Imported:</span>
+              <span className="ml-2 font-medium text-green-600">{result.documentsImported}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Documents Skipped:</span>
+              <span className="ml-2 font-medium text-orange-600">{result.documentsSkipped}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Processing Time:</span>
+              <span className="ml-2 font-medium">{formatTime(result.processingTime)}</span>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Summary Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm text-blue-600">Properties Created</p>
-                  <p className="text-2xl font-bold text-blue-800">{result.propertiesCreated}</p>
+        </div>
+
+        {/* Warnings */}
+        {result.warnings.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-medium text-orange-700">Warnings</h4>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {result.warnings.map((warning, index) => (
+                <div key={index} className="text-sm text-orange-600 bg-orange-50 p-2 rounded">
+                  {warning}
                 </div>
-              </div>
-            </div>
-            
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm text-green-600">Owners Created</p>
-                  <p className="text-2xl font-bold text-green-800">{result.ownersCreated}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-sm text-purple-600">Documents Imported</p>
-                  <p className="text-2xl font-bold text-purple-800">{result.documentsImported}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm text-orange-600">Documents Skipped</p>
-                  <p className="text-2xl font-bold text-orange-800">{result.documentsSkipped}</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* Created Properties Details */}
-          {result.createdProperties && result.createdProperties.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Created Properties & Addresses ({result.createdProperties.length})
-              </h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-                <div className="space-y-2">
-                  {result.createdProperties.map((property, index) => (
-                    <div key={property.id} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
-                      <div className="flex items-center gap-2">
-                        <Home className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">{property.address}</span>
-                        {property.unitNumber && (
-                          <Badge variant="secondary" className="text-xs">Unit {property.unitNumber}</Badge>
-                        )}
-                      </div>
-                      <div className="text-gray-500 text-xs">
-                        {property.documentsCount} docs
-                      </div>
-                    </div>
-                  ))}
+        {/* Errors */}
+        {result.errors.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-medium text-red-700">Errors</h4>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {result.errors.map((error, index) => (
+                <div key={index} className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                  {error}
                 </div>
-              </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Created Owners Details */}
-          {result.createdOwners && result.createdOwners.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Created Owners & Contact Info ({result.createdOwners.length})
-              </h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-                <div className="space-y-2">
-                  {result.createdOwners.map((owner, index) => (
-                    <div key={owner.id} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-green-500" />
-                        <span className="font-medium">{owner.name}</span>
-                      </div>
-                      <div className="text-gray-500 text-xs flex items-center gap-1">
-                        {owner.contactInfo && (
-                          <>
-                            {owner.contactInfo.includes('@') && <Mail className="h-3 w-3" />}
-                            {owner.contactInfo.match(/\d{3}/) && <Phone className="h-3 w-3" />}
-                            <span>{owner.contactInfo}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4">
+          <Button onClick={onImportAnother} className="flex-1">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Import Another ZIP
+          </Button>
+          
+          {onResume && (
+            <Button onClick={onResume} variant="outline">
+              Resume Processing
+            </Button>
+          )}
+        </div>
+
+        {/* Success Message */}
+        {result.success && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">Import Successful!</span>
             </div>
-          )}
-
-          {/* Timing Information */}
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-600">
-              Processing completed in {(result.processingTime / 1000).toFixed(2)} seconds
+            <p className="text-sm text-green-700 mt-1">
+              Your documents have been imported and are now accessible from the property and owner profile pages.
+              {result.createdProperties.length > 0 && ` ${result.createdProperties.length} properties were created with proper addresses.`}
+              {result.createdOwners.length > 0 && ` ${result.createdOwners.length} owner records were established.`}
             </p>
           </div>
-
-          {/* Warnings */}
-          {result.warnings.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-yellow-800 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Warnings ({result.warnings.length})
-              </h4>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <ul className="list-disc list-inside space-y-1">
-                  {result.warnings.map((warning, index) => (
-                    <li key={index} className="text-sm text-yellow-800">
-                      {warning}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Errors */}
-          {result.errors.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-red-800 flex items-center gap-2">
-                <XCircle className="h-4 w-4" />
-                Errors ({result.errors.length})
-              </h4>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-32 overflow-y-auto">
-                <ul className="list-disc list-inside space-y-1">
-                  {result.errors.map((error, index) => (
-                    <li key={index} className="text-sm text-red-800">
-                      {error}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button onClick={onImportAnother} variant="outline">
-              Import Another ZIP
-            </Button>
-            {onResume && (
-              <Button onClick={onResume} variant="secondary">
-                Resume Import
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Next Steps */}
-      {result.success && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">What's Next?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                Review the {result.propertiesCreated} created properties with their addresses in the Properties section
-              </p>
-              <p className="text-sm text-gray-600 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Check the {result.ownersCreated} owner profiles that were automatically created with contact information
-              </p>
-              <p className="text-sm text-gray-600 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Access the {result.documentsImported} imported documents from their respective property pages
-              </p>
-              <p className="text-sm text-gray-600 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Update addresses and property details as needed based on the AI-extracted information
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
