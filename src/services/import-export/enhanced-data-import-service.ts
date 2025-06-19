@@ -1,4 +1,3 @@
-
 import { ImportResult, ImportJob, ImportOptions } from '@/types/import-types';
 import { jobService } from './job-service';
 import { enhancedProcessorService } from './processors/enhanced-processor-service';
@@ -31,6 +30,9 @@ export const enhancedDataImportService = {
         throw new Error('No data provided for import');
       }
 
+      // Verify association exists and user has access
+      await this.validateAssociationAccess(associationId);
+
       // Create import job with enhanced tracking
       const job = await jobService.createImportJob({
         associationId: associationId,
@@ -44,15 +46,26 @@ export const enhancedDataImportService = {
         throw new Error('Failed to create import job - this may indicate a permission issue');
       }
 
-      devLog.info('[EnhancedDataImportService] Import job created:', job.id);
+      devLog.info('[EnhancedDataImportService] Import job created:', {
+        jobId: job.id,
+        associationId,
+        targetAssociation: associationId
+      });
 
       // Process data with enhanced field mappings
       const processedData = this.applyEnhancedFieldMappings(data, mappings, dataType);
       
-      devLog.info('[EnhancedDataImportService] Data mapped successfully:', {
+      // Ensure all processed data has the correct association_id
+      const validatedData = processedData.map(record => ({
+        ...record,
+        association_id: associationId // Explicitly set the association ID
+      }));
+      
+      devLog.info('[EnhancedDataImportService] Data mapped and validated:', {
         originalFields: Object.keys(data[0] || {}),
         mappedFields: Object.keys(processedData[0] || {}),
-        recordCount: processedData.length
+        recordCount: validatedData.length,
+        targetAssociation: associationId
       });
 
       // Process the import with enhanced error handling
@@ -60,8 +73,16 @@ export const enhancedDataImportService = {
         job.id,
         associationId,
         dataType,
-        processedData
+        validatedData
       );
+
+      // Log final results
+      devLog.info('[EnhancedDataImportService] Import processing completed:', {
+        success: result.success,
+        successfulImports: result.successfulImports,
+        failedImports: result.failedImports,
+        targetAssociation: associationId
+      });
 
       // Return standardized result with enhanced error information
       const importResult: ImportResult = {
@@ -88,14 +109,19 @@ export const enhancedDataImportService = {
         success: importResult.success,
         totalProcessed: importResult.totalProcessed,
         successfulImports: importResult.successfulImports,
-        failedImports: importResult.failedImports
+        failedImports: importResult.failedImports,
+        targetAssociation: associationId
       });
 
       return importResult;
 
     } catch (error) {
       const categorizedError = EnhancedErrorHandler.handleError(error, 'Enhanced Data Import');
-      devLog.error('[EnhancedDataImportService] Import failed:', categorizedError);
+      devLog.error('[EnhancedDataImportService] Import failed:', {
+        error: categorizedError,
+        associationId,
+        dataType
+      });
       
       return {
         success: false,
@@ -111,6 +137,32 @@ export const enhancedDataImportService = {
         errors: [categorizedError.message],
         warnings: categorizedError.recovery ? [categorizedError.recovery] : []
       };
+    }
+  },
+
+  // Add association validation method
+  async validateAssociationAccess(associationId: string): Promise<void> {
+    try {
+      const { createEnhancedSupabaseClient } = await import('./enhanced-supabase-client');
+      const client = createEnhancedSupabaseClient();
+      
+      const { data, error } = await client
+        .from('associations')
+        .select('id, name')
+        .eq('id', associationId)
+        .single();
+
+      if (error || !data) {
+        throw new Error(`Association not found or access denied: ${associationId}`);
+      }
+
+      devLog.info('[EnhancedDataImportService] Association validated:', {
+        associationId,
+        associationName: data.name
+      });
+    } catch (error) {
+      devLog.error('[EnhancedDataImportService] Association validation failed:', error);
+      throw new Error(`Failed to validate association access: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 

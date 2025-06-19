@@ -1,14 +1,15 @@
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Database, FileSpreadsheet } from 'lucide-react';
+import { Database, FileSpreadsheet, Upload, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Download } from 'lucide-react';
 import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
 import { useImportState } from '@/hooks/import-export/useImportState';
 import { useFileUploadHandler } from '@/hooks/import-export/useFileUploadHandler';
+import DataMigrationTools from '@/components/data-management/DataMigrationTools';
+import PropertiesTab from '@/components/data-management/PropertiesTab';
 
 const DataManagement: React.FC = () => {
   const {
@@ -81,6 +82,14 @@ const DataManagement: React.FC = () => {
             <Download className="h-4 w-4 mr-2" />
             Export Templates
           </TabsTrigger>
+          <TabsTrigger value="properties">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Properties
+          </TabsTrigger>
+          <TabsTrigger value="migration">
+            <Database className="h-4 w-4 mr-2" />
+            Migration Tools
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="import">
@@ -98,6 +107,14 @@ const DataManagement: React.FC = () => {
 
         <TabsContent value="export">
           <ExportDataTemplates associationId={selectedAssociationId} />
+        </TabsContent>
+
+        <TabsContent value="properties">
+          <PropertiesTab associationId={selectedAssociationId} />
+        </TabsContent>
+
+        <TabsContent value="migration">
+          <DataMigrationTools associationId={selectedAssociationId} />
         </TabsContent>
       </Tabs>
 
