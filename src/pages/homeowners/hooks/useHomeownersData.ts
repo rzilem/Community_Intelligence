@@ -20,15 +20,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
     
     const { data: residentsData, error: residentsError } = await supabase
       .from('residents')
-      .select(`
-        *,
-        properties:property_id (
-          id,
-          address,
-          unit_number,
-          association_id
-        )
-      `)
+      .select('*')
       .in('property_id', batchIds);
     
     if (residentsError) {
@@ -136,9 +128,15 @@ export const useHomeownersData = () => {
           return map;
         }, {});
         
+        // Create properties lookup
+        const propertiesMap = properties.reduce((map: any, property: any) => {
+          map[property.id] = property;
+          return map;
+        }, {});
+        
         // Map the results
         const formattedResidents = (allResidents || []).map(resident => {
-          const property = resident.properties;
+          const property = propertiesMap[resident.property_id];
           const associationId = property?.association_id;
           
           return {
