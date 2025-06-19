@@ -93,7 +93,7 @@ export const enhancedDuplicateDetectionService = {
     };
   },
 
-  private findDuplicateGroups(records: any[], options: DuplicateDetectionOptions): any[] {
+  findDuplicateGroups(records: any[], options: DuplicateDetectionOptions): any[] {
     const groups: any[] = [];
     const processed = new Set<number>();
 
@@ -131,7 +131,7 @@ export const enhancedDuplicateDetectionService = {
     return groups;
   },
 
-  private generateEnhancedMatches(duplicateGroups: any[], fileData: Array<{ filename: string; data: any[] }>): EnhancedDuplicateMatch[] {
+  generateEnhancedMatches(duplicateGroups: any[], fileData: Array<{ filename: string; data: any[] }>): EnhancedDuplicateMatch[] {
     const matches: EnhancedDuplicateMatch[] = [];
     
     duplicateGroups.forEach(group => {
@@ -150,7 +150,7 @@ export const enhancedDuplicateDetectionService = {
     return matches;
   },
 
-  private generateClusters(duplicateGroups: any[]): DuplicateCluster[] {
+  generateClusters(duplicateGroups: any[]): DuplicateCluster[] {
     return duplicateGroups.map((group, index) => ({
       clusterId: `cluster_${index}`,
       records: [group.masterRecord, ...group.duplicates],
@@ -159,7 +159,7 @@ export const enhancedDuplicateDetectionService = {
     }));
   },
 
-  private calculateSimilarity(record1: any, record2: any, options: DuplicateDetectionOptions): any {
+  calculateSimilarity(record1: any, record2: any, options: DuplicateDetectionOptions): any {
     const matchingFields: string[] = [];
     let totalWeight = 0;
     let matchedWeight = 0;
@@ -185,7 +185,7 @@ export const enhancedDuplicateDetectionService = {
     };
   },
 
-  private fieldsMatch(value1: any, value2: any, options: DuplicateDetectionOptions): boolean {
+  fieldsMatch(value1: any, value2: any, options: DuplicateDetectionOptions): boolean {
     if (value1 === value2) return true;
     if (!value1 || !value2) return false;
 
@@ -201,7 +201,7 @@ export const enhancedDuplicateDetectionService = {
     return false;
   },
 
-  private fuzzyMatch(str1: string, str2: string): boolean {
+  fuzzyMatch(str1: string, str2: string): boolean {
     const distance = this.levenshteinDistance(str1, str2);
     const maxLength = Math.max(str1.length, str2.length);
     const similarity = 1 - (distance / maxLength);
@@ -209,7 +209,7 @@ export const enhancedDuplicateDetectionService = {
     return similarity > 0.8;
   },
 
-  private levenshteinDistance(str1: string, str2: string): number {
+  levenshteinDistance(str1: string, str2: string): number {
     const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
 
     for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
@@ -229,7 +229,7 @@ export const enhancedDuplicateDetectionService = {
     return matrix[str2.length][str1.length];
   },
 
-  private getMostCommonFields(fieldArrays: string[][]): string[] {
+  getMostCommonFields(fieldArrays: string[][]): string[] {
     const fieldCounts: Record<string, number> = {};
     
     fieldArrays.forEach(fields => {
@@ -243,18 +243,18 @@ export const enhancedDuplicateDetectionService = {
       .map(([field]) => field);
   },
 
-  private calculateQualityScore(duplicateGroups: any[]): number {
+  calculateQualityScore(duplicateGroups: any[]): number {
     if (duplicateGroups.length === 0) return 100;
     
     const avgConfidence = duplicateGroups.reduce((sum, group) => sum + group.confidence, 0) / duplicateGroups.length;
     return Math.round(avgConfidence * 100);
   },
 
-  private calculateTotalComparisons(recordCount: number): number {
+  calculateTotalComparisons(recordCount: number): number {
     return (recordCount * (recordCount - 1)) / 2;
   },
 
-  private generateSuggestions(duplicateGroups: any[]): string[] {
+  generateSuggestions(duplicateGroups: any[]): string[] {
     const suggestions: string[] = [];
 
     if (duplicateGroups.length > 0) {

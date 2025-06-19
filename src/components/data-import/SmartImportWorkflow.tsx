@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { multiFormatProcessor } from '@/services/import-export/multi-format-proc
 import { enhancedDuplicateDetectionService } from '@/services/import-export/enhanced-duplicate-detection-service';
 import { dataQualityService } from '@/services/import-export/data-quality-service';
 import { toast } from 'sonner';
-import { FileUploader } from './FileUploader';
+import FileUploader from './FileUploader';
 
 interface SmartImportWorkflowProps {
   onImportComplete?: (data: any) => void;

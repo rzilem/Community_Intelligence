@@ -40,7 +40,7 @@ function convertToWorkflowExecution(row: any): WorkflowExecution {
 }
 
 export class IntelligentWorkflowEngine {
-  async createWorkflowTemplate(templateData: Omit<WorkflowTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<WorkflowTemplate> {
+  async createWorkflowTemplate(templateData: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
     const { data, error } = await supabase
       .from('workflows')
       .insert({
