@@ -12,6 +12,7 @@ import LoadingIndicator from './LoadingIndicator';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
 import ZipFileUploader from './ZipFileUploader';
 import AISmartImport from './AISmartImport';
+import { SmartImportErrorDisplay } from './SmartImportErrorDisplay';
 import { ImportResult } from '@/types/import-types';
 import { useSmartImport } from '@/hooks/import-export/useSmartImport';
 import { toast } from 'sonner';
@@ -206,11 +207,18 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
           <NolanCityAddressGenerator />
         </>
       ) : (
-        <ImportResultsTable 
-          results={displayResults}
-          onImportAnother={handleImportAnother}
-          associationId={associationId}
-        />
+        <div className="space-y-4">
+          {/* Enhanced error display for Smart Import results */}
+          {smartImportResult && !smartImportResult.success && (
+            <SmartImportErrorDisplay result={smartImportResult} />
+          )}
+          
+          <ImportResultsTable 
+            results={displayResults}
+            onImportAnother={handleImportAnother}
+            associationId={associationId}
+          />
+        </div>
       )}
     </div>
   );

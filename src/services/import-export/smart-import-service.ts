@@ -1,8 +1,8 @@
-
 import { zipParserService, ZipAnalysisResult } from './zip-parser-service';
 import { aiContentAnalyzer, BatchAnalysisResult } from './ai-content-analyzer';
 import { dataImportService } from './data-import-service';
-import { validationService } from './validation-service';
+import { enhancedValidationService } from './enhanced-validation-service';
+import { enhancedExcelProcessor } from './enhanced-excel-processor';
 import { SmartImportResult } from '@/types/import-types';
 import { devLog } from '@/utils/dev-logger';
 import { toast } from 'sonner';
@@ -19,28 +19,31 @@ export const smartImportService = {
     zipFile: File, 
     options: SmartImportOptions
   ): Promise<SmartImportResult> {
-    devLog.info('Starting smart import process for:', zipFile.name);
+    devLog.info('Starting enhanced smart import process for:', zipFile.name);
     
     try {
       toast.info('Analyzing zip file contents...');
       const zipAnalysis = await zipParserService.parseZipFile(zipFile);
       
+      // Enhanced Excel processing for each file
+      const processedFiles = await this.preprocessFiles(zipAnalysis.files);
+      
       toast.info('AI analyzing file contents and mappings...');
-      const aiAnalysis = await aiContentAnalyzer.analyzeBatch(zipAnalysis.files);
+      const aiAnalysis = await aiContentAnalyzer.analyzeBatch(processedFiles);
       
       const importStrategy = this.determineImportStrategy(aiAnalysis, options);
       
       if (importStrategy.autoImport) {
-        toast.success(`High confidence detected! Auto-importing ${zipAnalysis.files.length} files...`);
-        return await this.executeAutoImport(zipAnalysis, aiAnalysis, options);
+        toast.success(`High confidence detected! Auto-importing ${processedFiles.length} files...`);
+        return await this.executeAutoImport({ ...zipAnalysis, files: processedFiles }, aiAnalysis, options);
       } else {
         toast.info('Manual review required for some files');
-        return await this.executeManualImport(zipAnalysis, aiAnalysis, options);
+        return await this.executeManualImport({ ...zipAnalysis, files: processedFiles }, aiAnalysis, options);
       }
       
     } catch (error) {
-      devLog.error('Smart import failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      devLog.error('Enhanced smart import failed:', error);
+      const errorMessage = this.safeErrorMessage(error);
       
       return {
         success: false,
@@ -57,6 +60,53 @@ export const smartImportService = {
         details: []
       };
     }
+  },
+
+  async preprocessFiles(files: any[]): Promise<any[]> {
+    const processedFiles = [];
+    
+    for (const file of files) {
+      try {
+        if (file.filename.toLowerCase().endsWith('.xlsx') || file.filename.toLowerCase().endsWith('.xls')) {
+          devLog.info('Enhanced Excel processing for:', file.filename);
+          
+          // Create a File object from the data
+          const blob = new Blob([new Uint8Array(file.content)], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+          });
+          const excelFile = new File([blob], file.filename);
+          
+          const excelResult = await enhancedExcelProcessor.processExcelFile(excelFile);
+          
+          if (excelResult.success && excelResult.data.length > 0) {
+            processedFiles.push({
+              ...file,
+              data: excelResult.data,
+              processingMetadata: excelResult.metadata,
+              processingWarnings: excelResult.warnings
+            });
+          } else {
+            devLog.warn('Excel processing failed for:', file.filename, excelResult.errors);
+            processedFiles.push({
+              ...file,
+              processingErrors: excelResult.errors,
+              processingWarnings: excelResult.warnings
+            });
+          }
+        } else {
+          // Keep non-Excel files as-is
+          processedFiles.push(file);
+        }
+      } catch (error) {
+        devLog.error('File preprocessing failed:', file.filename, error);
+        processedFiles.push({
+          ...file,
+          processingErrors: [this.safeErrorMessage(error)]
+        });
+      }
+    }
+    
+    return processedFiles;
   },
 
   determineImportStrategy(
@@ -117,7 +167,7 @@ export const smartImportService = {
           result.totalProcessed += fileResult.recordsImported;
           
           if (fileResult.warnings.length > 0) {
-            result.warnings.push(...fileResult.warnings);
+            result.warnings.push(...fileResult.warnings.map(w => this.safeErrorMessage(w)));
           }
           
           result.details.push({
@@ -127,13 +177,14 @@ export const smartImportService = {
             message: `Successfully imported ${fileResult.recordsImported} records`
           });
         } else {
-          result.errors.push(`Error processing ${file.filename}: ${promiseResult.reason}`);
+          const errorMessage = this.safeErrorMessage(promiseResult.reason);
+          result.errors.push(`Error processing ${file.filename}: ${errorMessage}`);
           result.failedImports++;
           result.details.push({
             filename: file.filename,
             status: 'error',
             recordsProcessed: 0,
-            message: promiseResult.reason
+            message: errorMessage
           });
         }
       });
@@ -149,13 +200,35 @@ export const smartImportService = {
     aiAnalysis: BatchAnalysisResult,
     options: SmartImportOptions
   ): Promise<SmartImportResult> {
-    devLog.info('Manual import mode - preparing for user review');
+    devLog.info('Manual import mode - preparing detailed analysis for user review');
+    
+    const details = await Promise.all(
+      zipAnalysis.files.map(async (file) => {
+        const analysis = aiAnalysis.fileAnalyses[file.path];
+        let message = `Confidence: ${(analysis?.confidence * 100).toFixed(1)}%`;
+        
+        // Add specific processing issues if any
+        if (file.processingErrors?.length > 0) {
+          message += ` - Errors: ${file.processingErrors.join(', ')}`;
+        }
+        if (file.processingWarnings?.length > 0) {
+          message += ` - Warnings: ${file.processingWarnings.join(', ')}`;
+        }
+        
+        return {
+          filename: file.filename,
+          status: 'skipped' as const,
+          recordsProcessed: 0,
+          message
+        };
+      })
+    );
     
     return {
       success: false,
       totalFiles: zipAnalysis.files.length,
       processedFiles: 0,
-      skippedFiles: 0,
+      skippedFiles: zipAnalysis.files.length,
       totalRecords: zipAnalysis.totalRecords,
       importedRecords: 0,
       totalProcessed: 0,
@@ -163,12 +236,7 @@ export const smartImportService = {
       failedImports: 0,
       errors: [],
       warnings: ['Manual review required - confidence below threshold'],
-      details: zipAnalysis.files.map(file => ({
-        filename: file.filename,
-        status: 'skipped' as const,
-        recordsProcessed: 0,
-        message: `Confidence: ${(aiAnalysis.fileAnalyses[file.path]?.confidence * 100).toFixed(1)}%`
-      }))
+      details
     };
   },
 
@@ -177,14 +245,17 @@ export const smartImportService = {
     analysis: any,
     options: SmartImportOptions
   ) {
-    const validation = await validationService.validateData(
+    // Use enhanced validation with detailed feedback
+    const validation = await enhancedValidationService.validateDataWithDetails(
       file.data, 
       analysis.detectedType, 
-      options.associationId
+      options.associationId,
+      file.filename
     );
     
     if (!validation.valid && !options.skipValidation) {
-      throw new Error(`Validation failed: ${validation.issues.length} issues found`);
+      const detailedErrors = validation.suggestedFixes.join('; ');
+      throw new Error(`Enhanced validation failed: ${detailedErrors}`);
     }
     
     const importResult = await dataImportService.importData({
@@ -203,6 +274,13 @@ export const smartImportService = {
       recordsImported: importResult.successfulImports,
       warnings: validation.issues.map(issue => issue.issue)
     };
+  },
+
+  safeErrorMessage(error: any): string {
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && error?.message) return error.message;
+    return 'Unknown error occurred';
   },
 
   chunkArray<T>(array: T[], size: number): T[][] {
