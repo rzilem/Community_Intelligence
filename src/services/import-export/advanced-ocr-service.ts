@@ -1,8 +1,10 @@
-
 import { devLog } from '@/utils/dev-logger';
 import Tesseract from 'tesseract.js';
-import pdfParse from 'pdf-parse';
+import * as pdfjsLib from 'pdfjs-dist';
 import { ProcessedDocument, OCROptions, AdvancedOCRResult } from './types';
+
+// Configure PDF.js worker for browser environment
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export interface OCRResult {
   text: string;
@@ -44,8 +46,39 @@ export const advancedOCRService = {
         devLog.warn('Poor image quality detected:', qualityAssessment);
       }
       
-      // Step 2: Extract text with Tesseract
-      const ocrResult = await this.extractTextWithTesseract(file, options);
+      let ocrResult: AdvancedOCRResult;
+      
+      // Step 2: Process based on file type
+      if (file.type === 'application/pdf') {
+        // Use PDF.js for PDF files
+        const pdfResult = await this.extractFromPDF(file);
+        ocrResult = {
+          text: pdfResult.text,
+          confidence: 0.9, // PDF text extraction is generally high confidence
+          language: 'eng',
+          pages: pdfResult.pages,
+          tables: [],
+          forms: []
+        };
+      } else if (file.type.startsWith('image/')) {
+        // Use Tesseract for images
+        ocrResult = await this.extractTextWithTesseract(file, options);
+      } else {
+        // For text files, read directly
+        const text = await file.text();
+        ocrResult = {
+          text,
+          confidence: 1.0,
+          language: 'eng',
+          pages: [{
+            pageNumber: 1,
+            text,
+            words: []
+          }],
+          tables: [],
+          forms: []
+        };
+      }
       
       // Step 3: Extract tables if enabled
       let tables: any[] = [];
@@ -71,7 +104,7 @@ export const advancedOCRService = {
         content: ocrResult.text,
         metadata: {
           processingMethod: 'advanced-ocr',
-          extractionMethod: 'tesseract-enhanced',
+          extractionMethod: file.type === 'application/pdf' ? 'pdfjs-extraction' : 'tesseract-enhanced',
           confidence: ocrResult.confidence,
           qualityScore: Math.round(qualityAssessment.score * 100),
           tables: tables.length,
@@ -165,21 +198,39 @@ export const advancedOCRService = {
   async extractFromPDF(file: File): Promise<{ text: string; pages: any[] }> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfParse(new Uint8Array(arrayBuffer));
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdfDoc = await loadingTask.promise;
       
+      let fullText = '';
       const pages = [];
+      const pageCount = pdfDoc.numPages;
       
-      // Process each page with proper type handling
-      for (let i = 0; i < pdf.numpages; i++) {
+      // Process each page
+      for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // Combine all text items from the page
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        
+        fullText += pageText + '\n\n';
+        
         pages.push({
-          pageNumber: i + 1,
-          text: pdf.text,
-          words: [] // PDF parsing doesn't provide word-level data by default
+          pageNumber: pageNum,
+          text: pageText,
+          words: [] // PDF.js doesn't provide word-level bounding boxes by default
         });
       }
       
+      devLog.info('PDF extraction completed:', {
+        pageCount,
+        textLength: fullText.length
+      });
+      
       return {
-        text: pdf.text,
+        text: fullText.trim(),
         pages
       };
     } catch (error) {

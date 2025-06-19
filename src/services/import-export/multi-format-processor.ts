@@ -1,4 +1,3 @@
-
 import { devLog } from '@/utils/dev-logger';
 import { advancedOCRService } from './advanced-ocr-service';
 import { parseService } from './parse-service';
@@ -146,6 +145,7 @@ export const multiFormatProcessor = {
 
   async processPDF(file: File, options: ProcessingOptions): Promise<ProcessedDocument> {
     try {
+      // Use the updated PDF.js-based extraction
       const pdfResult = await advancedOCRService.extractFromPDF(file);
       
       return {
@@ -154,7 +154,7 @@ export const multiFormatProcessor = {
         format: 'pdf',
         content: pdfResult.text,
         metadata: {
-          processingMethod: 'pdf-parse',
+          processingMethod: 'pdfjs-extraction',
           extractionMethod: 'pdf-text-extraction',
           confidence: 0.9,
           qualityScore: 90,
