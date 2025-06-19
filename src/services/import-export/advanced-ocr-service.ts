@@ -1,4 +1,3 @@
-
 import Tesseract from 'tesseract.js';
 import { GlobalWorkerOptions, getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { devLog } from '@/utils/dev-logger';
@@ -10,6 +9,11 @@ if (typeof window !== 'undefined' && GlobalWorkerOptions) {
 }
 
 export class AdvancedOCRService {
+  // Add the missing processDocument method that calls processDocumentWithOCR
+  async processDocument(file: File, options?: OCROptions): Promise<ProcessedDocument> {
+    return this.processDocumentWithOCR(file, options);
+  }
+
   async processDocumentWithOCR(file: File, options?: OCROptions): Promise<ProcessedDocument> {
     devLog.info('Processing document with OCR:', file.name);
     
