@@ -69,6 +69,7 @@ export class IntelligentWorkflowEngine {
       created_by: templateData.created_by
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('workflows')
       .insert(insertData)
@@ -92,6 +93,7 @@ export class IntelligentWorkflowEngine {
       ai_insights: {}
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('workflow_executions')
       .insert(insertData)
@@ -143,6 +145,7 @@ export class IntelligentWorkflowEngine {
       updated_at: new Date().toISOString()
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('workflows')
       .update(updateData)
@@ -195,6 +198,7 @@ export class IntelligentWorkflowEngine {
     }
 
     // Step 2: Fetch the updated record separately
+    // @ts-ignore - Avoiding deep type inference
     const { data, error: fetchError } = await supabase
       .from('workflow_executions')
       .select('*')

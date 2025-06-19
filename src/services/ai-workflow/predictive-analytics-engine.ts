@@ -116,11 +116,12 @@ export class PredictiveAnalyticsEngine {
       };
 
       // Step 2: Insert without complex chaining
+      // @ts-ignore - Avoiding deep type inference
       const { data, error: insertError } = await supabase
         .from('ai_predictions')
         .insert(predictionInsert)
         .select('*')
-        .single() as { data: any, error: any };
+        .single();
 
       if (insertError || !data) {
         throw new Error(`Failed to save prediction: ${insertError?.message}`);
@@ -167,11 +168,12 @@ export class PredictiveAnalyticsEngine {
       valid_until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionInsert)
       .select('*')
-      .single() as { data: any, error: any };
+      .single();
 
     if (error || !data) {
       throw new Error(`Failed to save vendor prediction: ${error?.message}`);
@@ -197,11 +199,12 @@ export class PredictiveAnalyticsEngine {
       valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionInsert)
       .select('*')
-      .single() as { data: any, error: any };
+      .single();
 
     if (error || !data) {
       throw new Error(`Failed to save health score: ${error?.message}`);
@@ -224,11 +227,12 @@ export class PredictiveAnalyticsEngine {
       valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     };
 
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionInsert)
       .select('*')
-      .single() as { data: any, error: any };
+      .single();
 
     if (error || !data) {
       throw new Error(`Failed to save budget prediction: ${error?.message}`);
@@ -254,6 +258,7 @@ export class PredictiveAnalyticsEngine {
     }
 
     // Step 2: Fetch updated record
+    // @ts-ignore - Avoiding deep type inference
     const { data, error: fetchError } = await supabase
       .from('ai_predictions')
       .select('*')
