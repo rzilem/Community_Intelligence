@@ -50,6 +50,7 @@ export interface EnhancedProcessingOptions extends ProcessingOptions {
     enableSandbox?: boolean;
     enableAuditTrail?: boolean;
     createBackups?: boolean;
+    keepSandboxAfterSimulation?: boolean;
   };
   businessIntelligence?: {
     enableDashboards?: boolean;
