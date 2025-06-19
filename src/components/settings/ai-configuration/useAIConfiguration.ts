@@ -10,6 +10,8 @@ export interface AIConfigValues {
   retryAttempts: string;
   maxFileSize: string;
   allowedFileTypes: string;
+  openaiApiKey: string;
+  openaiModel: string;
 }
 
 const defaultValues: AIConfigValues = {
@@ -18,7 +20,9 @@ const defaultValues: AIConfigValues = {
   processingTimeout: '300000',
   retryAttempts: '3',
   maxFileSize: '10485760',
-  allowedFileTypes: 'image/jpeg,image/png,application/pdf'
+  allowedFileTypes: 'image/jpeg,image/png,application/pdf',
+  openaiApiKey: '',
+  openaiModel: 'gpt-4o-mini'
 };
 
 export function useAIConfiguration() {
@@ -29,33 +33,49 @@ export function useAIConfiguration() {
   const loadConfiguration = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_secret', {
+      // Load AI processing configuration
+      const { data: aiConfigData, error: aiConfigError } = await supabase.rpc('get_secret', {
         secret_name: 'ai_config'
       });
 
-      if (error) {
-        console.error('Error loading AI configuration:', error);
-        toast.error('Failed to load AI configuration');
-        return;
+      // Load OpenAI configuration
+      const { data: openaiConfigData, error: openaiConfigError } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'integrations')
+        .single();
+
+      let configValues = { ...defaultValues };
+
+      // Parse AI processing config
+      if (!aiConfigError && aiConfigData) {
+        const aiConfig = typeof aiConfigData === 'object' ? aiConfigData : JSON.parse(aiConfigData as string);
+        configValues = {
+          ...configValues,
+          aiConfidenceThreshold: String(aiConfig.aiConfidenceThreshold || defaultValues.aiConfidenceThreshold),
+          highConfidenceThreshold: String(aiConfig.highConfidenceThreshold || defaultValues.highConfidenceThreshold),
+          processingTimeout: String(aiConfig.processingTimeout || defaultValues.processingTimeout),
+          retryAttempts: String(aiConfig.retryAttempts || defaultValues.retryAttempts),
+          maxFileSize: String(aiConfig.maxFileSize || defaultValues.maxFileSize),
+          allowedFileTypes: String(aiConfig.allowedFileTypes || defaultValues.allowedFileTypes)
+        };
       }
 
-      if (data) {
-        const configData = typeof data === 'object' ? data : JSON.parse(data as string);
-        
-        setValues({
-          aiConfidenceThreshold: String(configData.aiConfidenceThreshold || defaultValues.aiConfidenceThreshold),
-          highConfidenceThreshold: String(configData.highConfidenceThreshold || defaultValues.highConfidenceThreshold),
-          processingTimeout: String(configData.processingTimeout || defaultValues.processingTimeout),
-          retryAttempts: String(configData.retryAttempts || defaultValues.retryAttempts),
-          maxFileSize: String(configData.maxFileSize || defaultValues.maxFileSize),
-          allowedFileTypes: String(configData.allowedFileTypes || defaultValues.allowedFileTypes)
-        });
-        
-        toast.success('AI configuration loaded successfully');
+      // Parse OpenAI config
+      if (!openaiConfigError && openaiConfigData?.value?.integrationSettings?.OpenAI) {
+        const openaiConfig = openaiConfigData.value.integrationSettings.OpenAI;
+        configValues = {
+          ...configValues,
+          openaiApiKey: openaiConfig.apiKey || '',
+          openaiModel: openaiConfig.model || 'gpt-4o-mini'
+        };
       }
+
+      setValues(configValues);
+      toast.success('Configuration loaded successfully');
     } catch (error) {
       console.error('Error loading configuration:', error);
-      toast.error('Failed to load AI configuration');
+      toast.error('Failed to load configuration');
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +140,8 @@ export function useAIConfiguration() {
 
     setIsSaving(true);
     try {
-      const configData = {
+      // Save AI processing configuration
+      const aiConfigData = {
         aiConfidenceThreshold: values.aiConfidenceThreshold,
         highConfidenceThreshold: values.highConfidenceThreshold,
         processingTimeout: values.processingTimeout,
@@ -129,21 +150,34 @@ export function useAIConfiguration() {
         allowedFileTypes: values.allowedFileTypes
       };
 
-      const { error } = await supabase.rpc('set_secret', {
+      const { error: aiConfigError } = await supabase.rpc('set_secret', {
         secret_name: 'ai_config',
-        secret_value: JSON.stringify(configData)
+        secret_value: JSON.stringify(aiConfigData)
       });
 
-      if (error) {
-        console.error('Error saving AI configuration:', error);
-        toast.error('Failed to save AI configuration');
-        return;
+      if (aiConfigError) {
+        throw new Error(`Failed to save AI configuration: ${aiConfigError.message}`);
       }
 
-      toast.success('AI configuration saved successfully');
+      // Save OpenAI configuration if API key is provided
+      if (values.openaiApiKey.trim()) {
+        const { error: openaiError } = await supabase.functions.invoke('update-openai-config', {
+          body: {
+            apiKey: values.openaiApiKey,
+            model: values.openaiModel
+          }
+        });
+
+        if (openaiError) {
+          throw new Error(`Failed to save OpenAI configuration: ${openaiError.message}`);
+        }
+      }
+
+      toast.success('Configuration saved successfully');
     } catch (error) {
       console.error('Error saving configuration:', error);
-      toast.error('Failed to save AI configuration');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to save configuration: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
