@@ -6,6 +6,7 @@ export interface DuplicateDetectionOptions {
   fuzzyMatching?: boolean;
   confidenceThreshold?: number;
   fieldWeights?: Record<string, number>;
+  semanticAnalysis?: boolean;
 }
 
 export interface DuplicateResult {
@@ -19,26 +20,76 @@ export interface DuplicateResult {
   suggestions: string[];
 }
 
+export interface EnhancedDuplicateDetectionResult {
+  totalDuplicates: number;
+  duplicateClusters: DuplicateCluster[];
+  enhancedMatches: EnhancedDuplicateMatch[];
+  clusters: DuplicateCluster[];
+  qualityScore: number;
+  recommendations: {
+    suggestions: string[];
+  };
+  processingStats: {
+    totalComparisons: number;
+    processingTime: number;
+  };
+}
+
+export interface EnhancedDuplicateMatch {
+  sourceFile: string;
+  targetFile: string;
+  sourceIndex: number;
+  targetIndex: number;
+  confidence: number;
+  matchingFields: string[];
+}
+
+export interface DuplicateCluster {
+  clusterId: string;
+  records: any[];
+  confidence: number;
+  commonFields: string[];
+}
+
 export const enhancedDuplicateDetectionService = {
   async detectDuplicatesAdvanced(
     fileData: Array<{ filename: string; data: any[] }>,
     options: DuplicateDetectionOptions = {}
-  ): Promise<DuplicateResult> {
+  ): Promise<EnhancedDuplicateDetectionResult> {
+    const startTime = Date.now();
     devLog.info('Starting enhanced duplicate detection', { 
       fileCount: fileData.length,
       options 
     });
 
-    const allRecords = fileData.flatMap(file => 
-      file.data.map(record => ({ ...record, _source: file.filename }))
+    const allRecords = fileData.flatMap((file, fileIndex) => 
+      file.data.map((record, recordIndex) => ({ 
+        ...record, 
+        _source: file.filename,
+        _fileIndex: fileIndex,
+        _recordIndex: recordIndex
+      }))
     );
 
     const duplicateGroups = this.findDuplicateGroups(allRecords, options);
+    const enhancedMatches = this.generateEnhancedMatches(duplicateGroups, fileData);
+    const clusters = this.generateClusters(duplicateGroups);
+    
+    const processingTime = Date.now() - startTime;
     
     return {
       totalDuplicates: duplicateGroups.reduce((sum, group) => sum + group.duplicates.length, 0),
-      duplicateGroups,
-      suggestions: this.generateSuggestions(duplicateGroups)
+      duplicateClusters: clusters,
+      enhancedMatches,
+      clusters,
+      qualityScore: this.calculateQualityScore(duplicateGroups),
+      recommendations: {
+        suggestions: this.generateSuggestions(duplicateGroups)
+      },
+      processingStats: {
+        totalComparisons: this.calculateTotalComparisons(allRecords.length),
+        processingTime
+      }
     };
   },
 
@@ -78,6 +129,34 @@ export const enhancedDuplicateDetectionService = {
     }
 
     return groups;
+  },
+
+  private generateEnhancedMatches(duplicateGroups: any[], fileData: Array<{ filename: string; data: any[] }>): EnhancedDuplicateMatch[] {
+    const matches: EnhancedDuplicateMatch[] = [];
+    
+    duplicateGroups.forEach(group => {
+      group.duplicates.forEach((duplicate: any) => {
+        matches.push({
+          sourceFile: group.masterRecord._source,
+          targetFile: duplicate._source,
+          sourceIndex: group.masterRecord._recordIndex,
+          targetIndex: duplicate._recordIndex,
+          confidence: group.confidence,
+          matchingFields: group.matchingFields
+        });
+      });
+    });
+
+    return matches;
+  },
+
+  private generateClusters(duplicateGroups: any[]): DuplicateCluster[] {
+    return duplicateGroups.map((group, index) => ({
+      clusterId: `cluster_${index}`,
+      records: [group.masterRecord, ...group.duplicates],
+      confidence: group.confidence,
+      commonFields: group.matchingFields
+    }));
   },
 
   private calculateSimilarity(record1: any, record2: any, options: DuplicateDetectionOptions): any {
@@ -123,7 +202,6 @@ export const enhancedDuplicateDetectionService = {
   },
 
   private fuzzyMatch(str1: string, str2: string): boolean {
-    // Simple fuzzy matching - can be enhanced with more sophisticated algorithms
     const distance = this.levenshteinDistance(str1, str2);
     const maxLength = Math.max(str1.length, str2.length);
     const similarity = 1 - (distance / maxLength);
@@ -163,6 +241,17 @@ export const enhancedDuplicateDetectionService = {
     return Object.entries(fieldCounts)
       .sort(([,a], [,b]) => b - a)
       .map(([field]) => field);
+  },
+
+  private calculateQualityScore(duplicateGroups: any[]): number {
+    if (duplicateGroups.length === 0) return 100;
+    
+    const avgConfidence = duplicateGroups.reduce((sum, group) => sum + group.confidence, 0) / duplicateGroups.length;
+    return Math.round(avgConfidence * 100);
+  },
+
+  private calculateTotalComparisons(recordCount: number): number {
+    return (recordCount * (recordCount - 1)) / 2;
   },
 
   private generateSuggestions(duplicateGroups: any[]): string[] {
