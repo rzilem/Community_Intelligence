@@ -39,3 +39,26 @@ export interface MappingConfig {
   default_values?: Record<string, any>;
   transformations?: Record<string, (value: any) => any>;
 }
+
+// Export options interface
+export interface ExportOptions {
+  associationId: string;
+  dataType: string;
+  format?: 'csv' | 'xlsx';
+}
+
+// Import options interface
+export interface ImportOptions {
+  associationId: string;
+  dataType: string;
+  data: any[];
+  mappings: Record<string, string>;
+  userId?: string;
+}
+
+// Smart import options
+export interface SmartImportOptions {
+  associationId: string;
+  autoImportThreshold?: number;
+  skipValidation?: boolean;
+}

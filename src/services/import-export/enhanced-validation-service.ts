@@ -1,11 +1,20 @@
 
-import { ValidationResult } from '@/types/import-types';
 import { devLog } from '@/utils/dev-logger';
 
-export interface DetailedValidationResult extends ValidationResult {
-  fileSpecificIssues: Record<string, string[]>;
-  suggestedFixes: string[];
-  dataTypeConfidence: number;
+export interface DetailedValidationResult {
+  isValid: boolean;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  criticalErrors: string[];
+  warnings: string[];
+  suggestions: string[];
+  fieldAnalysis: Record<string, {
+    present: boolean;
+    fillRate: number;
+    dataType: string;
+    sampleValues: any[];
+  }>;
 }
 
 export const enhancedValidationService = {
@@ -16,296 +25,321 @@ export const enhancedValidationService = {
     filename?: string
   ): Promise<DetailedValidationResult> {
     try {
-      devLog.info('Enhanced validation starting:', { dataType, recordCount: data.length, filename });
+      devLog.info('Starting enhanced validation:', { dataType, recordCount: data.length, filename });
       
       if (!data || !Array.isArray(data) || data.length === 0) {
         return {
-          valid: false,
+          isValid: false,
           totalRows: 0,
           validRows: 0,
           invalidRows: 0,
-          warnings: 0,
-          issues: [{ row: 0, field: 'data', issue: 'No data provided for validation' }],
-          fileSpecificIssues: { [filename || 'unknown']: ['File contains no valid data'] },
-          suggestedFixes: ['Check if the file format is correct', 'Ensure the file is not empty'],
-          dataTypeConfidence: 0
+          criticalErrors: ['No data provided for validation'],
+          warnings: [],
+          suggestions: ['Upload a file with valid data'],
+          fieldAnalysis: {}
         };
       }
 
-      const issues: Array<{ row: number; field: string; issue: string }> = [];
-      const fileSpecificIssues: Record<string, string[]> = {};
-      const suggestedFixes: string[] = [];
+      const result: DetailedValidationResult = {
+        isValid: true,
+        totalRows: data.length,
+        validRows: 0,
+        invalidRows: 0,
+        criticalErrors: [],
+        warnings: [],
+        suggestions: [],
+        fieldAnalysis: {}
+      };
+
+      // Analyze field structure
+      result.fieldAnalysis = this.analyzeFields(data);
+      
+      // Validate based on data type
+      const typeValidation = this.validateByDataType(data, dataType, result.fieldAnalysis);
+      result.criticalErrors.push(...typeValidation.criticalErrors);
+      result.warnings.push(...typeValidation.warnings);
+      result.suggestions.push(...typeValidation.suggestions);
+
+      // Validate each row
       let validRows = 0;
-      let warnings = 0;
-      let dataTypeConfidence = 0;
-
-      // Analyze data structure
-      const firstRow = data[0];
-      const columnNames = Object.keys(firstRow || {});
-      
-      devLog.info('Analyzing data structure:', { columnNames, firstRowSample: firstRow });
-
-      // Check for common Excel issues
-      if (this.hasExcelArtifacts(data)) {
-        const excelIssues = this.identifyExcelIssues(data);
-        fileSpecificIssues[filename || 'excel_file'] = excelIssues;
-        if (excelIssues.length > 0) {
-          suggestedFixes.push('Remove Excel header rows or metadata', 'Check for merged cells', 'Ensure consistent data format');
-        }
-      }
-
-      // Analyze data type confidence
-      dataTypeConfidence = this.calculateDataTypeConfidence(data, dataType);
-      
-      if (dataTypeConfidence < 0.5) {
-        suggestedFixes.push(`Data structure doesn't match expected ${dataType} format`);
-      }
-
-      // Validate each row with detailed feedback
       for (let i = 0; i < data.length; i++) {
-        const row = data[i];
-        const rowIssues = this.validateRowWithDetails(row, dataType, i + 1, columnNames);
-        
-        if (rowIssues.length === 0) {
+        const rowValidation = this.validateRow(data[i], dataType, i + 1);
+        if (rowValidation.isValid) {
           validRows++;
         } else {
-          const criticalIssues = rowIssues.filter(issue => 
-            issue.issue.includes('required') || issue.issue.includes('invalid')
-          );
-          const warningIssues = rowIssues.filter(issue => 
-            !issue.issue.includes('required') && !issue.issue.includes('invalid')
-          );
-          
-          warnings += warningIssues.length;
-          issues.push(...rowIssues);
+          result.criticalErrors.push(...rowValidation.errors);
+          result.warnings.push(...rowValidation.warnings);
         }
       }
 
-      // Generate specific fixes based on common issues
-      this.addContextualSuggestions(issues, suggestedFixes, dataType);
+      result.validRows = validRows;
+      result.invalidRows = data.length - validRows;
+      result.isValid = result.criticalErrors.length === 0 && validRows > 0;
 
-      const invalidRows = data.length - validRows;
-      const result: DetailedValidationResult = {
-        valid: invalidRows === 0,
-        totalRows: data.length,
-        validRows,
-        invalidRows,
-        warnings,
-        issues,
-        fileSpecificIssues,
-        suggestedFixes,
-        dataTypeConfidence
-      };
+      // Add suggestions based on validation results
+      if (result.invalidRows > 0) {
+        result.suggestions.push(`${result.invalidRows} rows have validation issues that need to be addressed`);
+      }
+      
+      if (result.validRows > 0 && result.invalidRows > 0) {
+        result.suggestions.push('Consider importing only the valid rows or fix the invalid data');
+      }
 
-      devLog.info('Enhanced validation completed:', result);
+      devLog.info('Enhanced validation completed:', {
+        isValid: result.isValid,
+        validRows: result.validRows,
+        invalidRows: result.invalidRows,
+        criticalErrors: result.criticalErrors.length,
+        warnings: result.warnings.length
+      });
+
       return result;
+      
     } catch (error) {
       devLog.error('Enhanced validation error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown validation error';
-      
       return {
-        valid: false,
-        totalRows: data?.length || 0,
+        isValid: false,
+        totalRows: data.length || 0,
         validRows: 0,
-        invalidRows: data?.length || 0,
-        warnings: 0,
-        issues: [{ row: 0, field: 'validation', issue: `Validation failed: ${errorMessage}` }],
-        fileSpecificIssues: { [filename || 'unknown']: [errorMessage] },
-        suggestedFixes: ['Check file format and structure', 'Ensure data is properly formatted'],
-        dataTypeConfidence: 0
+        invalidRows: data.length || 0,
+        criticalErrors: [`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        warnings: [],
+        suggestions: ['Check the file format and data structure'],
+        fieldAnalysis: {}
       };
     }
   },
 
-  hasExcelArtifacts(data: any[]): boolean {
-    if (!data || data.length === 0) return false;
+  analyzeFields(data: any[]): Record<string, any> {
+    if (data.length === 0) return {};
     
-    // Check for typical Excel issues
-    const firstRow = data[0];
-    const keys = Object.keys(firstRow || {});
+    const analysis: Record<string, any> = {};
+    const allKeys = new Set<string>();
     
-    return (
-      keys.some(key => key.includes('__EMPTY')) ||
-      keys.some(key => key.startsWith('F') && /^\d+$/.test(key.substring(1))) ||
-      data.some(row => Object.values(row).every(val => val === null || val === undefined))
-    );
+    // Collect all possible keys
+    data.forEach(row => {
+      Object.keys(row).forEach(key => allKeys.add(key));
+    });
+
+    // Analyze each field
+    allKeys.forEach(key => {
+      const values = data.map(row => row[key]).filter(val => val !== null && val !== undefined && val !== '');
+      const fillRate = values.length / data.length;
+      
+      analysis[key] = {
+        present: values.length > 0,
+        fillRate,
+        dataType: this.detectDataType(values),
+        sampleValues: values.slice(0, 3)
+      };
+    });
+
+    return analysis;
   },
 
-  identifyExcelIssues(data: any[]): string[] {
-    const issues: string[] = [];
+  detectDataType(values: any[]): string {
+    if (values.length === 0) return 'empty';
     
-    if (data.length === 0) {
-      issues.push('File appears to be empty');
-      return issues;
-    }
-
-    const firstRow = data[0];
-    const keys = Object.keys(firstRow || {});
+    const sample = values.slice(0, 10);
     
-    if (keys.some(key => key.includes('__EMPTY'))) {
-      issues.push('Excel file contains empty columns (possible merged cells)');
+    if (sample.every(val => !isNaN(Number(val)) && !isNaN(parseFloat(val)))) {
+      return 'number';
     }
     
-    if (keys.some(key => key.startsWith('F') && /^\d+$/.test(key.substring(1)))) {
-      issues.push('Excel file may have generic column names (F1, F2, etc.)');
+    if (sample.every(val => typeof val === 'boolean' || val === 'true' || val === 'false')) {
+      return 'boolean';
     }
     
-    const emptyRowCount = data.filter(row => 
-      Object.values(row).every(val => val === null || val === undefined || val === '')
-    ).length;
-    
-    if (emptyRowCount > data.length * 0.3) {
-      issues.push(`High number of empty rows detected (${emptyRowCount}/${data.length})`);
+    if (sample.some(val => String(val).includes('@') && String(val).includes('.'))) {
+      return 'email';
     }
-
-    return issues;
+    
+    if (sample.some(val => /^\d{4}-\d{2}-\d{2}/.test(String(val)))) {
+      return 'date';
+    }
+    
+    return 'text';
   },
 
-  calculateDataTypeConfidence(data: any[], expectedType: string): number {
-    if (!data || data.length === 0) return 0;
-    
-    const firstRow = data[0];
-    const columns = Object.keys(firstRow || {});
-    
-    const expectedColumns = this.getExpectedColumnsForType(expectedType);
-    const matchingColumns = columns.filter(col => 
-      expectedColumns.some(expected => 
-        col.toLowerCase().includes(expected.toLowerCase()) ||
-        expected.toLowerCase().includes(col.toLowerCase())
-      )
-    );
-    
-    return expectedColumns.length > 0 ? matchingColumns.length / expectedColumns.length : 0.5;
-  },
+  validateByDataType(data: any[], dataType: string, fieldAnalysis: Record<string, any>): {
+    criticalErrors: string[];
+    warnings: string[];
+    suggestions: string[];
+  } {
+    const result = {
+      criticalErrors: [] as string[],
+      warnings: [] as string[],
+      suggestions: [] as string[]
+    };
 
-  getExpectedColumnsForType(dataType: string): string[] {
+    const fields = Object.keys(fieldAnalysis);
+    
     switch (dataType) {
       case 'properties':
-        return ['address', 'property_type', 'unit_number'];
+        if (!this.hasAddressField(fields)) {
+          result.criticalErrors.push('No address column found. Ensure address column is properly mapped');
+          result.suggestions.push('Look for columns like: address, street_address, property_address, full_address');
+        }
+        break;
+        
       case 'owners':
-        return ['first_name', 'last_name', 'email'];
-      case 'properties_owners':
-        return ['address', 'first_name', 'last_name'];
+        if (!this.hasNameField(fields)) {
+          result.criticalErrors.push('No name column found. Owner records need first_name/last_name or full name');
+          result.suggestions.push('Look for columns like: first_name, last_name, name, owner_name');
+        }
+        break;
+        
       case 'financial':
-        return ['amount', 'due_date', 'property'];
-      case 'compliance':
-        return ['violation_type', 'property', 'date'];
-      case 'maintenance':
-        return ['title', 'description', 'property'];
-      case 'associations':
-        return ['name', 'address', 'contact'];
-      default:
-        return [];
-    }
-  },
-
-  validateRowWithDetails(row: any, dataType: string, rowNumber: number, availableColumns: string[]): Array<{ row: number; field: string; issue: string }> {
-    const issues: Array<{ row: number; field: string; issue: string }> = [];
-    
-    if (!row || typeof row !== 'object') {
-      issues.push({ row: rowNumber, field: 'row', issue: 'Invalid row data structure' });
-      return issues;
-    }
-
-    // Check if row is completely empty
-    const values = Object.values(row);
-    if (values.every(val => val === null || val === undefined || val === '')) {
-      issues.push({ row: rowNumber, field: 'row', issue: 'Row is completely empty' });
-      return issues;
-    }
-
-    // Type-specific validation with detailed feedback
-    switch (dataType) {
-      case 'properties':
-        this.validatePropertyWithDetails(row, rowNumber, issues, availableColumns);
+        if (!this.hasAmountField(fields)) {
+          result.criticalErrors.push('No amount/payment column found');
+          result.suggestions.push('Look for columns like: amount, payment_amount, balance, total');
+        }
         break;
-      case 'owners':
-        this.validateOwnerWithDetails(row, rowNumber, issues, availableColumns);
-        break;
-      case 'properties_owners':
-        this.validatePropertyOwnerWithDetails(row, rowNumber, issues, availableColumns);
-        break;
-      case 'financial':
-        this.validateFinancialWithDetails(row, rowNumber, issues, availableColumns);
-        break;
-      default:
-        this.validateGenericWithDetails(row, rowNumber, issues, availableColumns);
     }
 
-    return issues;
-  },
-
-  validatePropertyWithDetails(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, availableColumns: string[]) {
-    const addressFields = ['address', 'property_address', 'street_address'];
-    const hasAddress = addressFields.some(field => row[field] && String(row[field]).trim());
-    
-    if (!hasAddress) {
-      const availableAddressFields = availableColumns.filter(col => 
-        addressFields.some(addr => col.toLowerCase().includes(addr.toLowerCase()))
-      );
-      issues.push({ 
-        row: rowNumber, 
-        field: 'address', 
-        issue: `Address is required. Available fields: ${availableAddressFields.join(', ') || 'None found'}` 
-      });
-    }
-  },
-
-  validateOwnerWithDetails(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, availableColumns: string[]) {
-    if (!row.first_name && !row.name) {
-      issues.push({ row: rowNumber, field: 'first_name', issue: 'First name is required' });
-    }
-    if (!row.last_name && !row.name) {
-      issues.push({ row: rowNumber, field: 'last_name', issue: 'Last name is required' });
-    }
-    if (row.email && !this.isValidEmail(row.email)) {
-      issues.push({ row: rowNumber, field: 'email', issue: `Invalid email format: ${row.email}` });
-    }
-  },
-
-  validatePropertyOwnerWithDetails(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, availableColumns: string[]) {
-    this.validatePropertyWithDetails(row, rowNumber, issues, availableColumns);
-    if (!row.owner_name && !row.first_name) {
-      issues.push({ row: rowNumber, field: 'owner_name', issue: 'Owner name is required' });
-    }
-  },
-
-  validateFinancialWithDetails(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, availableColumns: string[]) {
-    if (!row.amount && !row.balance && !row.payment_amount) {
-      issues.push({ row: rowNumber, field: 'amount', issue: 'Amount field is required' });
-    }
-    if (row.amount && isNaN(parseFloat(row.amount))) {
-      issues.push({ row: rowNumber, field: 'amount', issue: `Amount must be a valid number, got: ${row.amount}` });
-    }
-  },
-
-  validateGenericWithDetails(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, availableColumns: string[]) {
-    const keys = Object.keys(row);
-    if (keys.length === 0) {
-      issues.push({ row: rowNumber, field: 'row', issue: 'Row contains no data' });
-    }
-  },
-
-  addContextualSuggestions(issues: Array<{ row: number; field: string; issue: string }>, suggestedFixes: string[], dataType: string) {
-    const commonIssues = issues.reduce((acc, issue) => {
-      acc[issue.field] = (acc[issue.field] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    Object.entries(commonIssues).forEach(([field, count]) => {
-      if (count > 1) {
-        suggestedFixes.push(`Multiple rows missing ${field} - check column mapping`);
+    // Check for empty required fields
+    Object.entries(fieldAnalysis).forEach(([field, analysis]) => {
+      if (analysis.fillRate < 0.5) {
+        result.warnings.push(`Column '${field}' is mostly empty (${Math.round(analysis.fillRate * 100)}% filled)`);
       }
     });
 
-    const emailIssues = issues.filter(i => i.issue.includes('email')).length;
-    if (emailIssues > 0) {
-      suggestedFixes.push('Check email format in source data');
+    return result;
+  },
+
+  hasAddressField(fields: string[]): boolean {
+    const addressPatterns = ['address', 'street', 'property_address', 'full_address', 'street_address'];
+    return fields.some(field => 
+      addressPatterns.some(pattern => 
+        field.toLowerCase().includes(pattern)
+      )
+    );
+  },
+
+  hasNameField(fields: string[]): boolean {
+    const namePatterns = ['name', 'first_name', 'last_name', 'owner_name', 'resident_name'];
+    return fields.some(field => 
+      namePatterns.some(pattern => 
+        field.toLowerCase().includes(pattern)
+      )
+    );
+  },
+
+  hasAmountField(fields: string[]): boolean {
+    const amountPatterns = ['amount', 'payment', 'balance', 'total', 'cost', 'price'];
+    return fields.some(field => 
+      amountPatterns.some(pattern => 
+        field.toLowerCase().includes(pattern)
+      )
+    );
+  },
+
+  validateRow(row: any, dataType: string, rowNumber: number): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  } {
+    const result = {
+      isValid: true,
+      errors: [] as string[],
+      warnings: [] as string[]
+    };
+
+    if (!row || typeof row !== 'object') {
+      result.isValid = false;
+      result.errors.push(`Row ${rowNumber}: Invalid row data`);
+      return result;
     }
 
-    if (dataType === 'properties' && issues.some(i => i.field === 'address')) {
-      suggestedFixes.push('Ensure address column is properly mapped and contains valid addresses');
+    // Basic validation based on data type
+    switch (dataType) {
+      case 'properties':
+        if (!this.getAddressValue(row)) {
+          result.isValid = false;
+          result.errors.push(`Row ${rowNumber}: Address is required`);
+        }
+        break;
+        
+      case 'owners':
+        if (!this.getNameValue(row)) {
+          result.isValid = false;
+          result.errors.push(`Row ${rowNumber}: Name is required`);
+        }
+        
+        const email = this.getEmailValue(row);
+        if (email && !this.isValidEmail(email)) {
+          result.warnings.push(`Row ${rowNumber}: Invalid email format`);
+        }
+        break;
+        
+      case 'financial':
+        const amount = this.getAmountValue(row);
+        if (!amount && amount !== 0) {
+          result.isValid = false;
+          result.errors.push(`Row ${rowNumber}: Amount is required`);
+        } else if (isNaN(parseFloat(String(amount)))) {
+          result.isValid = false;
+          result.errors.push(`Row ${rowNumber}: Amount must be a valid number`);
+        }
+        break;
     }
+
+    return result;
+  },
+
+  getAddressValue(row: any): string | null {
+    const addressFields = ['address', 'street_address', 'property_address', 'full_address', 'street'];
+    for (const field of addressFields) {
+      const value = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+      if (value && String(value).trim()) {
+        return String(value).trim();
+      }
+    }
+    return null;
+  },
+
+  getNameValue(row: any): string | null {
+    const nameFields = ['name', 'owner_name', 'resident_name', 'full_name'];
+    for (const field of nameFields) {
+      const value = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+      if (value && String(value).trim()) {
+        return String(value).trim();
+      }
+    }
+    
+    // Try combining first and last name
+    const firstName = row.first_name || row.First_Name || row.FIRST_NAME;
+    const lastName = row.last_name || row.Last_Name || row.LAST_NAME;
+    if (firstName || lastName) {
+      return `${firstName || ''} ${lastName || ''}`.trim();
+    }
+    
+    return null;
+  },
+
+  getEmailValue(row: any): string | null {
+    const emailFields = ['email', 'email_address', 'contact_email'];
+    for (const field of emailFields) {
+      const value = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+      if (value && String(value).trim()) {
+        return String(value).trim();
+      }
+    }
+    return null;
+  },
+
+  getAmountValue(row: any): number | null {
+    const amountFields = ['amount', 'payment_amount', 'balance', 'total', 'cost', 'price'];
+    for (const field of amountFields) {
+      const value = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+      if (value !== null && value !== undefined && value !== '') {
+        const numValue = parseFloat(String(value).replace(/[$,]/g, ''));
+        if (!isNaN(numValue)) {
+          return numValue;
+        }
+      }
+    }
+    return null;
   },
 
   isValidEmail(email: string): boolean {
