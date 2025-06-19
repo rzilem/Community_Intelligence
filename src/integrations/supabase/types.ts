@@ -2462,6 +2462,71 @@ export type Database = {
         }
         Relationships: []
       }
+      document_import_progress: {
+        Row: {
+          association_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_properties: number | null
+          current_stage: string | null
+          error_details: Json | null
+          failed_imports: number | null
+          id: string
+          processed_files: number | null
+          session_id: string
+          stage_progress: number | null
+          successful_imports: number | null
+          total_files: number | null
+          updated_at: string | null
+          user_id: string | null
+          warnings: Json | null
+        }
+        Insert: {
+          association_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_properties?: number | null
+          current_stage?: string | null
+          error_details?: Json | null
+          failed_imports?: number | null
+          id?: string
+          processed_files?: number | null
+          session_id: string
+          stage_progress?: number | null
+          successful_imports?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          warnings?: Json | null
+        }
+        Update: {
+          association_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_properties?: number | null
+          current_stage?: string | null
+          error_details?: Json | null
+          failed_imports?: number | null
+          id?: string
+          processed_files?: number | null
+          session_id?: string
+          stage_progress?: number | null
+          successful_imports?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_import_progress_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_processing_queue: {
         Row: {
           ai_classification: Json | null
@@ -8396,6 +8461,14 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
+      bulk_import_documents: {
+        Args: {
+          p_documents: Json
+          p_association_id: string
+          p_session_id?: string
+        }
+        Returns: Json
+      }
       calculate_campaign_metrics: {
         Args: { campaign_uuid: string }
         Returns: {
@@ -8740,6 +8813,10 @@ export type Database = {
       user_is_association_admin: {
         Args: { association_uuid: string }
         Returns: boolean
+      }
+      validate_document_upload: {
+        Args: { file_size_bytes: number; file_type?: string }
+        Returns: Json
       }
       validate_resident_preferences: {
         Args: { preferences: Json }
