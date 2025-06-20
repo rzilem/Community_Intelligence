@@ -77,6 +77,10 @@ export interface Lead {
   uploaded_files?: LeadAttachment[] | any;
   additional_requirements?: string;
   html_content?: string;
+
+  // AI extraction metadata
+  ai_confidence?: Record<string, number>;
+  ai_generated_fields?: string[];
 }
 
 // Import the LeadColumn type

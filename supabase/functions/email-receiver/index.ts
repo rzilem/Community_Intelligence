@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SecurityMiddleware } from "../shared/security-middleware.ts";
 import { sanitizeInput, validateEmail } from "../shared/validation-utils.ts";
+import { processEmail } from "./services/email-processor.ts";
+import { createLead } from "./services/lead-service.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -130,18 +132,35 @@ serve(async (req) => {
 
     console.log('Email processed successfully:', trackingNumber);
 
+    // Extract lead details from the email and store in the database
+    const processedLead = await processEmail(sanitizedEmail);
+    const lead = await createLead(processedLead);
+
+    await supabase
+      .from('communications_log')
+      .update({
+        status: 'completed',
+        metadata: {
+          ...logData.metadata,
+          lead_id: lead.id,
+          processed_successfully: true
+        }
+      })
+      .eq('tracking_number', trackingNumber);
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         tracking_number: trackingNumber,
-        message: 'Email processed successfully' 
+        lead,
+        message: 'Email processed successfully'
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
+      {
+        headers: {
+          ...corsHeaders,
           ...SecurityMiddleware.getSecurityHeaders(),
           'Content-Type': 'application/json'
-        } 
+        }
       }
     );
 

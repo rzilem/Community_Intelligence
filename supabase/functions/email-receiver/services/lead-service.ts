@@ -19,10 +19,17 @@ export async function createLead(leadData: any) {
     const trackingNumber = await getNextTrackingNumber();
     
     // Add tracking number to lead data
-    const leadWithTracking = {
+    const aiConfidence = leadData._aiConfidence;
+    const leadWithTracking: Record<string, any> = {
       ...leadData,
-      tracking_number: trackingNumber
+      tracking_number: trackingNumber,
     };
+
+    if (aiConfidence) {
+      leadWithTracking.ai_confidence = aiConfidence;
+      leadWithTracking.ai_generated_fields = Object.keys(aiConfidence);
+      delete leadWithTracking._aiConfidence;
+    }
     
     const { data: lead, error } = await supabase
       .from('leads')
