@@ -28,7 +28,7 @@ export const useEnhancedInvoiceData = ({ invoice }: UseEnhancedInvoiceDataProps)
         currency: 'USD'
       }).format(invoice.amount),
       hasAttachments: !!(invoice.pdf_url || invoice.html_content),
-      hasAIData: !!(invoice.email_content)
+      hasAIData: !!(invoice.ai_confidence)
     };
   }, [invoice]);
 
@@ -40,6 +40,7 @@ export const useEnhancedInvoiceData = ({ invoice }: UseEnhancedInvoiceDataProps)
     error,
     setError,
     clearError,
-    invoiceMetadata
+    invoiceMetadata,
+    aiConfidence: invoice.ai_confidence
   };
 };

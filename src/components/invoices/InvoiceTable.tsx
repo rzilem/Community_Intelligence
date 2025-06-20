@@ -41,9 +41,8 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   }
 
   const isAIAssisted = (invoice: Invoice, field: keyof Invoice) => {
-    if (!invoice.html_content) return false;
-    
-    return !!invoice[field] && field !== 'html_content';
+    if (!invoice.ai_confidence) return false;
+    return invoice.ai_confidence[field as string] !== undefined;
   };
 
   return (
@@ -57,6 +56,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Due Date</TableHead>
+            <TableHead>Extraction</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -142,6 +142,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                   )}
                 </div>
               </TableCell>
+              <TableCell>{invoice.ai_processing_status || 'pending'}</TableCell>
               <TableCell>
                 <InvoiceStatusBadge status={invoice.status} />
               </TableCell>

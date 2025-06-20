@@ -152,11 +152,16 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
           
           // Store AI confidence data for future reference
           if (aiExtractedData._aiConfidence) {
-            invoice._aiConfidence = aiExtractedData._aiConfidence;
+            invoice.ai_confidence = aiExtractedData._aiConfidence;
+            invoice.ai_processing_status = 'completed';
+            invoice.ai_processed_at = new Date().toISOString();
           }
         }
       } catch (aiError) {
         console.error(`[${requestId}] AI analysis error: ${aiError.message}`);
+        // Mark AI processing as failed but continue with traditional extraction
+        invoice.ai_processing_status = 'failed';
+        invoice.ai_processed_at = new Date().toISOString();
         // Continue with traditional extraction only, don't fail the process
       }
     }
