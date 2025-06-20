@@ -17,7 +17,7 @@ const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 interface ExtractRequest {
   content: string;
-  contentType: 'invoice' | 'homeowner-request' | 'lead';
+  contentType: 'invoice' | 'homeowner-request' | 'lead' | 'message-analysis';
   metadata?: Record<string, any>;
   apiKey?: string; // Optional API key from request body
 }
@@ -210,6 +210,19 @@ Return the data as a valid JSON object with these keys:
 
 Email Subject: ${metadata.subject || ''}
 From: ${metadata.from || ''}
+`;
+
+    case 'message-analysis':
+      return `
+Analyze the following community message or request and return a JSON object with these keys:
+
+- category: The general topic such as maintenance, billing, complaint, emergency, announcement or general
+- urgency: low | normal | high | urgent
+- sentiment: A number from -1 (very negative) to 1 (very positive)
+- suggested_responses: An array of up to 2 short suggested replies
+
+Message Subject: ${metadata.subject || ''}
+Sender: ${metadata.from || ''}
 `;
 
     default:

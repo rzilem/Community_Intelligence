@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getNextTrackingNumber, registerCommunication } from '@/services/tracking-service';
+import { communicationIntelligenceHub } from '@/services/ai-workflow/communication-intelligence-hub';
 
 export interface MessageData {
   subject: string;
@@ -71,11 +72,21 @@ export const messageService = {
       // In a real implementation, this would be handled by a background job
       await supabase
         .from('communications_log')
-        .update({ 
+        .update({
           status: 'completed',
           processed_at: new Date().toISOString()
         })
         .eq('id', logEntry.id);
+
+      try {
+        await communicationIntelligenceHub.analyzeMessage(
+          messageData.content,
+          messageData.association_id,
+          logEntry.id
+        );
+      } catch (analysisError) {
+        console.error('AI analysis failed:', analysisError);
+      }
 
       console.log('Message sent successfully with tracking number:', trackingNumber);
       return { success: true, trackingNumber };

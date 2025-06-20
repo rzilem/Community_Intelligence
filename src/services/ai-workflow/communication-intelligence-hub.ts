@@ -69,56 +69,43 @@ export class CommunicationIntelligenceHub {
   }
 
   private async performAIAnalysis(messageContent: string): Promise<any> {
-    // Simulate AI analysis - replace with actual OpenAI/AI service integration
-    const words = messageContent.toLowerCase();
-    
-    let category = 'general';
-    let urgency: 'low' | 'normal' | 'high' | 'urgent' = 'normal';
-    let sentiment = 0;
+    try {
+      const { data, error } = await supabase.functions.invoke('openai-extractor', {
+        body: {
+          content: messageContent,
+          contentType: 'message-analysis'
+        }
+      });
 
-    // Simple keyword-based analysis (replace with real AI)
-    if (words.includes('urgent') || words.includes('emergency')) {
-      urgency = 'urgent';
-      category = 'emergency';
-    } else if (words.includes('complaint') || words.includes('problem')) {
-      category = 'complaint';
-      urgency = 'high';
-      sentiment = -0.5;
-    } else if (words.includes('maintenance') || words.includes('repair')) {
-      category = 'maintenance';
-      urgency = 'normal';
-    } else if (words.includes('payment') || words.includes('fee')) {
-      category = 'billing';
-      urgency = 'normal';
-    }
-
-    // Calculate sentiment (simple approach)
-    const positiveWords = ['thank', 'good', 'great', 'excellent', 'pleased'];
-    const negativeWords = ['bad', 'terrible', 'awful', 'angry', 'frustrated'];
-    
-    positiveWords.forEach(word => {
-      if (words.includes(word)) sentiment += 0.2;
-    });
-    
-    negativeWords.forEach(word => {
-      if (words.includes(word)) sentiment -= 0.3;
-    });
-
-    sentiment = Math.max(-1, Math.min(1, sentiment));
-
-    return {
-      category,
-      urgency,
-      sentiment,
-      suggestedResponses: this.generateSuggestedResponses(category, urgency),
-      routingRules: this.generateRoutingRules(category, urgency),
-      confidence: {
-        overall: 0.8,
-        category: 0.75,
-        sentiment: 0.7,
-        urgency: 0.85
+      if (error) {
+        throw error;
       }
-    };
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'AI extraction failed');
+      }
+
+      const extracted = data.extractedData || {};
+
+      return {
+        category: extracted.category || 'general',
+        urgency: extracted.urgency || 'normal',
+        sentiment: typeof extracted.sentiment === 'number' ? extracted.sentiment : 0,
+        suggestedResponses: extracted.suggested_responses || [],
+        routingRules: extracted.routing_rules || {},
+        confidence: data.confidence || {}
+      };
+    } catch (err) {
+      devLog.error('AI extraction failed', err);
+      return {
+        category: 'general',
+        urgency: 'normal',
+        sentiment: 0,
+        suggestedResponses: [],
+        routingRules: {},
+        confidence: {}
+      };
+    }
   }
 
   private generateSuggestedResponses(category: string, urgency: string): string[] {
