@@ -9,7 +9,6 @@ import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
 import { useImportState } from '@/hooks/import-export/useImportState';
-import { useFileUploadHandler } from '@/hooks/import-export/useFileUploadHandler';
 
 const DataImportExport: React.FC = () => {
   const {
@@ -32,13 +31,12 @@ const DataImportExport: React.FC = () => {
     importDataWithMapping
   } = useImportState();
 
-  const { handleFileUpload } = useFileUploadHandler({
-    setImportFile,
-    setImportData,
-    setImportType,
-    validateData,
-    selectedAssociationId
-  });
+  // Simple file upload handler for legacy CSV/Excel imports
+  const handleFileUpload = (file: File) => {
+    setImportFile(file);
+    // For document imports, the enhanced uploader handles everything
+    // For CSV/Excel, we'd need additional processing
+  };
 
   return (
     <PageTemplate 

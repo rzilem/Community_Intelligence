@@ -1,137 +1,161 @@
 
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-import { devLog } from '@/utils/dev-logger';
+import { DocumentStorageResult, ProcessingProgress } from './types/document-types';
 import { enhancedPropertyMatcher } from './enhanced-property-matcher';
 import { intelligentUnitParser } from './intelligent-unit-parser';
-import { DocumentStorageResult, ProcessingProgress, DocumentUploadInfo, AssociationInfo } from './types/document-types';
+import { devLog } from '@/utils/dev-logger';
 
-export type { DocumentStorageResult, ProcessingProgress };
+interface ProgressCallback {
+  (progress: ProcessingProgress): void;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  message: string;
+  error?: string;
+  max_size_mb?: number;
+  file_size_mb?: number;
+}
 
 class EnhancedDocumentStorageProcessor {
-  private progressCallback?: (progress: ProcessingProgress) => void;
+  private progressCallback: ProgressCallback | null = null;
   private cancelled = false;
-  private sessionId = '';
 
-  setProgressCallback(callback: (progress: ProcessingProgress) => void) {
+  setProgressCallback(callback: ProgressCallback | null) {
     this.progressCallback = callback;
   }
 
-  private updateProgress(update: Partial<ProcessingProgress>) {
+  private updateProgress(progress: ProcessingProgress) {
     if (this.progressCallback && !this.cancelled) {
-      const defaultProgress: ProcessingProgress = {
+      this.progressCallback(progress);
+    }
+  }
+
+  cancel() {
+    this.cancelled = true;
+    devLog.info('Enhanced document storage processor cancelled');
+  }
+
+  async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
+    devLog.info('Starting enhanced hierarchical ZIP processing:', zipFile.name);
+    
+    const startTime = Date.now();
+    this.cancelled = false;
+
+    try {
+      // Stage 1: Analyzing ZIP structure
+      this.updateProgress({
         stage: 'analyzing',
-        message: '',
-        progress: 0,
+        message: 'Analyzing ZIP file structure...',
+        progress: 5,
         filesProcessed: 0,
         totalFiles: 0,
         unitsProcessed: 0,
         totalUnits: 0
-      };
-      this.progressCallback({ ...defaultProgress, ...update });
-    }
-  }
-
-  async processHierarchicalZip(zipFile: File): Promise<DocumentStorageResult> {
-    this.cancelled = false;
-    this.sessionId = crypto.randomUUID();
-    const startTime = Date.now();
-
-    devLog.info('Starting enhanced document storage processing:', zipFile.name);
-
-    try {
-      // Stage 1: Analyze ZIP structure
-      this.updateProgress({
-        stage: 'analyzing',
-        message: 'Analyzing ZIP file structure...',
-        progress: 5
       });
 
       const zip = await JSZip.loadAsync(zipFile);
-      const files = Object.keys(zip.files).filter(name => !zip.files[name].dir);
+      const files = Object.values(zip.files).filter(file => !file.dir);
       
       if (files.length === 0) {
-        throw new Error('No files found in ZIP archive');
+        throw new Error('ZIP file contains no documents');
       }
 
-      const documentsToUpload = this.analyzeFileStructure(files, zip);
-      const associationInfo = await this.findOrCreateAssociation(documentsToUpload);
+      devLog.info(`Found ${files.length} files in ZIP`);
+
+      // Extract association name from ZIP structure
+      const associationName = this.extractAssociationName(files);
+      devLog.info('Extracted association name:', associationName);
 
       this.updateProgress({
         stage: 'analyzing',
-        message: `Found ${files.length} files across ${documentsToUpload.length} units`,
+        message: `Found ${files.length} files. Creating association: ${associationName}`,
         progress: 15,
-        totalFiles: files.length
+        filesProcessed: 0,
+        totalFiles: files.length,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
 
-      // Stage 2: Create properties
+      // Stage 2: Create or find association
+      const association = await this.createOrFindAssociation(associationName);
+      
+      // Stage 3: Analyze file structure and create properties
       this.updateProgress({
         stage: 'creating_properties',
-        message: 'Creating association and properties...',
-        progress: 20
+        message: 'Analyzing file structure and creating properties...',
+        progress: 25,
+        filesProcessed: 0,
+        totalFiles: files.length,
+        unitsProcessed: 0,
+        totalUnits: 0
       });
 
-      const existingProperties = await enhancedPropertyMatcher.loadExistingProperties(associationInfo.id);
-      const createdProperties = await this.createPropertiesFromDocuments(
-        documentsToUpload, 
-        associationInfo.id, 
-        existingProperties
+      const { documentMappings, createdProperties } = await this.analyzeAndCreateProperties(
+        files,
+        association.id
       );
 
-      // Stage 3: Upload documents
+      if (this.cancelled) {
+        throw new Error('Process was cancelled');
+      }
+
+      // Stage 4: Upload documents
       this.updateProgress({
         stage: 'uploading',
-        message: 'Processing and uploading documents...',
-        progress: 40
+        message: 'Uploading documents to storage...',
+        progress: 50,
+        filesProcessed: 0,
+        totalFiles: files.length,
+        unitsProcessed: createdProperties.length,
+        totalUnits: createdProperties.length
       });
 
       const uploadResults = await this.uploadDocuments(
-        documentsToUpload,
-        associationInfo.id,
-        zip,
+        documentMappings,
+        association.id,
         files.length
       );
 
       // Complete
-      const result: DocumentStorageResult = {
-        success: true,
-        associationName: associationInfo.name,
-        associationId: associationInfo.id,
-        documentsImported: uploadResults.successful,
-        documentsSkipped: uploadResults.skipped,
-        totalFiles: files.length,
-        createdProperties: createdProperties.map(p => ({
-          unitNumber: p.unit_number || 'Unknown',
-          address: p.address || '',
-          id: p.id
-        })),
-        createdOwners: [], // Enhanced feature for future implementation
-        errors: uploadResults.errors,
-        warnings: uploadResults.warnings,
-        processingTime: Date.now() - startTime
-      };
-
       this.updateProgress({
         stage: 'complete',
-        message: `Import complete! ${uploadResults.successful} documents imported successfully.`,
+        message: 'Enhanced import completed successfully!',
         progress: 100,
-        filesProcessed: files.length,
-        totalFiles: files.length
+        filesProcessed: uploadResults.successful,
+        totalFiles: files.length,
+        unitsProcessed: createdProperties.length,
+        totalUnits: createdProperties.length
       });
 
-      await this.trackImportProgress(associationInfo.id, result);
+      const processingTime = Date.now() - startTime;
 
-      devLog.info('Enhanced document storage processing completed:', result);
-      return result;
+      return {
+        success: uploadResults.successful > 0,
+        associationName: association.name,
+        associationId: association.id,
+        documentsImported: uploadResults.successful,
+        documentsSkipped: uploadResults.failed,
+        totalFiles: files.length,
+        createdProperties,
+        createdOwners: [],
+        errors: uploadResults.errors,
+        warnings: uploadResults.warnings,
+        processingTime
+      };
 
     } catch (error) {
-      devLog.error('Enhanced document storage processing failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      devLog.error('Enhanced ZIP processing failed:', error);
       
       this.updateProgress({
         stage: 'error',
-        message: `Import failed: ${errorMessage}`,
+        message: `Enhanced import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         progress: 0,
+        filesProcessed: 0,
+        totalFiles: 0,
+        unitsProcessed: 0,
+        totalUnits: 0,
         canResume: true
       });
 
@@ -144,277 +168,310 @@ class EnhancedDocumentStorageProcessor {
         totalFiles: 0,
         createdProperties: [],
         createdOwners: [],
-        errors: [errorMessage],
+        errors: [error instanceof Error ? error.message : 'Unknown error occurred'],
         warnings: [],
         processingTime: Date.now() - startTime
       };
     }
   }
 
-  private analyzeFileStructure(files: string[], zip: JSZip): DocumentUploadInfo[] {
-    const documentsToUpload: DocumentUploadInfo[] = [];
-
-    for (const filePath of files) {
-      const file = zip.files[filePath];
-      if (!file || file.dir) continue;
-
-      const parsedInfo = intelligentUnitParser.parseUnitFromPath(filePath);
-      
-      documentsToUpload.push({
-        file: new File([file.async('blob')], filePath.split('/').pop() || filePath),
-        folderPath: filePath,
-        unitNumber: parsedInfo?.unitNumber,
-        address: parsedInfo?.streetAddress,
-        category: this.categorizeDocument(filePath)
-      });
-    }
-
-    return documentsToUpload;
+  async resumeProcessing(zipFile: File): Promise<DocumentStorageResult> {
+    devLog.info('Resuming enhanced document processing');
+    // For now, just restart the process
+    // In the future, we could implement actual resume functionality
+    return this.processHierarchicalZip(zipFile);
   }
 
-  private async findOrCreateAssociation(documents: DocumentUploadInfo[]): Promise<AssociationInfo> {
-    // Extract association name from first document's path
-    const firstPath = documents[0]?.folderPath || '';
-    const associationName = intelligentUnitParser.extractAssociationName(firstPath) || 'Imported Association';
+  private extractAssociationName(files: JSZip.JSZipObject[]): string {
+    if (files.length === 0) return 'Imported Association';
 
-    // Try to find existing association
+    // Get the first file's path and extract the root folder name
+    const firstFilePath = files[0].name;
+    const pathParts = firstFilePath.split('/');
+    
+    if (pathParts.length > 1) {
+      return pathParts[0] || 'Imported Association';
+    }
+
+    return 'Imported Association';
+  }
+
+  private async createOrFindAssociation(name: string): Promise<{ id: string; name: string }> {
+    devLog.info('Creating or finding association:', name);
+
+    // First, try to find existing association
     const { data: existing } = await supabase
       .from('associations')
       .select('id, name')
-      .ilike('name', `%${associationName}%`)
-      .limit(1)
+      .eq('name', name)
       .single();
 
     if (existing) {
       devLog.info('Found existing association:', existing);
-      return { id: existing.id, name: existing.name, created: false };
+      return existing;
     }
 
     // Create new association
     const { data: newAssociation, error } = await supabase
       .from('associations')
       .insert({
-        name: associationName,
+        name,
         status: 'active',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select('id, name')
       .single();
 
-    if (error || !newAssociation) {
-      throw new Error(`Failed to create association: ${error?.message}`);
+    if (error) {
+      devLog.error('Failed to create association:', error);
+      throw new Error(`Failed to create association: ${error.message}`);
     }
 
     devLog.info('Created new association:', newAssociation);
-    return { id: newAssociation.id, name: newAssociation.name, created: true };
+    return newAssociation;
   }
 
-  private async createPropertiesFromDocuments(
-    documents: DocumentUploadInfo[],
-    associationId: string,
-    existingProperties: any[]
-  ): Promise<any[]> {
-    const createdProperties: any[] = [];
-    const processedUnits = new Set<string>();
+  private async analyzeAndCreateProperties(
+    files: JSZip.JSZipObject[],
+    associationId: string
+  ): Promise<{
+    documentMappings: Array<{
+      file: JSZip.JSZipObject;
+      propertyId: string | null;
+      category: string;
+    }>;
+    createdProperties: Array<{
+      unitNumber: string;
+      address: string;
+      id: string;
+    }>;
+  }> {
+    const documentMappings: Array<{
+      file: JSZip.JSZipObject;
+      propertyId: string | null;
+      category: string;
+    }> = [];
 
-    for (const doc of documents) {
-      if (!doc.unitNumber || processedUnits.has(doc.unitNumber)) continue;
+    const createdProperties: Array<{
+      unitNumber: string;
+      address: string;
+      id: string;
+    }> = [];
 
-      try {
-        const matchResult = await enhancedPropertyMatcher.findOrCreateProperty(
-          doc.folderPath,
-          associationId,
-          existingProperties
-        );
+    // Load existing properties
+    const existingProperties = await enhancedPropertyMatcher.loadExistingProperties(associationId);
 
-        if (matchResult.created && matchResult.property) {
-          createdProperties.push(matchResult.property);
-          processedUnits.add(doc.unitNumber);
-        }
-      } catch (error) {
-        devLog.error('Failed to create property for unit:', doc.unitNumber, error);
+    // Group files by folder path to identify properties
+    const folderGroups = new Map<string, JSZip.JSZipObject[]>();
+    
+    for (const file of files) {
+      const folderPath = file.name.substring(0, file.name.lastIndexOf('/')) || 'General';
+      if (!folderGroups.has(folderPath)) {
+        folderGroups.set(folderPath, []);
       }
+      folderGroups.get(folderPath)!.push(file);
     }
 
-    return createdProperties;
-  }
-
-  private async uploadDocuments(
-    documents: DocumentUploadInfo[],
-    associationId: string,
-    zip: JSZip,
-    totalFiles: number
-  ): Promise<{ successful: number; skipped: number; errors: string[]; warnings: string[] }> {
-    let successful = 0;
-    let skipped = 0;
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    for (let i = 0; i < documents.length; i++) {
+    // Process each folder group
+    for (const [folderPath, folderFiles] of folderGroups) {
       if (this.cancelled) break;
 
-      const doc = documents[i];
-      const progress = 40 + (i / documents.length) * 50;
+      devLog.info('Processing folder group:', folderPath);
 
-      this.updateProgress({
-        stage: 'uploading',
-        message: `Uploading ${doc.folderPath}...`,
-        progress,
-        filesProcessed: i + 1,
-        totalFiles
-      });
+      // Try to match or create property for this folder
+      const matchResult = await enhancedPropertyMatcher.findOrCreateProperty(
+        folderPath,
+        associationId,
+        existingProperties
+      );
 
-      try {
-        const zipFile = zip.files[doc.folderPath];
-        if (!zipFile) {
-          skipped++;
-          continue;
-        }
+      if (matchResult.property && matchResult.created) {
+        createdProperties.push({
+          unitNumber: matchResult.property.unit_number,
+          address: matchResult.property.address,
+          id: matchResult.property.id
+        });
+      }
 
-        const fileBlob = await zipFile.async('blob');
-        const fileSizeInBytes = fileBlob.size;
-
-        // Validate file size (500MB limit)
-        const validation = await this.validateFileUpload(fileSizeInBytes);
-        if (!validation.valid) {
-          warnings.push(`${doc.folderPath}: ${validation.message}`);
-          skipped++;
-          continue;
-        }
-
-        // Upload to Supabase storage
-        const fileName = `${associationId}/${doc.folderPath}`;
-        const { error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(fileName, fileBlob, {
-            upsert: true,
-            contentType: this.getContentType(doc.folderPath)
-          });
-
-        if (uploadError) {
-          errors.push(`Upload failed for ${doc.folderPath}: ${uploadError.message}`);
-          skipped++;
-          continue;
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('documents')
-          .getPublicUrl(fileName);
-
-        // Save document record
-        await this.saveDocumentRecord(doc, associationId, urlData.publicUrl, fileSizeInBytes);
-        successful++;
-
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        errors.push(`Failed to process ${doc.folderPath}: ${errorMessage}`);
-        skipped++;
+      // Map all files in this folder to the property
+      for (const file of folderFiles) {
+        documentMappings.push({
+          file,
+          propertyId: matchResult.property?.id || null,
+          category: this.categorizeDocument(file.name)
+        });
       }
     }
 
-    return { successful, skipped, errors, warnings };
+    devLog.info(`Created ${createdProperties.length} properties, mapped ${documentMappings.length} files`);
+
+    return { documentMappings, createdProperties };
   }
 
-  private async validateFileUpload(fileSizeInBytes: number): Promise<{ valid: boolean; message: string }> {
-    const { data } = await supabase.rpc('validate_document_upload', {
-      file_size_bytes: fileSizeInBytes
-    });
-
-    return {
-      valid: data?.valid || false,
-      message: data?.message || 'File validation failed'
-    };
-  }
-
-  private async saveDocumentRecord(
-    doc: DocumentUploadInfo,
-    associationId: string,
-    publicUrl: string,
-    fileSize: number
-  ): Promise<void> {
-    const { error } = await supabase
-      .from('documents')
-      .insert({
-        association_id: associationId,
-        name: doc.folderPath.split('/').pop() || 'Unknown',
-        url: publicUrl,
-        file_type: this.getContentType(doc.folderPath),
-        file_size: fileSize,
-        category: doc.category,
-        folder_path: doc.folderPath,
-        uploaded_by: (await supabase.auth.getUser()).data.user?.id
-      });
-
-    if (error) {
-      throw new Error(`Failed to save document record: ${error.message}`);
-    }
-  }
-
-  private categorizeDocument(filePath: string): string {
-    const fileName = filePath.toLowerCase();
+  private categorizeDocument(filename: string): string {
+    const name = filename.toLowerCase();
     
-    if (fileName.includes('lease')) return 'lease';
-    if (fileName.includes('insurance')) return 'insurance';
-    if (fileName.includes('inspection')) return 'inspection';
-    if (fileName.includes('maintenance')) return 'maintenance';
-    if (fileName.includes('bylaw')) return 'legal';
-    if (fileName.includes('financial') || fileName.includes('statement')) return 'financial';
+    if (name.includes('lease')) return 'lease';
+    if (name.includes('insurance')) return 'insurance';
+    if (name.includes('inspection')) return 'inspection';
+    if (name.includes('violation') || name.includes('notice')) return 'violation';
+    if (name.includes('bylaw') || name.includes('rule')) return 'governing_documents';
+    if (name.includes('financial') || name.includes('budget')) return 'financial';
     
     return 'general';
   }
 
-  private getContentType(filePath: string): string {
-    const ext = filePath.split('.').pop()?.toLowerCase();
-    
-    switch (ext) {
-      case 'pdf': return 'application/pdf';
-      case 'doc': return 'application/msword';
-      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      case 'jpg': case 'jpeg': return 'image/jpeg';
-      case 'png': return 'image/png';
-      case 'txt': return 'text/plain';
-      default: return 'application/octet-stream';
-    }
-  }
+  private async uploadDocuments(
+    documentMappings: Array<{
+      file: JSZip.JSZipObject;
+      propertyId: string | null;
+      category: string;
+    }>,
+    associationId: string,
+    totalFiles: number
+  ): Promise<{
+    successful: number;
+    failed: number;
+    errors: string[];
+    warnings: string[];
+  }> {
+    let successful = 0;
+    let failed = 0;
+    const errors: string[] = [];
+    const warnings: string[] = [];
 
-  private async trackImportProgress(associationId: string, result: DocumentStorageResult): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('document_import_progress')
-        .insert({
-          session_id: this.sessionId,
-          association_id: associationId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          total_files: result.totalFiles,
-          processed_files: result.totalFiles,
-          successful_imports: result.documentsImported,
-          failed_imports: result.documentsSkipped,
-          created_properties: result.createdProperties.length,
-          current_stage: 'complete',
-          stage_progress: 100,
-          error_details: result.errors,
-          warnings: result.warnings,
-          completed_at: new Date().toISOString()
+    for (let i = 0; i < documentMappings.length; i++) {
+      if (this.cancelled) break;
+
+      const mapping = documentMappings[i];
+      
+      try {
+        // Get file content as blob
+        const fileBlob = await mapping.file.async('blob');
+        
+        // Validate file size (500MB limit)
+        const validationResult = await this.validateDocumentSize(fileBlob.size);
+        if (!validationResult.valid) {
+          warnings.push(`Skipped ${mapping.file.name}: ${validationResult.message}`);
+          failed++;
+          continue;
+        }
+
+        // Upload to Supabase storage
+        const fileName = `${Date.now()}_${mapping.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const filePath = `${associationId}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, fileBlob, {
+            contentType: this.getContentType(mapping.file.name),
+            upsert: false
+          });
+
+        if (uploadError) {
+          errors.push(`Upload failed for ${mapping.file.name}: ${uploadError.message}`);
+          failed++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+
+        // Save document record to database
+        const { error: dbError } = await supabase
+          .from('documents')
+          .insert({
+            association_id: associationId,
+            property_id: mapping.propertyId,
+            name: mapping.file.name,
+            url: publicUrl,
+            file_type: this.getFileExtension(mapping.file.name),
+            file_size: fileBlob.size,
+            category: mapping.category,
+            folder_path: mapping.file.name.substring(0, mapping.file.name.lastIndexOf('/')) || 'General',
+            uploaded_by: (await supabase.auth.getUser()).data.user?.id
+          });
+
+        if (dbError) {
+          errors.push(`Database save failed for ${mapping.file.name}: ${dbError.message}`);
+          failed++;
+        } else {
+          successful++;
+        }
+
+        // Update progress
+        this.updateProgress({
+          stage: 'uploading',
+          message: `Uploaded ${successful + failed}/${totalFiles} files...`,
+          progress: 50 + (((successful + failed) / totalFiles) * 45),
+          filesProcessed: successful + failed,
+          totalFiles,
+          unitsProcessed: 0,
+          totalUnits: 0
         });
 
-      if (error) {
-        devLog.error('Failed to track import progress:', error);
+      } catch (error) {
+        errors.push(`Processing failed for ${mapping.file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        failed++;
       }
+    }
+
+    return { successful, failed, errors, warnings };
+  }
+
+  private async validateDocumentSize(fileSizeBytes: number): Promise<ValidationResult> {
+    try {
+      const { data } = await supabase.rpc('validate_document_upload', {
+        file_size_bytes: fileSizeBytes
+      });
+      
+      // Type assertion since we know the expected structure
+      const result = data as ValidationResult;
+      return result;
     } catch (error) {
-      devLog.error('Error tracking import progress:', error);
+      // Fallback validation if RPC fails
+      const maxSizeMB = 500;
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+      
+      if (fileSizeBytes > maxSizeBytes) {
+        return {
+          valid: false,
+          message: `File size (${(fileSizeBytes / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of ${maxSizeMB} MB`,
+          error: 'file_too_large',
+          max_size_mb: maxSizeMB,
+          file_size_mb: Number((fileSizeBytes / 1024 / 1024).toFixed(2))
+        };
+      }
+      
+      return {
+        valid: true,
+        message: 'File size acceptable',
+        file_size_mb: Number((fileSizeBytes / 1024 / 1024).toFixed(2))
+      };
     }
   }
 
-  async resumeProcessing(zipFile: File): Promise<DocumentStorageResult> {
-    // For now, restart the process - enhanced resume logic can be added later
-    return this.processHierarchicalZip(zipFile);
+  private getContentType(filename: string): string {
+    const ext = filename.toLowerCase().split('.').pop();
+    const contentTypes: Record<string, string> = {
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'txt': 'text/plain'
+    };
+    return contentTypes[ext || ''] || 'application/octet-stream';
   }
 
-  cancel() {
-    this.cancelled = true;
-    devLog.info('Enhanced document storage processing cancelled');
+  private getFileExtension(filename: string): string {
+    return filename.toLowerCase().split('.').pop() || 'unknown';
   }
 }
 
 export const enhancedDocumentStorageProcessor = new EnhancedDocumentStorageProcessor();
+export { DocumentStorageResult, ProcessingProgress };

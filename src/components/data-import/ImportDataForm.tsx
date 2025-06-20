@@ -10,14 +10,14 @@ import { Upload } from 'lucide-react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 
 interface ImportDataFormProps {
-  onFileUpload: (file: File, parsedData: any[], type: string) => void;
-  associationId: string;
+  associationId: string | null;
+  onImportAnother: () => void;
   onAssociationChange: (associationId: string) => void;
 }
 
 const ImportDataForm: React.FC<ImportDataFormProps> = ({ 
-  onFileUpload, 
   associationId, 
+  onImportAnother,
   onAssociationChange 
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,8 +40,9 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({
         
         console.log('Parsed data:', parsedData.slice(0, 2)); // Log first two items for debugging
         
-        // Pass the file, parsed data, and type to the parent component
-        onFileUpload(selectedFile, parsedData, importType);
+        // For now, just show success message - integration with actual import will be handled elsewhere
+        toast.success('File parsed successfully. Import functionality will be integrated separately.');
+        
       } catch (error) {
         console.error('Error parsing file:', error);
         toast.error(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -81,7 +82,14 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({
             selectedFile={selectedFile} 
           />
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onImportAnother}
+            >
+              Reset
+            </Button>
             <Button
               type="submit"
               disabled={!selectedFile || !importType || !associationId || isProcessing}
