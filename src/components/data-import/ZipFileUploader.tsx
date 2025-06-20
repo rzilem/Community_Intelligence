@@ -1,34 +1,35 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileArchive, Loader2 } from 'lucide-react';
 import { SmartImportErrorBoundary } from './SmartImportErrorBoundary';
 
-interface ZipFileUploaderProps {
-  onZipSelected: (file: File) => void;
-  selectedFile: File | null;
-  onSmartImport: () => void;
-  isProcessing: boolean;
-}
-
-const ZipFileUploader: React.FC<ZipFileUploaderProps> = ({
-  onZipSelected,
-  selectedFile,
-  onSmartImport,
-  isProcessing
-}) => {
+const ZipFileUploader: React.FC = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.name.toLowerCase().endsWith('.zip')) {
-      onZipSelected(file);
+      setSelectedFile(file);
     }
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleSmartImport = async () => {
+    if (!selectedFile) return;
+    
+    setIsProcessing(true);
+    // TODO: Implement smart import logic
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert('Smart import feature coming soon!');
+    }, 2000);
   };
 
   return (
@@ -82,7 +83,7 @@ const ZipFileUploader: React.FC<ZipFileUploaderProps> = ({
             
             {selectedFile && (
               <Button
-                onClick={onSmartImport}
+                onClick={handleSmartImport}
                 disabled={isProcessing}
                 className="flex-1"
               >
@@ -96,6 +97,12 @@ const ZipFileUploader: React.FC<ZipFileUploaderProps> = ({
                 )}
               </Button>
             )}
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Coming Soon:</strong> AI-powered analysis of mixed data files, automatic format detection, and intelligent import routing.
+            </p>
           </div>
         </CardContent>
       </Card>

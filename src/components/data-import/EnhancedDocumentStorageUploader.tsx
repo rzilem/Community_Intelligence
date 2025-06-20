@@ -2,7 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileArchive, Loader2, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileArchive, Loader2, RefreshCw, AlertCircle, Zap } from 'lucide-react';
 import { useEnhancedDocumentStorageImport } from '@/hooks/import-export/useEnhancedDocumentStorageImport';
 import DocumentProgressDisplay from './DocumentProgressDisplay';
 import DocumentImportResults from './DocumentImportResults';
@@ -88,36 +88,35 @@ const EnhancedDocumentStorageUploader: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileArchive className="h-5 w-5" />
+            <Zap className="h-5 w-5 text-blue-600" />
             Enhanced Document Storage Import
           </CardTitle>
           <CardDescription>
-            Upload ZIP files with organized document collections. Enhanced with intelligent property matching, bulk processing, and improved error handling.
+            Advanced ZIP processing with intelligent property matching, 500MB file support, and enhanced error handling.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Enhancement Features */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
+          {/* Enhanced Features Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+              <Zap className="h-4 w-4" />
               Enhanced Features:
             </h4>
-            <ul className="text-sm text-green-800 space-y-1">
-              <li>• Increased file size limit to 500MB per document</li>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• 500MB file size limit (increased from 300MB)</li>
               <li>• Intelligent property matching and creation</li>
-              <li>• Bulk document processing with error recovery</li>
-              <li>• Automatic user-association linking</li>
-              <li>• Enhanced progress tracking and resume capability</li>
-              <li>• Improved error categorization and reporting</li>
+              <li>• Better error handling and recovery</li>
+              <li>• Enhanced progress tracking</li>
+              <li>• Automatic association management</li>
             </ul>
           </div>
 
           {/* Expected Structure Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">Expected ZIP Structure:</h4>
-            <div className="text-sm text-blue-800 space-y-1 font-mono">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-2">Expected ZIP Structure:</h4>
+            <div className="text-sm text-gray-700 space-y-1 font-mono">
               <div>📁 Association Name/</div>
-              <div className="ml-4">📁 1490 Rusk Rd. Unit 301/</div>
+              <div className="ml-4">📁 Unit 101/</div>
               <div className="ml-8">📄 lease.pdf</div>
               <div className="ml-8">📄 inspection_report.pdf</div>
               <div className="ml-4">📁 Unit 102/</div>
@@ -139,16 +138,16 @@ const EnhancedDocumentStorageUploader: React.FC = () => {
             
             {selectedFile ? (
               <div className="space-y-3">
-                <FileArchive className="h-12 w-12 mx-auto text-primary" />
+                <FileArchive className="h-12 w-12 mx-auto text-blue-600" />
                 <div>
                   <p className="font-medium text-lg">{selectedFile.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
-                <div className="flex items-center justify-center gap-2 text-sm text-green-600">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Ready for enhanced processing - will create properties and import documents</span>
+                <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Ready for enhanced processing</span>
                 </div>
               </div>
             ) : (
@@ -157,7 +156,7 @@ const EnhancedDocumentStorageUploader: React.FC = () => {
                 <div>
                   <p className="text-lg font-medium text-muted-foreground">Select a ZIP file to upload</p>
                   <p className="text-sm text-muted-foreground">
-                    Maximum file size: 500 MB per document (enhanced limit)
+                    Maximum file size: 500 MB per document
                   </p>
                 </div>
               </div>
@@ -180,7 +179,7 @@ const EnhancedDocumentStorageUploader: React.FC = () => {
               <Button
                 onClick={handleStartImport}
                 disabled={isProcessing}
-                className="flex-1"
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 {isProcessing ? (
                   <>
@@ -188,7 +187,10 @@ const EnhancedDocumentStorageUploader: React.FC = () => {
                     Processing...
                   </>
                 ) : (
-                  'Start Enhanced Import'
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Start Enhanced Import
+                  </>
                 )}
               </Button>
             )}

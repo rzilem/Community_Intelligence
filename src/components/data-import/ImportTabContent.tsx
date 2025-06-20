@@ -22,11 +22,6 @@ interface ImportTabContentProps {
 
 const ImportTabContent: React.FC<ImportTabContentProps> = ({
   associationId,
-  importFile,
-  importResults,
-  isValidating,
-  isImporting,
-  onFileUpload,
   onImportAnother,
   onAssociationChange
 }) => {
@@ -87,11 +82,6 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
           <TabsContent value="csv-excel">
             <ImportDataForm
               associationId={associationId}
-              importFile={importFile}
-              importResults={importResults}
-              isValidating={isValidating}
-              isImporting={isImporting}
-              onFileUpload={onFileUpload}
               onImportAnother={onImportAnother}
               onAssociationChange={onAssociationChange}
             />
