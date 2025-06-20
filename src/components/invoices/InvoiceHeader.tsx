@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import VendorSelector from '@/components/vendors/VendorSelector';
+import AIDataIndicator from '@/components/invoices/detail/AIDataIndicator';
 
 interface InvoiceHeaderProps {
   invoice: {
@@ -24,37 +25,41 @@ interface InvoiceHeaderProps {
     description?: string;
   };
   onInvoiceChange: (field: string, value: string | number) => void;
+  aiConfidence?: Record<string, number> | null;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoice,
   onInvoiceChange,
+  aiConfidence
 }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       {/* First row with Association and Vendor */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <AssociationSelector
             initialAssociationId={invoice.association}
             onAssociationChange={(value) => onInvoiceChange('association', value)}
             label="Association"
           />
+          <AIDataIndicator field="association_id" confidenceData={aiConfidence || undefined} />
         </div>
 
-        <div className="md:col-span-4">
+        <div className="md:col-span-4 relative">
           <VendorSelector
             onVendorChange={(value) => onInvoiceChange('vendor', value)}
             initialVendorName={invoice.vendor}
             className="w-full"
             label="Vendor"
           />
+          <AIDataIndicator field="vendor" confidenceData={aiConfidence || undefined} />
         </div>
       </div>
 
       {/* Date and Invoice Number row */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <div className="space-y-2">
             <Label htmlFor="invoiceDate">Invoice Date</Label>
             <Input
@@ -64,10 +69,11 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               onChange={(e) => onInvoiceChange('invoiceDate', e.target.value)}
               className="w-full"
             />
+            <AIDataIndicator field="invoice_date" confidenceData={aiConfidence || undefined} />
           </div>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <div className="space-y-2">
             <Label htmlFor="dueDate">Due Date</Label>
             <Input
@@ -77,10 +83,11 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
               className="w-full"
             />
+            <AIDataIndicator field="due_date" confidenceData={aiConfidence || undefined} />
           </div>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <div className="space-y-2">
             <Label htmlFor="invoiceNumber">Invoice Number</Label>
             <Input
@@ -90,13 +97,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               placeholder="Enter invoice number"
               className="w-full"
             />
+            <AIDataIndicator field="invoice_number" confidenceData={aiConfidence || undefined} />
           </div>
         </div>
       </div>
 
       {/* Payment type and Total row */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <div className="space-y-2">
             <Label>Payment Type</Label>
             <Select
@@ -113,9 +121,10 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               </SelectContent>
             </Select>
           </div>
+          <AIDataIndicator field="payment_method" confidenceData={aiConfidence || undefined} />
         </div>
 
-        <div className="md:col-span-2 md:col-start-5">
+        <div className="md:col-span-2 md:col-start-5 relative">
           <div className="space-y-2">
             <Label htmlFor="invoiceTotal">Total</Label>
             <Input
@@ -127,6 +136,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               className="w-full"
             />
           </div>
+          <AIDataIndicator field="amount" confidenceData={aiConfidence || undefined} />
         </div>
       </div>
     </div>

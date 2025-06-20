@@ -54,7 +54,11 @@ export async function handleEmailData(emailData: any, requestId: string, logging
         email_content: normalizedEmailData.text,
         pdf_url: attachmentResult.pdfUrl || processedInvoice.pdf_url,
         description: processedInvoice.description || "Invoice received via email",
-        tracking_number: normalizedEmailData.tracking_number || processedInvoice.tracking_number
+        tracking_number: normalizedEmailData.tracking_number || processedInvoice.tracking_number,
+        ai_confidence: processedInvoice.ai_confidence || null,
+        ai_line_items: processedInvoice.ai_line_items || null,
+        ai_processing_status: processedInvoice.ai_processing_status || 'completed',
+        ai_processed_at: processedInvoice.ai_processed_at || new Date().toISOString()
       };
       
       return {
@@ -76,7 +80,11 @@ export async function handleEmailData(emailData: any, requestId: string, logging
         email_content: normalizedEmailData.text,
         pdf_url: attachmentResult.pdfUrl,
         description: "Invoice received via email",
-        tracking_number: normalizedEmailData.tracking_number
+        tracking_number: normalizedEmailData.tracking_number,
+        ai_processing_status: 'failed',
+        ai_processed_at: new Date().toISOString(),
+        ai_confidence: null,
+        ai_line_items: null
       };
 
       return {

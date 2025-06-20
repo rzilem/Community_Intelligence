@@ -21,6 +21,10 @@ export interface Invoice {
   payment_date?: string;
   gl_account_id?: string;
   bank_account_id?: string;
+  ai_confidence?: Record<string, number> | null;
+  ai_processing_status?: string | null;
+  ai_processed_at?: string | null;
+  ai_line_items?: any[] | null;
 }
 
 export interface InvoiceFilterOptions {

@@ -19,7 +19,11 @@ const defaultInvoice = {
   emailContent: '',
   pdfUrl: '',
   paymentType: 'Check',
-  aiExtractedData: null
+  aiExtractedData: null,
+  ai_confidence: null,
+  ai_processing_status: null,
+  ai_processed_at: null,
+  ai_line_items: null
 };
 
 export const useInvoiceData = (id: string | undefined) => {
@@ -84,7 +88,11 @@ export const useInvoiceData = (id: string | undefined) => {
         aiExtractedData: aiConfidence ? {
           confidence: aiConfidence,
           lineItems: aiLineItems
-        } : null
+        } : null,
+        ai_confidence: aiConfidence,
+        ai_line_items: aiLineItems,
+        ai_processing_status: invoiceData.ai_processing_status || null,
+        ai_processed_at: invoiceData.ai_processed_at || null
       });
     }
   }, [invoiceData, isLoadingInvoice]);

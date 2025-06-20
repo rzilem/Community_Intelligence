@@ -35,9 +35,10 @@ export const InvoiceDetailContent: React.FC<InvoiceDetailContentProps> = ({
     <ResizablePanelGroup direction="horizontal">
       <ResizablePanel defaultSize={showPreview ? 60 : 100}>
         <div className="p-4 h-full space-y-6">
-          <InvoiceHeader 
+          <InvoiceHeader
             invoice={invoice}
             onInvoiceChange={handleInvoiceChange}
+            aiConfidence={invoice.ai_confidence}
           />
           
           <InvoiceLineItems 
