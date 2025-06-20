@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
@@ -74,9 +75,10 @@ export const useHomeownerRequests = () => {
         resolved_at: item.resolved_at,
         html_content: item.html_content,
         tracking_number: item.tracking_number,
-        _aiConfidence: item._aiConfidence || item.ai_confidence || null,
-        _aiExtracted: item._aiExtracted || false,
-        suggested_response: item.suggested_response || null
+        // Handle AI-related fields safely - these may not exist in the database yet
+        _aiConfidence: null, // Set to null since these columns don't exist yet
+        _aiExtracted: false, // Set to false since these columns don't exist yet
+        suggested_response: null // Set to null since these columns don't exist yet
       }));
       
       setManualRequests(typedRequests);

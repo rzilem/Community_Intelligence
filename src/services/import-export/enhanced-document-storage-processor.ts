@@ -1,4 +1,3 @@
-
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
@@ -231,12 +230,13 @@ export class EnhancedDocumentStorageProcessor {
           let propertyCreated = false;
 
           if (!existingProperty) {
-            // Create property if it doesn't exist
+            // Create property if it doesn't exist - include required address field
             const { data: newProperty, error: createPropertyError } = await supabase
               .from('properties')
               .insert([{ 
                 association_id: associationId, 
-                unit_number: unitNumber 
+                unit_number: unitNumber,
+                address: `${unitNumber} (auto-generated)` // Provide required address field
               }])
               .select('id, unit_number, address')
               .single();
