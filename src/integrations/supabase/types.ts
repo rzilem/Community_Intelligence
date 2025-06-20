@@ -4572,8 +4572,6 @@ export type Database = {
           updated_at: string
           uploaded_files: Json | null
           zip: string | null
-          ai_confidence: Json | null
-          ai_generated_fields: string[] | null
         }
         Insert: {
           additional_requirements?: string | null
@@ -4606,8 +4604,6 @@ export type Database = {
           updated_at?: string
           uploaded_files?: Json | null
           zip?: string | null
-          ai_confidence?: Json | null
-          ai_generated_fields?: string[] | null
         }
         Update: {
           additional_requirements?: string | null
@@ -4640,8 +4636,6 @@ export type Database = {
           updated_at?: string
           uploaded_files?: Json | null
           zip?: string | null
-          ai_confidence?: Json | null
-          ai_generated_fields?: string[] | null
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
@@ -182,7 +183,7 @@ export class EnhancedDocumentStorageProcessor {
 
       // Process documents
       const documentsUploaded: string[] = [];
-      const skippedDocumentPaths: string[] = [];
+      const skippedDocuments: string[] = [];
 
       for (const [index, entry] of documentEntries.entries()) {
         if (this.cancelled) break;
@@ -203,7 +204,7 @@ export class EnhancedDocumentStorageProcessor {
           
           if (fileContent.size > MAX_FILE_SIZE_BYTES) {
             processingWarnings.push(`Skipped ${entry.relativePath}: File size exceeds ${MAX_FILE_SIZE_MB} MB limit.`);
-            skippedDocumentPaths.push(entry.relativePath);
+            skippedDocuments.push(entry.relativePath);
             documentsSkipped++;
             continue;
           }
