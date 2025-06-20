@@ -55,6 +55,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   };
 
   return (
+    <>
     <RequestDialogLayout
       open={open}
       onOpenChange={onOpenChange}
@@ -102,6 +103,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </>
   );
 };
 
