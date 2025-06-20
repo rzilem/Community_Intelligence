@@ -5,6 +5,7 @@ import { createRequest } from "./services/request-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { validateWebhookSecret, getRequestLogInfo } from "../shared/webhook-auth.ts";
+import { validateCloudMailinAuth, getCloudMailinAuthConfig, isCloudMailinRequest } from "../shared/cloudmailin-auth.ts";
 import { createLogger, generateRequestId } from "../shared/logging.ts";
 
 serve(async (req) => {
@@ -27,27 +28,62 @@ serve(async (req) => {
     const requestInfo = getRequestLogInfo(req);
     await logger.info(requestId, "Request details", requestInfo);
     
-    // Check webhook authentication
-    const webhookSecret = Deno.env.get("WEBHOOK_SECRET") || Deno.env.get("CLOUDMAILIN_SECRET");
-    const isValidWebhook = validateWebhookSecret(req, webhookSecret);
+    // Determine authentication method based on request source
+    const isCloudMailin = isCloudMailinRequest(req);
+    let isValidWebhook = false;
     
-    if (!isValidWebhook && !req.headers.has("authorization")) {
+    if (isCloudMailin) {
+      // Use CloudMailin-specific authentication
+      const cloudmailinConfig = getCloudMailinAuthConfig();
+      isValidWebhook = validateCloudMailinAuth(req, cloudmailinConfig);
+      await logger.info(requestId, "CloudMailin authentication check", { 
+        isValid: isValidWebhook,
+        hasUsername: !!cloudmailinConfig.username,
+        hasPassword: !!cloudmailinConfig.password,
+        hasSecret: !!cloudmailinConfig.secret
+      });
+    } else {
+      // Use standard webhook authentication
+      const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
+      isValidWebhook = validateWebhookSecret(req, webhookSecret);
+      await logger.info(requestId, "Standard webhook authentication check", { 
+        isValid: isValidWebhook,
+        hasSecret: !!webhookSecret
+      });
+    }
+    
+    // For development/testing, allow requests without authentication if no secrets are configured
+    const cloudmailinConfig = getCloudMailinAuthConfig();
+    const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
+    const hasAnyAuth = !!(cloudmailinConfig.username || cloudmailinConfig.secret || webhookSecret);
+    
+    if (!isValidWebhook && hasAnyAuth) {
       await logger.error(requestId, "Webhook authentication failed", 
-        new Error("Missing or invalid webhook signature"),
-        { hasWebhookKey: !!req.headers.get('x-webhook-key') || !!req.headers.get('webhook-signature') }
+        new Error("Missing or invalid authentication"),
+        { 
+          isCloudMailin,
+          hasWebhookAuth: !!req.headers.get('authorization'),
+          hasWebhookKey: !!req.headers.get('x-webhook-key'),
+          hasCloudMailinSig: !!req.headers.get('x-cloudmailin-signature')
+        }
       );
       
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: "Unauthorized webhook request",
-          requestId
+          requestId,
+          authMethod: isCloudMailin ? 'cloudmailin' : 'standard'
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 401 
         }
       );
+    }
+    
+    if (!isValidWebhook && !hasAnyAuth) {
+      await logger.info(requestId, "Processing request without authentication (no secrets configured)");
     }
     
     // Get email data from request - handle both JSON and multipart form data
@@ -61,7 +97,6 @@ serve(async (req) => {
       await logger.error(requestId, "Error parsing request as multipart form data", parseError);
       
       // Clone the request before attempting to parse as JSON
-      // This avoids the "body already consumed" error
       const clonedRequest = req.clone();
       
       try {

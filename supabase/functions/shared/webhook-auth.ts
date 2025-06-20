@@ -28,7 +28,7 @@ export function validateWebhookSecret(request: Request, expectedSecret?: string)
   // If no secret is configured, we can't validate
   if (!expectedSecret) {
     console.warn("No webhook secret configured - running in insecure mode");
-    return true;
+    return false; // Changed to false for better security - require explicit auth config
   }
   
   // Check headers for webhook signature/key
@@ -60,6 +60,8 @@ export function getRequestLogInfo(request: Request): Record<string, any> {
     'x-webhook-key',
     'webhook-signature', 
     'x-webhook-signature',
+    'x-cloudmailin-signature',
+    'cloudmailin-signature',
     'x-forwarded-for'
   ];
   
