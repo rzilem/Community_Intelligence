@@ -7,6 +7,7 @@ import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import { ExternalLink } from 'lucide-react';
 import { formatLeadName } from './detail/lead-detail-utils';
 import { extractCity, createGoogleMapsLink } from './detail/address-utils';
+import AIBadge from '@/components/ui/ai-badge';
 
 export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadColumn[]) => {
   const column = columns.find(col => col.id === columnId);
@@ -20,12 +21,26 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
   
   // Special formatting for specific columns
   if (columnId === 'name') {
-    return formatLeadName(lead);
+    const content = formatLeadName(lead);
+    const aiConf = lead.ai_confidence?.name;
+    return (
+      <span className="flex items-center gap-1">
+        {content}
+        {aiConf && <AIBadge confidence={aiConf} />}
+      </span>
+    );
   }
   
   if (columnId === 'city') {
     // Extract and clean the city name using the utility function
-    return extractCity(lead.city, lead.street_address);
+    const content = extractCity(lead.city, lead.street_address);
+    const aiConf = lead.ai_confidence?.city;
+    return (
+      <span className="flex items-center gap-1">
+        {content}
+        {aiConf && <AIBadge confidence={aiConf} />}
+      </span>
+    );
   }
   
   if (columnId === 'street_address' && value) {
@@ -33,16 +48,23 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
     const cleanAddress = address.replace(/Map\s*It/gi, '').trim();
     const mapsLink = createGoogleMapsLink(address);
     
-    return (
-      <a 
-        href={mapsLink} 
-        target="_blank" 
+    const cell = (
+      <a
+        href={mapsLink}
+        target="_blank"
         rel="noopener noreferrer"
         className="text-blue-600 hover:underline flex items-center gap-1"
       >
         {cleanAddress}
         <ExternalLink size={14} />
       </a>
+    );
+    const aiConf = lead.ai_confidence?.street_address;
+    return (
+      <span className="flex items-center gap-1">
+        {cell}
+        {aiConf && <AIBadge confidence={aiConf} />}
+      </span>
     );
   }
   
@@ -72,6 +94,12 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
     return <span className="text-gray-400">—</span>;
   }
 
-  // Return value as string or React node
-  return value as React.ReactNode;
+  // Return value with AI badge if applicable
+  const aiConf = lead.ai_confidence?.[accessorKey as string];
+  return (
+    <span className="flex items-center gap-1">
+      {value as React.ReactNode}
+      {aiConf && <AIBadge confidence={aiConf} />}
+    </span>
+  );
 };
