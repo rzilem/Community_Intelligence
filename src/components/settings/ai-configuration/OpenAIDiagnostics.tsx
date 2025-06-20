@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,17 @@ interface DiagnosticStep {
   details?: any;
 }
 
+interface LogEntry {
+  id: string;
+  request_id: string;
+  function_name: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
 export function OpenAIDiagnostics() {
   const [isRunning, setIsRunning] = useState(false);
   const [steps, setSteps] = useState<DiagnosticStep[]>([
@@ -24,12 +35,53 @@ export function OpenAIDiagnostics() {
     { id: 'function-test', name: 'Test Edge Function', status: 'pending' },
     { id: 'ai-feature-test', name: 'Test AI Feature Usage', status: 'pending' }
   ]);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [logWarning, setLogWarning] = useState<string | null>(null);
 
   const updateStep = (id: string, updates: Partial<DiagnosticStep>) => {
-    setSteps(prev => prev.map(step => 
+    setSteps(prev => prev.map(step =>
       step.id === id ? { ...step, ...updates } : step
     ));
   };
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('view-logs?limit=20', { method: 'GET' });
+      if (error) {
+        console.error('Error fetching logs:', error);
+        return;
+      }
+
+      const openaiLogs = (data?.logs || []).filter((log: LogEntry) => log.function_name.startsWith('openai-')) as LogEntry[];
+      setLogEntries(openaiLogs);
+
+      const errorLogs = openaiLogs.filter(log => log.level === 'error');
+      if (errorLogs.length > 0) {
+        setLogWarning(`${errorLogs.length} OpenAI error logs detected`);
+      } else if (openaiLogs.length === 0) {
+        setLogWarning('No recent OpenAI logs found - usage may be zero');
+      } else {
+        setLogWarning(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch logs:', err);
+    }
+  }, []);
+
+  const runPeriodicCheck = useCallback(async () => {
+    try {
+      await supabase.functions.invoke('test-openai', {});
+      await supabase.functions.invoke('openai-extractor', {
+        body: {
+          content: 'Diagnostics ping',
+          contentType: 'invoice',
+          metadata: { periodic: true }
+        }
+      });
+    } catch (err) {
+      console.error('Periodic OpenAI check failed:', err);
+    }
+  }, []);
 
   const runDiagnostics = async () => {
     setIsRunning(true);
@@ -161,6 +213,16 @@ export function OpenAIDiagnostics() {
     }
   };
 
+  useEffect(() => {
+    fetchLogs();
+    runPeriodicCheck();
+    const interval = setInterval(() => {
+      runPeriodicCheck();
+      fetchLogs();
+    }, 600000); // every 10 minutes
+    return () => clearInterval(interval);
+  }, [fetchLogs, runPeriodicCheck]);
+
   const getStepIcon = (status: DiagnosticStep['status']) => {
     switch (status) {
       case 'running': return <Loader2 className="h-4 w-4 animate-spin" />;
@@ -249,9 +311,9 @@ export function OpenAIDiagnostics() {
             <AlertTitle>Next Steps</AlertTitle>
             <AlertDescription>
               Check your OpenAI dashboard at{' '}
-              <a 
-                href="https://platform.openai.com/usage" 
-                target="_blank" 
+              <a
+                href="https://platform.openai.com/usage"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
               >
@@ -260,6 +322,31 @@ export function OpenAIDiagnostics() {
               to see if the API key usage has been updated.
             </AlertDescription>
           </Alert>
+        )}
+
+        {logWarning && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Warning</AlertTitle>
+            <AlertDescription>{logWarning}</AlertDescription>
+          </Alert>
+        )}
+
+        {logEntries.length > 0 && (
+          <div className="space-y-2">
+            <div className="font-medium">Recent OpenAI Logs</div>
+            {logEntries.map((log) => (
+              <div key={log.id} className="text-sm border rounded p-2">
+                <div className="flex justify-between">
+                  <span>{log.function_name}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </span>
+                </div>
+                <div>{log.message}</div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
