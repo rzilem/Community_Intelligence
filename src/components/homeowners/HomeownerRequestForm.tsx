@@ -5,8 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { useSupabaseCreate } from '@/hooks/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseQuery } from '@/hooks/supabase';
+import { toast } from 'sonner';
 import RequestBasicInfoFields from './form/RequestBasicInfoFields';
 import RequestLocationFields from './form/RequestLocationFields';
 import FormFieldTextarea from './form/FormFieldTextarea';
@@ -55,36 +56,30 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
     },
   });
 
-  const { mutate: createRequest, isPending } = useSupabaseCreate('homeowner_requests', {
-    onSuccess: () => {
-      form.reset();
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const onSubmit = (data: RequestFormValues) => {
-    // Make sure we're using the database column names for the API call
-    const requestData: any = {
-      title: data.title,
-      description: data.description,
-      type: data.type,
-      priority: data.priority,
-      status: 'open',
-    };
-    
-    // Only add these fields if they were provided
-    if (data.propertyId) {
-      requestData.property_id = data.propertyId;
+  const onSubmit = async (data: RequestFormValues) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.functions.invoke('homeowner-request-email', {
+      body: {
+        subject: data.title,
+        text: data.description,
+        type: data.type,
+        priority: data.priority,
+        property_id: data.propertyId,
+        association_id: data.associationId,
+        sender: 'form@hoa.app'
+      }
+    });
+
+    setIsSubmitting(false);
+    if (error) {
+      toast.error(`Failed to submit request: ${error.message}`);
+      return;
     }
-    
-    if (data.associationId) {
-      requestData.association_id = data.associationId;
-    }
-    
-    // Create the request with only the provided fields
-    createRequest(requestData);
+    toast.success('Request submitted successfully');
+    form.reset();
+    if (onSuccess) onSuccess();
   };
 
   // Get selected association ID for filtering properties
@@ -117,8 +112,8 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
         />
         
         <div className="flex justify-end">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Submitting...' : 'Submit Request'}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </Button>
         </div>
       </form>

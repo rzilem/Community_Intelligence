@@ -12,6 +12,7 @@ interface RequestDialogLayoutProps {
   isFullscreen: boolean;
   onFullscreenToggle: () => void;
   children: React.ReactNode;
+  footerActions?: React.ReactNode;
 }
 
 const RequestDialogLayout: React.FC<RequestDialogLayoutProps> = ({
@@ -21,7 +22,8 @@ const RequestDialogLayout: React.FC<RequestDialogLayoutProps> = ({
   showFullscreenButton,
   isFullscreen,
   onFullscreenToggle,
-  children
+  children,
+  footerActions
 }) => {
   const handleClose = () => {
     onOpenChange(false);
@@ -47,6 +49,7 @@ const RequestDialogLayout: React.FC<RequestDialogLayoutProps> = ({
         {children}
         
         <DialogFooter>
+          {footerActions}
           <Button onClick={handleClose}>
             Close
           </Button>

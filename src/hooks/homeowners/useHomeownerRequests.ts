@@ -73,7 +73,10 @@ export const useHomeownerRequests = () => {
         assigned_to: item.assigned_to,
         resolved_at: item.resolved_at,
         html_content: item.html_content,
-        tracking_number: item.tracking_number
+        tracking_number: item.tracking_number,
+        _aiConfidence: item._aiConfidence || item.ai_confidence || null,
+        _aiExtracted: item._aiExtracted || false,
+        suggested_response: item.suggested_response || null
       }));
       
       setManualRequests(typedRequests);
