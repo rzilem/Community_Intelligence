@@ -18,7 +18,10 @@ export interface HomeownerRequest {
   assigned_to?: string;
   resolved_at?: string;
   html_content?: string; // For original email content
-  tracking_number?: string; 
+  tracking_number?: string;
+  _aiConfidence?: Record<string, number>;
+  _aiExtracted?: boolean;
+  suggested_response?: string;
   
   // Virtual properties for UI (not in database)
   createdAt?: string; // Alias for created_at

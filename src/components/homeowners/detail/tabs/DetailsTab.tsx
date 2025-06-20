@@ -88,10 +88,10 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
         {/* Description Section */}
         <div className="space-y-3">
           <h3 className="font-medium text-base">Description</h3>
-          <div 
+          <div
             className={cn(
               "border rounded-lg p-4 whitespace-pre-wrap text-sm",
-              "bg-gradient-to-br from-hoa-blue-50 to-hoa-silver-100", 
+              "bg-gradient-to-br from-hoa-blue-50 to-hoa-silver-100",
               "shadow-sm hover:shadow-md transition-all duration-300",
               "text-hoa-blue-900 dark:text-white",
               "dark:from-hoa-blue-800/50 dark:to-hoa-silver-900/50"
@@ -100,6 +100,29 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
             {processedDescription}
           </div>
         </div>
+
+        {request._aiConfidence && (
+          <div className="space-y-3">
+            <h3 className="font-medium text-base">AI Extraction Confidence</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="flex items-center justify-between border rounded-md p-2 bg-card text-sm">
+                <span className="text-muted-foreground">Title ({(request._aiConfidence.title * 100).toFixed(0)}%)</span>
+                <span>{request.title}</span>
+              </div>
+              <div className="flex items-center justify-between border rounded-md p-2 bg-card text-sm">
+                <span className="text-muted-foreground">Type ({(request._aiConfidence.type * 100).toFixed(0)}%)</span>
+                <span className="capitalize">{request.type}</span>
+              </div>
+              <div className="flex items-center justify-between border rounded-md p-2 bg-card text-sm">
+                <span className="text-muted-foreground">Priority ({(request._aiConfidence.priority * 100).toFixed(0)}%)</span>
+                <span className="capitalize">{request.priority}</span>
+              </div>
+              <div className="flex items-center justify-between border rounded-md p-2 bg-card text-sm md:col-span-2">
+                <span className="text-muted-foreground">Description ({(request._aiConfidence.description * 100).toFixed(0)}%)</span>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Resolution Section - Only show if resolved */}
         {request.resolved_at && (
