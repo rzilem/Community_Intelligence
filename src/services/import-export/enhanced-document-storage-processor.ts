@@ -182,9 +182,7 @@ export class EnhancedDocumentStorageProcessor {
 
       // Process documents
       const documentsUploaded: string[] = [];
-      const documentsSkipped: string[] = [];
-      const processingErrors: string[] = [];
-      const processingWarnings: string[] = [];
+      const skippedDocumentPaths: string[] = [];
 
       for (const [index, entry] of documentEntries.entries()) {
         if (this.cancelled) break;
@@ -205,7 +203,7 @@ export class EnhancedDocumentStorageProcessor {
           
           if (fileContent.size > MAX_FILE_SIZE_BYTES) {
             processingWarnings.push(`Skipped ${entry.relativePath}: File size exceeds ${MAX_FILE_SIZE_MB} MB limit.`);
-            documentsSkipped.push(entry.relativePath);
+            skippedDocumentPaths.push(entry.relativePath);
             documentsSkipped++;
             continue;
           }
