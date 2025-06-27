@@ -88,8 +88,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       return (
         <PreviewErrorState 
           error={error}
+          pdfUrl={normalizedPdfUrl}
           onRetry={retryPdfLoad}
-          onSwitchToHtml={hasHtml ? () => setCurrentView('html') : undefined}
+          onExternalOpen={hasHtml ? handleExternalOpen : undefined}
         />
       );
     }
@@ -98,7 +99,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     switch (currentView) {
       case 'pdf':
         return hasPdf ? (
-          <DocumentViewer pdfUrl={normalizedPdfUrl} />
+          <DocumentViewer 
+            pdfUrl={normalizedPdfUrl} 
+            isPdf={true}
+            isWordDocument={false}
+            onIframeError={() => {}}
+            onIframeLoad={() => {}}
+            onExternalOpen={handleExternalOpen}
+          />
         ) : (
           <NoPreviewState message="PDF not available" />
         );
@@ -112,7 +120,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       
       case 'email':
         return hasEmail ? (
-          <EmailPreview content={emailContent} />
+          <EmailPreview emailContent={emailContent} />
         ) : (
           <NoPreviewState message="Original email not available" />
         );
