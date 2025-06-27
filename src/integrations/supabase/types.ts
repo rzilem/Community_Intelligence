@@ -3900,6 +3900,47 @@ export type Database = {
           },
         ]
       }
+      homeowner_request_responses: {
+        Row: {
+          created_at: string
+          id: string
+          request_id: string | null
+          response_content: string
+          response_method: string
+          sent_at: string
+          sent_by: string | null
+          sent_to: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          response_content: string
+          response_method?: string
+          sent_at?: string
+          sent_by?: string | null
+          sent_to: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_id?: string | null
+          response_content?: string
+          response_method?: string
+          sent_at?: string
+          sent_by?: string | null
+          sent_to?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_request_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null

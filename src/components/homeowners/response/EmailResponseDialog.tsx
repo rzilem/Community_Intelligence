@@ -1,22 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Send, Save, Eye, Copy, RefreshCw } from 'lucide-react';
+import { Send, Sparkles, Loader2 } from 'lucide-react';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
 
 interface EmailResponseDialogProps {
-  request: HomeownerRequest | null;
+  request: HomeownerRequest;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onResponseSent: () => void;
@@ -28,56 +24,50 @@ const EmailResponseDialog: React.FC<EmailResponseDialogProps> = ({
   onOpenChange,
   onResponseSent
 }) => {
-  const [subject, setSubject] = useState('');
-  const [content, setContent] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState('compose');
-  const [aiResponse, setAiResponse] = useState('');
+  const [formData, setFormData] = useState({
+    recipientEmail: '',
+    subject: `Re: ${request.title} - Request #${request.tracking_number || 'N/A'}`,
+    message: ''
+  });
 
-  useEffect(() => {
-    if (request && open) {
-      setSubject(`Re: ${request.title}`);
-      setRecipientEmail(''); // This should be populated from the request data
-      setContent('');
-      setAiResponse('');
-    }
-  }, [request, open]);
-
-  const handleGenerateAI = async () => {
-    if (!request) return;
-    
-    setIsGenerating(true);
+  const handleGenerateAIResponse = async () => {
+    setIsGeneratingAI(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-response', {
-        body: { requestData: request }
+      const { data, error } = await supabase.functions.invoke('ai-homeowner-response', {
+        body: {
+          requestId: request.id,
+          requestTitle: request.title,
+          requestDescription: request.description,
+          requestType: request.type,
+          requestPriority: request.priority
+        }
       });
 
       if (error) {
-        toast.error(`Failed to generate response: ${error.message}`);
+        toast.error('Failed to generate AI response');
         return;
       }
 
-      setAiResponse(data.generatedText);
-      setActiveTab('ai-generated');
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          message: data.response
+        }));
+        toast.success('AI response generated successfully');
+      }
     } catch (error) {
       console.error('AI generation error:', error);
       toast.error('Failed to generate AI response');
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingAI(false);
     }
   };
 
-  const handleInsertAI = () => {
-    setContent(aiResponse);
-    setActiveTab('compose');
-    toast.success('AI response inserted into email');
-  };
-
-  const handleSendEmail = async () => {
-    if (!request || !recipientEmail || !subject || !content) {
-      toast.error('Please fill in all required fields');
+  const handleSendResponse = async () => {
+    if (!formData.recipientEmail || !formData.subject || !formData.message) {
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -86,230 +76,167 @@ const EmailResponseDialog: React.FC<EmailResponseDialogProps> = ({
       const { data, error } = await supabase.functions.invoke('send-homeowner-response', {
         body: {
           requestId: request.id,
-          recipientEmail,
-          subject,
-          htmlContent: content.replace(/\n/g, '<br>'),
-          plainTextContent: content
+          recipientEmail: formData.recipientEmail,
+          subject: formData.subject,
+          htmlContent: formatEmailContent(formData.message),
+          plainTextContent: formData.message
         }
       });
 
       if (error) {
-        toast.error(`Failed to send email: ${error.message}`);
+        toast.error(`Failed to send response: ${error.message}`);
         return;
       }
 
-      toast.success('Email sent successfully!');
-      onResponseSent();
-      onOpenChange(false);
+      if (data.success) {
+        toast.success('Response sent successfully');
+        onResponseSent();
+        onOpenChange(false);
+        // Reset form
+        setFormData({
+          recipientEmail: '',
+          subject: `Re: ${request.title} - Request #${request.tracking_number || 'N/A'}`,
+          message: ''
+        });
+      }
     } catch (error) {
-      console.error('Email sending error:', error);
-      toast.error('Failed to send email');
+      console.error('Send response error:', error);
+      toast.error('Failed to send response');
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleSaveDraft = () => {
-    // TODO: Implement draft saving
-    toast.success('Draft saved (feature coming soon)');
+  const formatEmailContent = (message: string) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Response to Your Request</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .header { background-color: #f8f9fa; padding: 20px; border-bottom: 2px solid #dee2e6; }
+            .content { padding: 20px; }
+            .footer { background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d; }
+            .request-info { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>Response to Your Request</h2>
+          </div>
+          <div class="content">
+            <div class="request-info">
+              <p><strong>Request:</strong> ${request.title}</p>
+              <p><strong>Tracking Number:</strong> ${request.tracking_number || 'N/A'}</p>
+              <p><strong>Type:</strong> ${request.type}</p>
+              <p><strong>Priority:</strong> ${request.priority}</p>
+            </div>
+            <div style="white-space: pre-wrap;">${message}</div>
+          </div>
+          <div class="footer">
+            <p>This is an automated response from your HOA management system.</p>
+            <p>Please do not reply to this email directly.</p>
+          </div>
+        </body>
+      </html>
+    `;
   };
-
-  if (!request) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Respond to Request
+            Send Email Response
+            <Badge variant="outline">{request.type}</Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="compose">Compose</TabsTrigger>
-              <TabsTrigger value="ai-generated">AI Generated</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-            </TabsList>
+        <div className="space-y-4">
+          {/* Request Summary */}
+          <div className="bg-muted p-4 rounded-lg">
+            <h4 className="font-medium mb-2">Request Summary</h4>
+            <p className="text-sm text-muted-foreground mb-1">
+              <strong>Title:</strong> {request.title}
+            </p>
+            <p className="text-sm text-muted-foreground mb-1">
+              <strong>Tracking:</strong> {request.tracking_number || 'N/A'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Priority:</strong> {request.priority}
+            </p>
+          </div>
 
-            <TabsContent value="compose" className="flex-1 min-h-0">
-              <ScrollArea className="h-full">
-                <div className="space-y-4 p-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="recipient">To</Label>
-                      <Input
-                        id="recipient"
-                        value={recipientEmail}
-                        onChange={(e) => setRecipientEmail(e.target.value)}
-                        placeholder="recipient@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="subject">Subject</Label>
-                      <Input
-                        id="subject"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        placeholder="Email subject"
-                      />
-                    </div>
-                  </div>
+          {/* Email Form */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="recipientEmail">Recipient Email</Label>
+              <Input
+                id="recipientEmail"
+                type="email"
+                placeholder="resident@example.com"
+                value={formData.recipientEmail}
+                onChange={(e) => setFormData(prev => ({ ...prev, recipientEmail: e.target.value }))}
+              />
+            </div>
 
-                  <div>
-                    <Label htmlFor="content">Message</Label>
-                    <Textarea
-                      id="content"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Type your response here..."
-                      className="min-h-[300px]"
-                    />
-                  </div>
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+              />
+            </div>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Original Request</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{request.type}</Badge>
-                          <Badge variant="secondary">{request.priority}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {request.description}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </ScrollArea>
-            </TabsContent>
-
-            <TabsContent value="ai-generated" className="flex-1 min-h-0">
-              <div className="h-full flex flex-col">
-                <div className="p-4 border-b">
-                  <Button
-                    onClick={handleGenerateAI}
-                    disabled={isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generate AI Response
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {aiResponse && (
-                  <div className="flex-1 p-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm flex items-center justify-between">
-                          AI Generated Response
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleInsertAI}
-                          >
-                            <Copy className="h-4 w-4 mr-2" />
-                            Insert into Email
-                          </Button>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className="h-[300px]">
-                          <div className="whitespace-pre-wrap text-sm">
-                            {aiResponse}
-                          </div>
-                        </ScrollArea>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="message">Message</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateAIResponse}
+                  disabled={isGeneratingAI}
+                  className="flex items-center gap-2"
+                >
+                  {isGeneratingAI ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  Generate AI Response
+                </Button>
               </div>
-            </TabsContent>
-
-            <TabsContent value="templates" className="flex-1 min-h-0">
-              <div className="p-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Quick Templates</CardTitle>
-                    <CardDescription>
-                      Pre-written responses for common situations
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setContent("Thank you for your request. We have received it and will respond within 24-48 hours.")}
-                        className="w-full justify-start"
-                      >
-                        Acknowledgment Template
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setContent("We need additional information to process your request. Please provide more details about your concern.")}
-                        className="w-full justify-start"
-                      >
-                        More Information Needed
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setContent("Your request has been resolved. Please let us know if you need any further assistance.")}
-                        className="w-full justify-start"
-                      >
-                        Resolution Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+              <Textarea
+                id="message"
+                rows={12}
+                placeholder="Type your response here..."
+                value={formData.message}
+                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              />
+            </div>
+          </div>
         </div>
 
-        <Separator />
-
-        <DialogFooter className="flex justify-between">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Draft
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSendEmail} disabled={isSending}>
-              {isSending ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Email
-                </>
-              )}
-            </Button>
-          </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendResponse}
+            disabled={isSending || !formData.recipientEmail || !formData.subject || !formData.message}
+            className="flex items-center gap-2"
+          >
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Send Response
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
