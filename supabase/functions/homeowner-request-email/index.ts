@@ -1,5 +1,4 @@
-
-// Redeployed on June 27, 2025 to support query parameter authentication
+// Redeployed on June 27, 2025 to load CloudMailin secrets
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
@@ -29,47 +28,58 @@ serve(async (req) => {
     const requestInfo = getRequestLogInfo(req);
     await logger.info(requestId, "Request details", requestInfo);
     
-    // Determine authentication method based on request source
-    const isCloudMailin = isCloudMailinRequest(req);
-    let authResult = { isValid: false, method: undefined };
+    // Check for token in query parameters first (highest priority for CloudMailin)
+    const url = new URL(req.url);
+    const queryToken = url.searchParams.get('token');
+    const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
     
-    if (isCloudMailin) {
-      // Use CloudMailin-specific authentication
-      const cloudmailinConfig = getCloudMailinAuthConfig();
-      authResult = validateCloudMailinAuth(req, cloudmailinConfig);
-      await logger.info(requestId, "CloudMailin authentication check", { 
-        isValid: authResult.isValid,
-        method: authResult.method,
-        hasUsername: !!cloudmailinConfig.username,
-        hasPassword: !!cloudmailinConfig.password,
-        hasSecret: !!cloudmailinConfig.secret
-      });
+    let isValidWebhook = false;
+    let authMethod = 'none';
+    
+    // First, check query parameter authentication
+    if (queryToken && webhookSecret && queryToken === webhookSecret) {
+      isValidWebhook = true;
+      authMethod = 'query_param';
+      await logger.info(requestId, "Query parameter authentication successful");
     } else {
-      // Use standard webhook authentication (now supports query parameters)
-      const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
-      authResult = validateWebhookSecret(req, webhookSecret);
-      await logger.info(requestId, "Standard webhook authentication check", { 
-        isValid: authResult.isValid,
-        method: authResult.method,
-        hasSecret: !!webhookSecret
-      });
+      // Determine authentication method based on request source
+      const isCloudMailin = isCloudMailinRequest(req);
+      
+      if (isCloudMailin) {
+        // Use CloudMailin-specific authentication
+        const cloudmailinConfig = getCloudMailinAuthConfig();
+        isValidWebhook = validateCloudMailinAuth(req, cloudmailinConfig);
+        authMethod = 'cloudmailin';
+        await logger.info(requestId, "CloudMailin authentication check", { 
+          isValid: isValidWebhook,
+          hasUsername: !!cloudmailinConfig.username,
+          hasPassword: !!cloudmailinConfig.password,
+          hasSecret: !!cloudmailinConfig.secret
+        });
+      } else {
+        // Use standard webhook authentication
+        isValidWebhook = validateWebhookSecret(req, webhookSecret);
+        authMethod = 'standard';
+        await logger.info(requestId, "Standard webhook authentication check", { 
+          isValid: isValidWebhook,
+          hasSecret: !!webhookSecret
+        });
+      }
     }
     
     // For development/testing, allow requests without authentication if no secrets are configured
     const cloudmailinConfig = getCloudMailinAuthConfig();
-    const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
     const hasAnyAuth = !!(cloudmailinConfig.username || cloudmailinConfig.secret || webhookSecret);
     
-    if (!authResult.isValid && hasAnyAuth) {
+    if (!isValidWebhook && hasAnyAuth) {
       await logger.error(requestId, "Webhook authentication failed", 
         new Error("Missing or invalid authentication"),
         { 
-          isCloudMailin,
-          authMethod: authResult.method || 'none',
+          authMethod,
+          hasQueryToken: !!queryToken,
           hasWebhookAuth: !!req.headers.get('authorization'),
           hasWebhookKey: !!req.headers.get('x-webhook-key'),
-          hasCloudMailinSig: !!req.headers.get('x-cloudmailin-signature'),
-          hasQueryToken: new URL(req.url).searchParams.has('token')
+          hasCloudMailinSig: !!req.headers.get('x-cloudmailin-signature')
         }
       );
       
@@ -78,13 +88,8 @@ serve(async (req) => {
           success: false, 
           error: "Unauthorized webhook request",
           requestId,
-          authMethod: isCloudMailin ? 'cloudmailin' : 'standard',
-          supportedMethods: [
-            'query_parameter (?token=secret)',
-            'bearer_token (Authorization: Bearer secret)',
-            'webhook_header (x-webhook-key: secret)',
-            ...(isCloudMailin ? ['basic_auth', 'cloudmailin_signature'] : [])
-          ]
+          authMethod,
+          hint: "Supported auth methods: query param (?token=), Bearer token, or CloudMailin auth"
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -93,10 +98,8 @@ serve(async (req) => {
       );
     }
     
-    if (!authResult.isValid && !hasAnyAuth) {
+    if (!isValidWebhook && !hasAnyAuth) {
       await logger.info(requestId, "Processing request without authentication (no secrets configured)");
-    } else if (authResult.isValid) {
-      await logger.info(requestId, `Authentication successful using method: ${authResult.method}`);
     }
     
     // Get email data from request - handle both JSON and multipart form data
@@ -182,8 +185,7 @@ serve(async (req) => {
         success: true, 
         message: "Homeowner request created", 
         request,
-        trackingId: requestId,
-        authMethod: authResult.method
+        trackingId: requestId
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -203,5 +205,7 @@ serve(async (req) => {
         status: 500 
       }
     );
+  }
+});
   }
 });
