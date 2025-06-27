@@ -5,7 +5,7 @@ import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { EnhancedPdfViewer } from './preview/viewers/EnhancedPdfViewer';
+import { ImprovedPdfViewer } from './preview/viewers/ImprovedPdfViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { NoPreviewState } from './preview/NoPreviewState';
 
@@ -24,38 +24,32 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   const [showSettings, setShowSettings] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>('pdf');
-  const [pdfError, setPdfError] = useState(false);
-
+  
   // Determine available views
   const hasPdf = !!pdfUrl && pdfUrl.trim().length > 0;
   const hasHtml = !!htmlContent && htmlContent.trim().length > 0;
   const hasEmail = !!emailContent && emailContent.trim().length > 0;
 
-  console.log('InvoicePreview: Content availability:', {
-    hasPdf,
-    hasHtml,
-    hasEmail,
-    pdfUrl: pdfUrl || 'none'
-  });
+  // Smart default view selection - prioritize HTML over PDF for reliability
+  const getDefaultView = (): 'pdf' | 'html' | 'email' => {
+    if (hasHtml) return 'html'; // HTML is most reliable
+    if (hasPdf) return 'pdf';   // PDF as secondary option
+    if (hasEmail) return 'email'; // Email as fallback
+    return 'html'; // Default fallback
+  };
 
-  // Auto-set current view based on available content and errors
-  React.useEffect(() => {
-    if (hasPdf && !pdfError && currentView !== 'pdf') {
-      setCurrentView('pdf');
-    } else if ((!hasPdf || pdfError) && hasHtml && currentView === 'pdf') {
-      setCurrentView('html');
-    } else if (!hasPdf && !hasHtml && hasEmail && currentView !== 'email') {
-      setCurrentView('email');
-    }
-  }, [hasPdf, hasHtml, hasEmail, currentView, pdfError]);
+  const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>(getDefaultView());
+
+  console.log('InvoicePreview: Smart content selection:', {
+    hasHtml,
+    hasPdf,
+    hasEmail,
+    defaultView: getDefaultView(),
+    currentView
+  });
 
   const handleViewChange = (view: 'pdf' | 'html' | 'email') => {
     setCurrentView(view);
-    // Reset PDF error when switching back to PDF view
-    if (view === 'pdf') {
-      setPdfError(false);
-    }
   };
 
   const handleExternalOpen = () => {
@@ -72,38 +66,28 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     setShowValidation(!showValidation);
   };
 
-  const handlePdfError = () => {
-    console.log('InvoicePreview: PDF error detected, setting error state');
-    setPdfError(true);
-    // Auto-switch to HTML if available
-    if (hasHtml) {
-      setCurrentView('html');
-    }
-  };
-
   const renderContent = () => {
-    console.log('InvoicePreview: Rendering content for view:', currentView, 'PDF Error:', pdfError);
+    console.log('InvoicePreview: Rendering content for view:', currentView);
 
-    // Show content based on current view
     switch (currentView) {
-      case 'pdf':
-        return hasPdf ? (
-          <EnhancedPdfViewer 
-            pdfUrl={pdfUrl}
-            onExternalOpen={handleExternalOpen}
-            onError={handlePdfError}
-          />
-        ) : (
-          <NoPreviewState message="PDF not available" />
-        );
-      
       case 'html':
         return hasHtml ? (
-          <div className="p-4 overflow-auto h-full bg-white">
+          <div className="p-6 overflow-auto h-full bg-white">
             <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
           </div>
         ) : (
           <NoPreviewState message="Processed content not available" />
+        );
+      
+      case 'pdf':
+        return hasPdf ? (
+          <ImprovedPdfViewer 
+            pdfUrl={pdfUrl}
+            onExternalOpen={handleExternalOpen}
+            onFallbackToHtml={hasHtml ? () => setCurrentView('html') : undefined}
+          />
+        ) : (
+          <NoPreviewState message="PDF not available" />
         );
       
       case 'email':
@@ -134,15 +118,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
         onToggleFullscreen={handleToggleFullscreen}
         onShowSettings={() => setShowSettings(true)}
         onValidate={handleValidate}
-        onRetry={() => setPdfError(false)}
-        canRetry={pdfError && hasPdf}
       />
       
       <div className="flex-1 overflow-hidden">
         {renderContent()}
       </div>
 
-      {/* Enhanced Tools - Show in sidebar when enabled */}
+      {/* Enhanced Tools */}
       {showValidation && (
         <div className="border-t p-4 bg-gray-50">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
