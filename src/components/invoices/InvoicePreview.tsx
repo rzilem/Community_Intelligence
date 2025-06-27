@@ -1,14 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useUserPreferences } from '@/hooks/invoices/useUserPreferences';
+import { useInvoicePreviewState } from '@/hooks/invoices/useInvoicePreviewState';
 import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar';
-import { PreferenceSettings } from './preview/PreferenceSettings';
-import { AIValidationTools } from './preview/validators/AIValidationTools';
-import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { EnhancedStoragePdfViewer } from './preview/viewers/EnhancedStoragePdfViewer';
-import { EmailPreview } from './preview/EmailPreview';
+import { InvoicePreviewContent } from './preview/InvoicePreviewContent';
+import { InvoicePreviewModals } from './preview/InvoicePreviewModals';
 import { NoPreviewState } from './preview/NoPreviewState';
-import { SupabaseStorageDebugger } from './preview/viewers/SupabaseStorageDebugger';
 
 interface InvoicePreviewProps {
   pdfUrl?: string;
@@ -22,37 +19,31 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   emailContent
 }) => {
   const { preferences } = useUserPreferences();
-  const [showSettings, setShowSettings] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
-  const [showStorageDebug, setShowStorageDebug] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Determine available views
   const hasPdf = !!pdfUrl && pdfUrl.trim().length > 0;
   const hasHtml = !!htmlContent && htmlContent.trim().length > 0;
   const hasEmail = !!emailContent && emailContent.trim().length > 0;
 
-  // Smart default view selection - prioritize HTML over PDF for reliability
-  const getDefaultView = (): 'pdf' | 'html' | 'email' => {
-    if (hasHtml) return 'html'; // HTML is most reliable
-    if (hasPdf) return 'pdf';   // PDF as secondary option
-    if (hasEmail) return 'email'; // Email as fallback
-    return 'html'; // Default fallback
-  };
-
-  const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>(getDefaultView());
+  const {
+    showSettings,
+    showValidation,
+    showStorageDebug,
+    isFullscreen,
+    currentView,
+    setShowSettings,
+    handleViewChange,
+    handleToggleFullscreen,
+    handleValidate,
+    handleShowStorageDebug,
+  } = useInvoicePreviewState({ hasPdf, hasHtml, hasEmail });
 
   console.log('InvoicePreview: Smart content selection:', {
     hasHtml,
     hasPdf,
     hasEmail,
-    defaultView: getDefaultView(),
     currentView
   });
-
-  const handleViewChange = (view: 'pdf' | 'html' | 'email') => {
-    setCurrentView(view);
-  };
 
   const handleExternalOpen = () => {
     if (pdfUrl) {
@@ -60,53 +51,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     }
   };
 
-  const handleToggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
-  const handleValidate = () => {
-    setShowValidation(!showValidation);
-  };
-
-  const handleShowStorageDebug = () => {
-    setShowStorageDebug(!showStorageDebug);
-  };
-
-  const renderContent = () => {
-    console.log('InvoicePreview: Rendering content for view:', currentView);
-
-    switch (currentView) {
-      case 'html':
-        return hasHtml ? (
-          <div className="p-6 overflow-auto h-full bg-white">
-            <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-          </div>
-        ) : (
-          <NoPreviewState message="Processed content not available" />
-        );
-      
-      case 'pdf':
-        return hasPdf ? (
-          <EnhancedStoragePdfViewer 
-            pdfUrl={pdfUrl}
-            onExternalOpen={handleExternalOpen}
-            onFallbackToHtml={hasHtml ? () => setCurrentView('html') : undefined}
-          />
-        ) : (
-          <NoPreviewState message="PDF not available" />
-        );
-      
-      case 'email':
-        return hasEmail ? (
-          <EmailPreview emailContent={emailContent} />
-        ) : (
-          <NoPreviewState message="Original email not available" />
-        );
-      
-      default:
-        return <NoPreviewState message="No content available" />;
-    }
-  };
+  const handleFallbackToHtml = hasHtml ? () => handleViewChange('html') : undefined;
 
   if (!hasPdf && !hasHtml && !hasEmail) {
     return <NoPreviewState message="No document content available for preview" />;
@@ -128,37 +73,27 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       />
       
       <div className="flex-1 overflow-hidden">
-        {renderContent()}
+        <InvoicePreviewContent
+          currentView={currentView}
+          pdfUrl={pdfUrl}
+          htmlContent={htmlContent}
+          emailContent={emailContent}
+          hasPdf={hasPdf}
+          hasHtml={hasHtml}
+          hasEmail={hasEmail}
+          onExternalOpen={handleExternalOpen}
+          onFallbackToHtml={handleFallbackToHtml}
+        />
       </div>
 
-      {/* Enhanced Tools */}
-      {showValidation && (
-        <div className="border-t p-4 bg-gray-50">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AIValidationTools 
-              pdfUrl={pdfUrl}
-              htmlContent={htmlContent}
-            />
-            {hasPdf && (
-              <EnhancedPdfProcessor 
-                pdfUrl={pdfUrl}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Storage Debug Information */}
-      {showStorageDebug && hasPdf && (
-        <div className="border-t p-4 bg-gray-50">
-          <SupabaseStorageDebugger pdfUrl={pdfUrl} />
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      <PreferenceSettings 
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+      <InvoicePreviewModals
+        showSettings={showSettings}
+        showValidation={showValidation}
+        showStorageDebug={showStorageDebug}
+        onCloseSettings={() => setShowSettings(false)}
+        pdfUrl={pdfUrl}
+        htmlContent={htmlContent}
+        hasPdf={hasPdf}
       />
     </div>
   );
