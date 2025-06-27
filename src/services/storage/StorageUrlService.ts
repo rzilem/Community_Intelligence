@@ -1,14 +1,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { StorageResult, StorageUrlStrategy, CacheEntry } from './types';
+import { storageValidationService } from './StorageValidationService';
 
 /**
- * Service for generating and managing storage URL strategies
+ * Enhanced service for generating multiple URL strategies for PDF access
  */
 export class StorageUrlService {
   private static instance: StorageUrlService;
   private cache = new Map<string, CacheEntry<StorageUrlStrategy[]>>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {}
 
@@ -20,14 +21,99 @@ export class StorageUrlService {
   }
 
   /**
-   * Parse storage URL to extract bucket and path
+   * Generate multiple URL strategies with fallback support
    */
-  parseStorageUrl(url: string): { bucket?: string; path?: string } {
+  async generateUrlStrategies(originalUrl: string): Promise<StorageResult<StorageUrlStrategy[]>> {
+    try {
+      // Check cache first
+      const cached = this.getFromCache(originalUrl);
+      if (cached) {
+        return { success: true, data: cached };
+      }
+
+      const strategies: StorageUrlStrategy[] = [];
+      
+      // Strategy 1: Direct URL (always first as fallback)
+      strategies.push({
+        type: 'direct',
+        url: originalUrl,
+        isPublic: true,
+        isSigned: false
+      });
+
+      // Check if storage is available
+      const storageHealth = await storageValidationService.getStorageHealth();
+      
+      if (storageHealth.success && storageHealth.data?.storageAvailable) {
+        const { bucket, path } = this.parseStorageUrl(originalUrl);
+        
+        if (bucket && path && storageHealth.data.invoicesBucketExists) {
+          // Strategy 2: Fresh public URL
+          try {
+            const { data: publicData } = supabase.storage
+              .from(bucket)
+              .getPublicUrl(path);
+
+            if (publicData?.publicUrl && publicData.publicUrl !== originalUrl) {
+              strategies.push({
+                type: 'public',
+                url: publicData.publicUrl,
+                isPublic: true,
+                isSigned: false
+              });
+            }
+          } catch (error) {
+            console.warn('Public URL generation failed:', error);
+          }
+
+          // Strategy 3: Signed URL (if available)
+          if (storageHealth.data.canCreateSignedUrls) {
+            try {
+              const { data: signedData, error } = await supabase.storage
+                .from(bucket)
+                .createSignedUrl(path, 3600); // 1 hour
+
+              if (signedData?.signedUrl && !error) {
+                strategies.push({
+                  type: 'signed',
+                  url: signedData.signedUrl,
+                  isPublic: false,
+                  isSigned: true,
+                  expiresAt: new Date(Date.now() + 3600 * 1000)
+                });
+              }
+            } catch (error) {
+              console.warn('Signed URL generation failed:', error);
+            }
+          }
+        }
+      }
+
+      // Cache the result
+      this.setCache(originalUrl, strategies);
+
+      return { success: true, data: strategies };
+    } catch (error) {
+      console.error('URL strategy generation failed:', error);
+      
+      // Return fallback strategy
+      return {
+        success: true,
+        data: [{
+          type: 'direct',
+          url: originalUrl,
+          isPublic: true,
+          isSigned: false
+        }]
+      };
+    }
+  }
+
+  private parseStorageUrl(url: string): { bucket?: string; path?: string } {
     try {
       const urlObj = new URL(url);
       const pathSegments = urlObj.pathname.split('/');
       
-      // Format: /storage/v1/object/public/bucket/path/to/file
       if (pathSegments.includes('storage') && pathSegments.includes('object')) {
         const storageIndex = pathSegments.indexOf('storage');
         const objectIndex = pathSegments.indexOf('object');
@@ -46,143 +132,39 @@ export class StorageUrlService {
     }
   }
 
-  /**
-   * Generate multiple URL strategies with caching
-   */
-  async generateUrlStrategies(originalUrl: string): Promise<StorageResult<StorageUrlStrategy[]>> {
-    try {
-      // Check cache first
-      const cached = this.getCachedStrategies(originalUrl);
-      if (cached) {
-        return { success: true, data: cached };
-      }
-
-      const strategies: StorageUrlStrategy[] = [];
-      const { bucket, path } = this.parseStorageUrl(originalUrl);
-
-      // Strategy 1: Direct/Original URL
-      strategies.push({
-        type: 'direct',
-        url: originalUrl,
-        isPublic: true,
-        isSigned: false
-      });
-
-      if (bucket && path) {
-        // Strategy 2: Fresh public URL
-        try {
-          const { data: publicData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(path);
-          
-          if (publicData?.publicUrl && publicData.publicUrl !== originalUrl) {
-            strategies.push({
-              type: 'public',
-              url: publicData.publicUrl,
-              isPublic: true,
-              isSigned: false
-            });
-          }
-        } catch (error) {
-          console.warn('Failed to generate public URL:', error);
-        }
-
-        // Strategy 3: Signed URL (1 hour expiry)
-        try {
-          const { data: signedData, error: signedError } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, 3600);
-
-          if (signedData?.signedUrl && !signedError) {
-            const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour from now
-            strategies.push({
-              type: 'signed',
-              url: signedData.signedUrl,
-              isPublic: false,
-              isSigned: true,
-              expiresAt
-            });
-          } else if (signedError) {
-            strategies.push({
-              type: 'signed',
-              url: originalUrl,
-              isPublic: false,
-              isSigned: true,
-              error: signedError.message
-            });
-          }
-        } catch (error) {
-          console.warn('Failed to generate signed URL:', error);
-        }
-      }
-
-      // Cache the results
-      this.setCachedStrategies(originalUrl, strategies);
-
-      return { success: true, data: strategies };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to generate URL strategies'
-      };
+  private getFromCache(key: string): StorageUrlStrategy[] | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    
+    if (Date.now() > entry.expiresAt.getTime()) {
+      this.cache.delete(key);
+      return null;
     }
+    
+    return entry.data;
   }
 
-  /**
-   * Get the best available strategy
-   */
-  getBestStrategy(strategies: StorageUrlStrategy[]): StorageUrlStrategy | null {
-    // Prefer signed URLs, then public URLs, then direct
-    const preference = ['signed', 'public', 'direct'] as const;
-    
-    for (const type of preference) {
-      const strategy = strategies.find(s => s.type === type && !s.error);
-      if (strategy) {
-        // Check if signed URL is not expired
-        if (strategy.type === 'signed' && strategy.expiresAt && strategy.expiresAt < new Date()) {
-          continue;
-        }
-        return strategy;
-      }
-    }
-    
-    return strategies[0] || null;
-  }
-
-  private getCachedStrategies(url: string): StorageUrlStrategy[] | null {
-    const cached = this.cache.get(url);
-    if (cached && cached.expiresAt > new Date()) {
-      return cached.data;
-    }
-    
-    if (cached) {
-      this.cache.delete(url);
-    }
-    
-    return null;
-  }
-
-  private setCachedStrategies(url: string, strategies: StorageUrlStrategy[]): void {
-    const expiresAt = new Date(Date.now() + this.CACHE_TTL);
-    this.cache.set(url, {
-      data: strategies,
+  private setCache(key: string, data: StorageUrlStrategy[]): void {
+    const entry: CacheEntry<StorageUrlStrategy[]> = {
+      data,
       timestamp: new Date(),
-      expiresAt
-    });
+      expiresAt: new Date(Date.now() + this.cacheTimeout)
+    };
+    this.cache.set(key, entry);
   }
 
-  /**
-   * Clear expired cache entries
-   */
   clearExpiredCache(): void {
-    const now = new Date();
+    const now = Date.now();
     for (const [key, entry] of this.cache.entries()) {
-      if (entry.expiresAt < now) {
+      if (now > entry.expiresAt.getTime()) {
         this.cache.delete(key);
       }
     }
   }
+
+  clearCache(): void {
+    this.cache.clear();
+  }
 }
 
-// Export singleton instance
 export const storageUrlService = StorageUrlService.getInstance();

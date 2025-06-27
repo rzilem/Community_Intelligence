@@ -5,7 +5,7 @@ import { chromeStorageService } from '@/services/storage/ChromeStorageService';
 import { PdfLoader } from './PdfLoader';
 import { PdfError } from './PdfError';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Monitor, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 
 interface ChromeOptimizedPdfViewerProps {
   pdfUrl: string;
@@ -23,7 +23,7 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [showChromeWarning, setShowChromeWarning] = useState(false);
   const urlSwitchCountRef = useRef(0);
-  const maxUrlSwitches = 3;
+  const maxUrlSwitches = 2; // Reduced from 3
 
   const {
     isLoading,
@@ -68,12 +68,13 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
 
   // Handle iframe load events
   const handleIframeLoad = useCallback(() => {
-    console.log('📄 Chrome PDF iframe loaded');
+    console.log('📄 Chrome PDF iframe loaded successfully');
     handleLoadSuccess();
+    setShowChromeWarning(false); // Clear warning on successful load
   }, [handleLoadSuccess]);
 
   const handleIframeError = useCallback(() => {
-    console.error('❌ Chrome PDF iframe error');
+    console.error('❌ Chrome PDF iframe error, URL index:', currentUrlIndex);
     
     // Try next URL if available and we haven't exceeded switch limit
     if (currentUrlIndex < optimizedUrls.length - 1 && urlSwitchCountRef.current < maxUrlSwitches) {
@@ -83,7 +84,7 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
       handleLoadStart();
     } else {
       // Show Chrome-specific warning after all attempts
-      if (chromeSpecific && (loadAttempt >= 3 || urlSwitchCountRef.current >= maxUrlSwitches)) {
+      if (chromeSpecific && (loadAttempt >= 2 || urlSwitchCountRef.current >= maxUrlSwitches)) {
         setShowChromeWarning(true);
       }
       handleLoadError(`PDF display failed. Chrome may be blocking the content due to security restrictions.`);
@@ -126,26 +127,6 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
     </div>
   );
 
-  // Debug info for Chrome (only in dev mode)
-  const renderDebugInfo = () => {
-    if (!chromeSpecific || process.env.NODE_ENV === 'production') {
-      return null;
-    }
-
-    return (
-      <div className="text-xs text-gray-500 p-2 bg-gray-50 border-t">
-        <div className="flex items-center gap-4">
-          <span>🔍 Debug: Chrome {browser.version}</span>
-          <span>URLs: {optimizedUrls.length}</span>
-          <span>Current: {currentUrlIndex + 1}</span>
-          <span>Attempts: {loadAttempt}</span>
-          <span>Switches: {urlSwitchCountRef.current}</span>
-          {browserOptimized && <span className="text-green-600">✅ Optimized</span>}
-        </div>
-      </div>
-    );
-  };
-
   const handleRetry = useCallback(() => {
     // Reset URL switching on manual retry
     setCurrentUrlIndex(0);
@@ -158,7 +139,6 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
     return (
       <div className="w-full h-full relative">
         <PdfLoader onExternalOpen={onExternalOpen} />
-        {renderDebugInfo()}
       </div>
     );
   }
@@ -173,7 +153,6 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
           onFallbackToHtml={onFallbackToHtml}
           onRetry={handleRetry}
         />
-        {renderDebugInfo()}
       </div>
     );
   }
@@ -193,8 +172,6 @@ export const ChromeOptimizedPdfViewer: React.FC<ChromeOptimizedPdfViewerProps> =
         title="PDF Document"
         sandbox={chromeSpecific ? chromeConfig?.sandboxAttributes : undefined}
       />
-      
-      {renderDebugInfo()}
     </div>
   );
 };

@@ -27,7 +27,7 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
   const timeoutRef = useRef<NodeJS.Timeout>();
   const loadAttemptRef = useRef(0);
   const isRetryingRef = useRef(false);
-  const maxRetries = 3;
+  const maxRetries = 2; // Reduced from 3 to prevent excessive retries
 
   useEffect(() => {
     setState(prev => ({
@@ -45,7 +45,7 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
   }, []);
 
   const handleLoadStart = useCallback(() => {
-    console.log('🔄 Chrome PDF loading started');
+    console.log('🔄 Chrome PDF loading started, attempt:', loadAttemptRef.current + 1);
     
     // Prevent multiple simultaneous load starts
     if (isRetryingRef.current) {
@@ -64,11 +64,11 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
       loadAttempt: loadAttemptRef.current
     }));
 
-    // Set Chrome-specific timeout
+    // Set Chrome-specific timeout with reasonable duration
     if (browser.isChrome && chromeConfig) {
       timeoutRef.current = setTimeout(() => {
-        console.warn('⏰ Chrome PDF load timeout');
-        handleLoadError('PDF loading timed out in Chrome. This may be due to browser security restrictions.');
+        console.warn('⏰ Chrome PDF load timeout after', chromeConfig.loadTimeout, 'ms');
+        handleLoadError('PDF loading timed out. Chrome may be blocking the content due to security restrictions.');
       }, chromeConfig.loadTimeout);
     }
   }, [browser.isChrome, chromeConfig]);
@@ -77,6 +77,7 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
     console.log('✅ Chrome PDF loaded successfully');
     clearTimeouts();
     isRetryingRef.current = false;
+    loadAttemptRef.current = 0; // Reset on success
 
     setState(prev => ({
       ...prev,
@@ -87,7 +88,7 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
   }, [clearTimeouts]);
 
   const handleLoadError = useCallback((error?: string) => {
-    console.error('❌ Chrome PDF load error:', error);
+    console.error('❌ Chrome PDF load error:', error, 'Attempt:', loadAttemptRef.current);
     clearTimeouts();
 
     const chromeSpecificError = browser.isChrome 
@@ -101,29 +102,32 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
       errorMessage: chromeSpecificError
     }));
 
-    // Auto-retry logic with proper guards
+    // Limited auto-retry logic with proper guards
     if (browser.isChrome && 
         chromeConfig && 
         loadAttemptRef.current < maxRetries && 
-        !isRetryingRef.current) {
+        !isRetryingRef.current &&
+        pdfUrl) {
       
       console.log(`🔄 Chrome auto-retry attempt ${loadAttemptRef.current}/${maxRetries}`);
       isRetryingRef.current = true;
       
-      // Use setTimeout to break the execution cycle and prevent infinite loops
+      // Use exponential backoff for retry delay
+      const retryDelay = Math.min(2000 * Math.pow(2, loadAttemptRef.current - 1), 8000);
+      
       setTimeout(() => {
-        if (loadAttemptRef.current < maxRetries) {
+        if (loadAttemptRef.current < maxRetries && !state.hasError) {
           handleLoadStart();
         }
         isRetryingRef.current = false;
-      }, 2000 * loadAttemptRef.current); // Exponential backoff
+      }, retryDelay);
     }
-  }, [browser.isChrome, chromeConfig, clearTimeouts, handleLoadStart, maxRetries]);
+  }, [browser.isChrome, chromeConfig, clearTimeouts, handleLoadStart, maxRetries, pdfUrl, state.hasError]);
 
   const retry = useCallback(async () => {
     console.log('🔄 Manual Chrome PDF retry');
     
-    // Reset attempt counter for manual retry
+    // Reset counters for manual retry
     loadAttemptRef.current = 0;
     isRetryingRef.current = false;
     
@@ -135,7 +139,8 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
           setState(prev => ({
             ...prev,
             hasError: true,
-            errorMessage: 'PDF is not accessible in Chrome. Please try opening in a new tab or use Edge browser.'
+            errorMessage: 'PDF is not accessible in Chrome. Please try opening in a new tab or use Edge browser.',
+            isLoading: false
           }));
           return;
         }

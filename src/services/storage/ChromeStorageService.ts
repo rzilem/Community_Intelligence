@@ -2,9 +2,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { StorageResult, StorageUrlStrategy } from './types';
 import { detectBrowser, getChromeSpecificConfig } from '@/utils/browser-utils';
+import { storageValidationService } from './StorageValidationService';
 
 /**
- * Chrome-specific storage service for PDF handling
+ * Chrome-specific storage service for PDF handling with improved error handling
  */
 export class ChromeStorageService {
   private static instance: ChromeStorageService;
@@ -21,34 +22,57 @@ export class ChromeStorageService {
   }
 
   /**
-   * Generate Chrome-optimized URL strategies
+   * Generate Chrome-optimized URL strategies with proper error handling
    */
   async generateChromeOptimizedStrategies(originalUrl: string): Promise<StorageResult<StorageUrlStrategy[]>> {
     try {
       const strategies: StorageUrlStrategy[] = [];
-      const { bucket, path } = this.parseStorageUrl(originalUrl);
-
+      
       console.log('🔧 Generating Chrome-optimized strategies for:', originalUrl);
 
-      if (this.browser.isChrome && bucket && path) {
-        // Strategy 1: Signed URL with longer expiry for Chrome
-        try {
-          const { data: signedData, error } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, 7200); // 2 hours for Chrome compatibility
+      // Always include direct URL as fallback
+      strategies.push({
+        type: 'direct',
+        url: originalUrl,
+        isPublic: true,
+        isSigned: false
+      });
 
-          if (signedData?.signedUrl && !error) {
-            strategies.push({
-              type: 'signed',
-              url: signedData.signedUrl,
-              isPublic: false,
-              isSigned: true,
-              expiresAt: new Date(Date.now() + 7200 * 1000)
-            });
-            console.log('✅ Chrome signed URL generated');
+      if (!this.browser.isChrome) {
+        return { success: true, data: strategies };
+      }
+
+      // Check storage health before attempting storage operations
+      const storageHealth = await storageValidationService.getStorageHealth();
+      
+      if (!storageHealth.success || !storageHealth.data?.storageAvailable) {
+        console.warn('⚠️ Storage not available, using direct URL only');
+        return { success: true, data: strategies };
+      }
+
+      const { bucket, path } = this.parseStorageUrl(originalUrl);
+
+      if (bucket && path && storageHealth.data.invoicesBucketExists) {
+        // Strategy 1: Signed URL with longer expiry for Chrome
+        if (storageHealth.data.canCreateSignedUrls) {
+          try {
+            const { data: signedData, error } = await supabase.storage
+              .from(bucket)
+              .createSignedUrl(path, 7200); // 2 hours for Chrome compatibility
+
+            if (signedData?.signedUrl && !error) {
+              strategies.push({
+                type: 'signed',
+                url: signedData.signedUrl,
+                isPublic: false,
+                isSigned: true,
+                expiresAt: new Date(Date.now() + 7200 * 1000)
+              });
+              console.log('✅ Chrome signed URL generated');
+            }
+          } catch (error) {
+            console.warn('⚠️ Chrome signed URL generation failed:', error);
           }
-        } catch (error) {
-          console.warn('⚠️ Chrome signed URL generation failed:', error);
         }
 
         // Strategy 2: Direct download URL for Chrome
@@ -85,20 +109,19 @@ export class ChromeStorageService {
         }
       }
 
-      // Fallback: Original URL
-      strategies.push({
-        type: 'direct',
-        url: originalUrl,
-        isPublic: true,
-        isSigned: false
-      });
-
       return { success: true, data: strategies };
     } catch (error) {
       console.error('❌ Chrome strategy generation failed:', error);
+      
+      // Return fallback strategy on error
       return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to generate Chrome strategies'
+        success: true,
+        data: [{
+          type: 'direct',
+          url: originalUrl,
+          isPublic: true,
+          isSigned: false
+        }]
       };
     }
   }
@@ -125,7 +148,7 @@ export class ChromeStorageService {
   }
 
   /**
-   * Test URL accessibility specifically for Chrome
+   * Test URL accessibility specifically for Chrome with improved error handling
    */
   async testChromeAccessibility(url: string): Promise<boolean> {
     if (!this.browser.isChrome) {
@@ -140,7 +163,7 @@ export class ChromeStorageService {
 
       const response = await fetch(url, {
         method: 'HEAD',
-        mode: this.chromeConfig?.corsMode || 'no-cors',
+        mode: 'no-cors',
         signal: controller.signal,
         cache: 'no-cache',
         headers: {
@@ -156,6 +179,11 @@ export class ChromeStorageService {
       
       return accessible;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.warn('🧪 Chrome accessibility test timed out');
+        return false;
+      }
+      
       console.warn('🧪 Chrome accessibility test failed (might still be accessible):', error);
       // For Chrome, CORS errors don't necessarily mean inaccessible
       return true;

@@ -7,59 +7,50 @@ export interface PdfLoadingState {
   errorMessage: string | null;
 }
 
-export interface PdfLoadingActions {
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  handleLoadSuccess: () => void;
-  handleLoadError: (error?: string) => void;
-  retry: () => void;
-}
-
-export const usePdfLoadingState = (): PdfLoadingState & PdfLoadingActions => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const setLoading = useCallback((loading: boolean) => {
-    setIsLoading(loading);
-    if (loading) {
-      setHasError(false);
-      setErrorMessage(null);
-    }
-  }, []);
-
-  const setError = useCallback((error: string | null) => {
-    setErrorMessage(error);
-    setHasError(!!error);
-    setIsLoading(false);
-  }, []);
+export const usePdfLoadingState = () => {
+  const [state, setState] = useState<PdfLoadingState>({
+    isLoading: true,
+    hasError: false,
+    errorMessage: null
+  });
 
   const handleLoadSuccess = useCallback(() => {
-    setIsLoading(false);
-    setHasError(false);
-    setErrorMessage(null);
+    setState({
+      isLoading: false,
+      hasError: false,
+      errorMessage: null
+    });
   }, []);
 
   const handleLoadError = useCallback((error?: string) => {
-    setIsLoading(false);
-    setHasError(true);
-    setErrorMessage(error || 'Failed to load PDF');
+    setState({
+      isLoading: false,
+      hasError: true,
+      errorMessage: error || 'Failed to load PDF'
+    });
   }, []);
 
   const retry = useCallback(() => {
-    setIsLoading(true);
-    setHasError(false);
-    setErrorMessage(null);
+    setState({
+      isLoading: true,
+      hasError: false,
+      errorMessage: null
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    setState({
+      isLoading: true,
+      hasError: false,
+      errorMessage: null
+    });
   }, []);
 
   return {
-    isLoading,
-    hasError,
-    errorMessage,
-    setLoading,
-    setError,
+    ...state,
     handleLoadSuccess,
     handleLoadError,
-    retry
+    retry,
+    reset
   };
 };
