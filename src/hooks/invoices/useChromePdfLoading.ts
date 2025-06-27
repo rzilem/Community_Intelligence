@@ -25,7 +25,9 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
   const browser = detectBrowser();
   const chromeConfig = getChromeSpecificConfig();
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const loadAttemptRef = useRef(0);
+  const isRetryingRef = useRef(false);
+  const maxRetries = 3;
 
   useEffect(() => {
     setState(prev => ({
@@ -35,14 +37,31 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
     }));
   }, [browser.isChrome, chromeConfig]);
 
+  const clearTimeouts = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+  }, []);
+
   const handleLoadStart = useCallback(() => {
     console.log('🔄 Chrome PDF loading started');
+    
+    // Prevent multiple simultaneous load starts
+    if (isRetryingRef.current) {
+      console.log('🔄 Already retrying, skipping load start');
+      return;
+    }
+
+    clearTimeouts();
+    loadAttemptRef.current += 1;
+    
     setState(prev => ({
       ...prev,
       isLoading: true,
       hasError: false,
       errorMessage: null,
-      loadAttempt: prev.loadAttempt + 1
+      loadAttempt: loadAttemptRef.current
     }));
 
     // Set Chrome-specific timeout
@@ -56,12 +75,8 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
 
   const handleLoadSuccess = useCallback(() => {
     console.log('✅ Chrome PDF loaded successfully');
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-    }
+    clearTimeouts();
+    isRetryingRef.current = false;
 
     setState(prev => ({
       ...prev,
@@ -69,13 +84,11 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
       hasError: false,
       errorMessage: null
     }));
-  }, []);
+  }, [clearTimeouts]);
 
   const handleLoadError = useCallback((error?: string) => {
     console.error('❌ Chrome PDF load error:', error);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    clearTimeouts();
 
     const chromeSpecificError = browser.isChrome 
       ? `Chrome PDF Error: ${error || 'Unable to display PDF in Chrome browser. This may be due to CORS restrictions or security policies.'}`
@@ -88,28 +101,46 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
       errorMessage: chromeSpecificError
     }));
 
-    // Auto-retry logic for Chrome
-    if (browser.isChrome && chromeConfig && state.loadAttempt < chromeConfig.retryAttempts) {
-      console.log(`🔄 Chrome auto-retry attempt ${state.loadAttempt + 1}/${chromeConfig.retryAttempts}`);
-      retryTimeoutRef.current = setTimeout(() => {
-        handleLoadStart();
-      }, 2000 * state.loadAttempt); // Exponential backoff
+    // Auto-retry logic with proper guards
+    if (browser.isChrome && 
+        chromeConfig && 
+        loadAttemptRef.current < maxRetries && 
+        !isRetryingRef.current) {
+      
+      console.log(`🔄 Chrome auto-retry attempt ${loadAttemptRef.current}/${maxRetries}`);
+      isRetryingRef.current = true;
+      
+      // Use setTimeout to break the execution cycle and prevent infinite loops
+      setTimeout(() => {
+        if (loadAttemptRef.current < maxRetries) {
+          handleLoadStart();
+        }
+        isRetryingRef.current = false;
+      }, 2000 * loadAttemptRef.current); // Exponential backoff
     }
-  }, [browser.isChrome, chromeConfig, state.loadAttempt]);
+  }, [browser.isChrome, chromeConfig, clearTimeouts, handleLoadStart, maxRetries]);
 
   const retry = useCallback(async () => {
     console.log('🔄 Manual Chrome PDF retry');
     
+    // Reset attempt counter for manual retry
+    loadAttemptRef.current = 0;
+    isRetryingRef.current = false;
+    
     if (pdfUrl && browser.isChrome) {
       // Test accessibility before retrying
-      const isAccessible = await chromeStorageService.testChromeAccessibility(pdfUrl);
-      if (!isAccessible) {
-        setState(prev => ({
-          ...prev,
-          hasError: true,
-          errorMessage: 'PDF is not accessible in Chrome. Please try opening in a new tab or use Edge browser.'
-        }));
-        return;
+      try {
+        const isAccessible = await chromeStorageService.testChromeAccessibility(pdfUrl);
+        if (!isAccessible) {
+          setState(prev => ({
+            ...prev,
+            hasError: true,
+            errorMessage: 'PDF is not accessible in Chrome. Please try opening in a new tab or use Edge browser.'
+          }));
+          return;
+        }
+      } catch (error) {
+        console.warn('Accessibility test failed, proceeding with retry');
       }
     }
 
@@ -117,12 +148,9 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
   }, [pdfUrl, browser.isChrome, handleLoadStart]);
 
   const reset = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-    }
+    clearTimeouts();
+    loadAttemptRef.current = 0;
+    isRetryingRef.current = false;
 
     setState({
       isLoading: true,
@@ -132,19 +160,15 @@ export const useChromePdfLoading = (pdfUrl?: string) => {
       browserOptimized: browser.isChrome && !!chromeConfig,
       chromeSpecific: browser.isChrome
     });
-  }, [browser.isChrome, chromeConfig]);
+  }, [browser.isChrome, chromeConfig, clearTimeouts]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
+      clearTimeouts();
+      isRetryingRef.current = false;
     };
-  }, []);
+  }, [clearTimeouts]);
 
   return {
     ...state,
