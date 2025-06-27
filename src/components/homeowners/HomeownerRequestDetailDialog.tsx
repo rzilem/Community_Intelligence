@@ -23,6 +23,11 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   open,
   onOpenChange
 }) => {
+  // Move all useState hooks to the top, before any conditional logic
+  const [aiResponse, setAiResponse] = useState('');
+  const [showResponse, setShowResponse] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  
   const { comments, loadingComments } = useRequestComments(request?.id || null);
   const { 
     fullscreenEmail, 
@@ -33,13 +38,10 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     handleFullscreenToggle 
   } = useRequestDialog();
   
+  // Early return after all hooks are declared
   if (!request) return null;
   
   const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
-
-  const [aiResponse, setAiResponse] = useState('');
-  const [showResponse, setShowResponse] = useState(false);
-  const [generating, setGenerating] = useState(false);
 
   const handleGenerate = async () => {
     if (!request) return;
