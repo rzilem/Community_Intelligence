@@ -69,6 +69,58 @@ export class StorageDebugService {
     }
   }
 
+  /**
+   * Generate troubleshooting suggestions based on debug info
+   */
+  getTroubleshootingSuggestions(debugInfo: StorageDebugInfo): string[] {
+    const suggestions: string[] = [];
+    const browser = detectBrowser();
+
+    // Browser-specific suggestions
+    if (browser.isChrome) {
+      suggestions.push('Chrome has stricter CORS policies. Try opening the PDF in a new tab.');
+      if (!debugInfo.isAccessible) {
+        suggestions.push('Chrome may be blocking cross-origin requests. Consider using a signed URL.');
+      }
+    }
+
+    // Accessibility suggestions
+    if (!debugInfo.isAccessible) {
+      suggestions.push('The file may not be publicly accessible. Check bucket permissions.');
+      suggestions.push('Verify the file exists at the specified path.');
+    }
+
+    // Strategy suggestions
+    if (debugInfo.strategies.length === 0) {
+      suggestions.push('No alternative access strategies available. Check URL format.');
+    } else if (debugInfo.strategies.length > 1) {
+      suggestions.push('Multiple access strategies generated. The system will try them automatically.');
+    }
+
+    // Error-specific suggestions
+    if (debugInfo.errors.length > 0) {
+      suggestions.push('Check console logs for detailed error information.');
+      if (debugInfo.errors.some(error => error.includes('CORS'))) {
+        suggestions.push('CORS error detected. Try accessing the file directly in a new browser tab.');
+      }
+    }
+
+    // Bucket/path suggestions
+    if (!debugInfo.bucketName) {
+      suggestions.push('Unable to parse bucket name from URL. Verify URL format.');
+    }
+    if (!debugInfo.filePath) {
+      suggestions.push('Unable to parse file path from URL. Check URL structure.');
+    }
+
+    // Fallback suggestion
+    if (suggestions.length === 0) {
+      suggestions.push('Try refreshing the page or opening the document in a new tab.');
+    }
+
+    return suggestions;
+  }
+
   private async testBasicAccessibility(url: string): Promise<boolean> {
     try {
       const response = await fetch(url, { 
