@@ -5,7 +5,7 @@ import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { PdfAccessScreen } from './preview/viewers/PdfAccessScreen';
+import { ImprovedPdfViewer } from './preview/viewers/ImprovedPdfViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { NoPreviewState } from './preview/NoPreviewState';
 
@@ -81,7 +81,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       
       case 'pdf':
         return hasPdf ? (
-          <PdfAccessScreen 
+          <ImprovedPdfViewer 
             pdfUrl={pdfUrl}
             onExternalOpen={handleExternalOpen}
             onFallbackToHtml={hasHtml ? () => setCurrentView('html') : undefined}
