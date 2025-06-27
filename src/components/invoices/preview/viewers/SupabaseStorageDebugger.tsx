@@ -1,21 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Info, Check, X, AlertTriangle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Copy, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { generateStorageDebugInfo, type StorageDebugInfo } from '@/utils/supabase-storage-utils';
-import { toast } from 'sonner';
 
 interface SupabaseStorageDebuggerProps {
   pdfUrl: string;
 }
 
-export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = ({
-  pdfUrl
-}) => {
+export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = ({ pdfUrl }) => {
   const [debugInfo, setDebugInfo] = useState<StorageDebugInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     const loadDebugInfo = async () => {
@@ -24,7 +22,7 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
         const info = await generateStorageDebugInfo(pdfUrl);
         setDebugInfo(info);
       } catch (error) {
-        console.error('Failed to load debug info:', error);
+        console.error('Failed to generate debug info:', error);
       } finally {
         setIsLoading(false);
       }
@@ -33,23 +31,27 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
     loadDebugInfo();
   }, [pdfUrl]);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeTextString(text);
-    toast.success('Copied to clipboard');
+  const handleCopy = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Info className="h-5 w-5 mr-2" />
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
             Storage Debug Information
           </CardTitle>
-          <CardDescription>Loading debug information...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse h-20 bg-gray-200 rounded"></div>
+          <div className="animate-pulse">Loading debug information...</div>
         </CardContent>
       </Card>
     );
@@ -59,134 +61,117 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center text-red-600">
-            <X className="h-5 w-5 mr-2" />
-            Debug Info Failed
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            Storage Debug Information
           </CardTitle>
-          <CardDescription>Could not load storage debug information</CardDescription>
         </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Failed to load debug information</p>
+        </CardContent>
       </Card>
     );
   }
 
+  const CopyButton = ({ text, fieldName }: { text: string; fieldName: string }) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleCopy(text, fieldName)}
+      className="h-6 w-6 p-0"
+    >
+      {copiedField === fieldName ? (
+        <CheckCircle className="h-3 w-3 text-green-500" />
+      ) : (
+        <Copy className="h-3 w-3" />
+      )}
+    </Button>
+  );
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Info className="h-5 w-5 mr-2" />
-          Supabase Storage Debug
+        <CardTitle className="flex items-center gap-2">
+          <Info className="h-4 w-4" />
+          Storage Debug Information
         </CardTitle>
-        <CardDescription>
-          Detailed information about PDF storage and access
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Accessibility Status */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <span className="font-medium">File Accessible:</span>
-          <Badge variant={debugInfo.isAccessible ? "default" : "destructive"}>
-            {debugInfo.isAccessible ? (
-              <><Check className="h-3 w-3 mr-1" /> Yes</>
-            ) : (
-              <><X className="h-3 w-3 mr-1" /> No</>
+          {debugInfo.isAccessible ? (
+            <Badge variant="default" className="bg-green-100 text-green-800">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Yes
+            </Badge>
+          ) : (
+            <Badge variant="destructive">
+              <XCircle className="h-3 w-3 mr-1" />
+              No
+            </Badge>
+          )}
+        </div>
+
+        {/* Bucket and Path */}
+        {debugInfo.bucketName && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Bucket:</span>
+              <div className="flex items-center gap-2">
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                  {debugInfo.bucketName}
+                </code>
+                <CopyButton text={debugInfo.bucketName} fieldName="bucket" />
+              </div>
+            </div>
+            
+            {debugInfo.filePath && (
+              <div className="flex items-center justify-between">
+                <span className="font-medium">File Path:</span>
+                <div className="flex items-center gap-2">
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
+                    {debugInfo.filePath}
+                  </code>
+                  <CopyButton text={debugInfo.filePath} fieldName="path" />
+                </div>
+              </div>
             )}
-          </Badge>
-        </div>
-
-        {/* Storage Information */}
-        <div className="grid grid-cols-1 gap-3">
-          <div>
-            <label className="text-sm font-medium text-gray-600">Bucket Name:</label>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                {debugInfo.bucketName || 'Unknown'}
-              </code>
-              {debugInfo.bucketName && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(debugInfo.bucketName!)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
           </div>
+        )}
 
-          <div>
-            <label className="text-sm font-medium text-gray-600">File Path:</label>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="text-sm bg-gray-100 px-2 py-1 rounded break-all">
-                {debugInfo.filePath || 'Unknown'}
-              </code>
-              {debugInfo.filePath && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(debugInfo.filePath!)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* URL Information */}
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-gray-600">Original URL:</label>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all flex-1">
+        {/* URLs */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-medium">Original URL:</span>
+            <div className="flex items-center gap-2">
+              <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
                 {debugInfo.originalUrl}
               </code>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(debugInfo.originalUrl)}
-                className="h-6 w-6 p-0"
-              >
-                <Copy className="h-3 w-3" />
-              </Button>
+              <CopyButton text={debugInfo.originalUrl} fieldName="original" />
             </div>
           </div>
 
           {debugInfo.publicUrl && (
-            <div>
-              <label className="text-sm font-medium text-gray-600">Public URL:</label>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all flex-1">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Public URL:</span>
+              <div className="flex items-center gap-2">
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
                   {debugInfo.publicUrl}
                 </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(debugInfo.publicUrl!)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
+                <CopyButton text={debugInfo.publicUrl} fieldName="public" />
               </div>
             </div>
           )}
 
           {debugInfo.signedUrl && (
-            <div>
-              <label className="text-sm font-medium text-gray-600">Signed URL:</label>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all flex-1">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Signed URL:</span>
+              <div className="flex items-center gap-2">
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
                   {debugInfo.signedUrl}
                 </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(debugInfo.signedUrl!)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
+                <CopyButton text={debugInfo.signedUrl} fieldName="signed" />
               </div>
             </div>
           )}
@@ -194,12 +179,9 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
 
         {/* Errors */}
         {debugInfo.errors.length > 0 && (
-          <div>
-            <label className="text-sm font-medium text-red-600 flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-1" />
-              Errors:
-            </label>
-            <div className="mt-1 space-y-1">
+          <div className="space-y-2">
+            <span className="font-medium text-red-600">Errors:</span>
+            <div className="space-y-1">
               {debugInfo.errors.map((error, index) => (
                 <div key={index} className="text-sm text-red-600 bg-red-50 p-2 rounded">
                   {error}
@@ -210,33 +192,15 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
         )}
 
         {/* Test Actions */}
-        <div className="pt-3 border-t">
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(debugInfo.originalUrl, '_blank')}
-            >
-              Test Original URL
-            </Button>
-            {debugInfo.publicUrl && debugInfo.publicUrl !== debugInfo.originalUrl && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(debugInfo.publicUrl!, '_blank')}
-              >
-                Test Public URL
-              </Button>
-            )}
-            {debugInfo.signedUrl && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(debugInfo.signedUrl!, '_blank')}
-              >
-                Test Signed URL
-              </Button>
-            )}
+        <div className="pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            <strong>Troubleshooting Tips:</strong>
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>If the file is not accessible, check RLS policies on the storage bucket</li>
+              <li>Try copying the signed URL above and opening it directly in a new tab</li>
+              <li>Verify the file exists and hasn't been moved or deleted</li>
+              <li>Check if the bucket is configured as public if needed</li>
+            </ul>
           </div>
         </div>
       </CardContent>
