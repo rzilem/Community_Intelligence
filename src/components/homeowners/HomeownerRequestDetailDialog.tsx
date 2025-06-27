@@ -7,7 +7,7 @@ import { useRequestDialog } from '@/hooks/homeowners/useRequestDialog';
 import RequestDialogLayout from './detail/RequestDialogLayout';
 import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import RequestTabsContent from './detail/RequestTabsContent';
-import EmailResponseDialog from './response/EmailResponseDialog';
+import { EmailResponseDialog } from './response/EmailResponseDialog';
 import { Button } from '@/components/ui/button';
 import { Send, Sparkles } from 'lucide-react';
 
