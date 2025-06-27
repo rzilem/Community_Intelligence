@@ -51,7 +51,8 @@ const AIProcessingControls: React.FC<AIProcessingControlsProps> = ({
   const getAverageConfidence = () => {
     if (!lead.ai_confidence) return 0;
     const scores = Object.values(lead.ai_confidence);
-    return scores.length > 0 ? scores.reduce((a: any, b: any) => a + b, 0) / scores.length : 0;
+    const numericScores = scores.filter((score): score is number => typeof score === 'number');
+    return numericScores.length > 0 ? numericScores.reduce((a, b) => a + b, 0) / numericScores.length : 0;
   };
 
   const hasAIData = lead.ai_confidence && Object.keys(lead.ai_confidence).length > 0;

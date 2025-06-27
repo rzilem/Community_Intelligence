@@ -84,7 +84,7 @@ const LeadsTableLayout: React.FC<LeadsTableLayoutProps> = ({
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Property Type</TableHead>
+            <TableHead>Association</TableHead>
             <TableHead>AI Processing</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -93,18 +93,18 @@ const LeadsTableLayout: React.FC<LeadsTableLayoutProps> = ({
           {leads.map((lead) => (
             <TableRow key={lead.id}>
               <TableCell className="font-medium">
-                {lead.company_name || 'Unknown Company'}
+                {lead.company || lead.association_name || 'Unknown Company'}
               </TableCell>
-              <TableCell>{lead.contact_name || 'Not specified'}</TableCell>
+              <TableCell>{lead.name || lead.first_name || lead.last_name || 'Not specified'}</TableCell>
               <TableCell>{lead.email || 'Not specified'}</TableCell>
               <TableCell>{lead.phone || 'Not specified'}</TableCell>
               <TableCell>
                 {getStatusBadge(lead.status)}
               </TableCell>
               <TableCell>
-                {lead.property_type ? (
+                {lead.association_name ? (
                   <Badge variant="outline">
-                    {lead.property_type.replace('_', ' ')}
+                    {lead.association_name}
                   </Badge>
                 ) : (
                   'Not specified'
