@@ -27,7 +27,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { requestId, recipientEmail, subject, htmlContent, plainTextContent } = await req.json()
+    const { 
+      requestId, 
+      recipientEmail, 
+      additionalRecipients,
+      subject, 
+      htmlContent, 
+      plainTextContent 
+    } = await req.json()
 
     // Get the request details
     const { data: request, error: requestError } = await supabaseClient
@@ -43,10 +50,17 @@ serve(async (req) => {
       )
     }
 
-    // Send email using CloudMailin SMTP
+    // Prepare recipients - handle both old and new format
+    const toEmails = additionalRecipients?.to || [recipientEmail]
+    const ccEmails = additionalRecipients?.cc || []
+    const bccEmails = additionalRecipients?.bcc || []
+
+    // Build email payload
     const emailPayload = {
       from: SMTP_CONFIG.from,
-      to: recipientEmail,
+      to: toEmails,
+      ...(ccEmails.length > 0 && { cc: ccEmails }),
+      ...(bccEmails.length > 0 && { bcc: bccEmails }),
       subject: subject,
       html: htmlContent,
       text: plainTextContent || stripHtml(htmlContent),
@@ -56,7 +70,7 @@ serve(async (req) => {
       }
     }
 
-    // Use CloudMailin's HTTP API for sending (more reliable than SMTP in edge functions)
+    // Use CloudMailin's HTTP API for sending
     const cloudmailinResponse = await fetch('https://api.cloudmailin.com/api/v0.1/send', {
       method: 'POST',
       headers: {
@@ -82,7 +96,11 @@ serve(async (req) => {
         request_id: requestId,
         response_content: htmlContent,
         response_method: 'email',
-        sent_to: recipientEmail,
+        sent_to: JSON.stringify({
+          to: toEmails,
+          cc: ccEmails,
+          bcc: bccEmails
+        }),
         sent_by: Deno.env.get('USER_ID'),
         sent_at: new Date().toISOString()
       })
@@ -105,7 +123,15 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Response sent successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Response sent successfully',
+        recipients: {
+          to: toEmails.length,
+          cc: ccEmails.length,
+          bcc: bccEmails.length
+        }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
