@@ -1,4 +1,5 @@
-// Redeployed on June 27, 2025 to load CloudMailin secrets
+
+// Redeployed on June 27, 2025 to support query parameter authentication
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
@@ -30,24 +31,26 @@ serve(async (req) => {
     
     // Determine authentication method based on request source
     const isCloudMailin = isCloudMailinRequest(req);
-    let isValidWebhook = false;
+    let authResult = { isValid: false, method: undefined };
     
     if (isCloudMailin) {
       // Use CloudMailin-specific authentication
       const cloudmailinConfig = getCloudMailinAuthConfig();
-      isValidWebhook = validateCloudMailinAuth(req, cloudmailinConfig);
+      authResult = validateCloudMailinAuth(req, cloudmailinConfig);
       await logger.info(requestId, "CloudMailin authentication check", { 
-        isValid: isValidWebhook,
+        isValid: authResult.isValid,
+        method: authResult.method,
         hasUsername: !!cloudmailinConfig.username,
         hasPassword: !!cloudmailinConfig.password,
         hasSecret: !!cloudmailinConfig.secret
       });
     } else {
-      // Use standard webhook authentication
+      // Use standard webhook authentication (now supports query parameters)
       const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
-      isValidWebhook = validateWebhookSecret(req, webhookSecret);
+      authResult = validateWebhookSecret(req, webhookSecret);
       await logger.info(requestId, "Standard webhook authentication check", { 
-        isValid: isValidWebhook,
+        isValid: authResult.isValid,
+        method: authResult.method,
         hasSecret: !!webhookSecret
       });
     }
@@ -57,14 +60,16 @@ serve(async (req) => {
     const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
     const hasAnyAuth = !!(cloudmailinConfig.username || cloudmailinConfig.secret || webhookSecret);
     
-    if (!isValidWebhook && hasAnyAuth) {
+    if (!authResult.isValid && hasAnyAuth) {
       await logger.error(requestId, "Webhook authentication failed", 
         new Error("Missing or invalid authentication"),
         { 
           isCloudMailin,
+          authMethod: authResult.method || 'none',
           hasWebhookAuth: !!req.headers.get('authorization'),
           hasWebhookKey: !!req.headers.get('x-webhook-key'),
-          hasCloudMailinSig: !!req.headers.get('x-cloudmailin-signature')
+          hasCloudMailinSig: !!req.headers.get('x-cloudmailin-signature'),
+          hasQueryToken: new URL(req.url).searchParams.has('token')
         }
       );
       
@@ -73,7 +78,13 @@ serve(async (req) => {
           success: false, 
           error: "Unauthorized webhook request",
           requestId,
-          authMethod: isCloudMailin ? 'cloudmailin' : 'standard'
+          authMethod: isCloudMailin ? 'cloudmailin' : 'standard',
+          supportedMethods: [
+            'query_parameter (?token=secret)',
+            'bearer_token (Authorization: Bearer secret)',
+            'webhook_header (x-webhook-key: secret)',
+            ...(isCloudMailin ? ['basic_auth', 'cloudmailin_signature'] : [])
+          ]
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -82,8 +93,10 @@ serve(async (req) => {
       );
     }
     
-    if (!isValidWebhook && !hasAnyAuth) {
+    if (!authResult.isValid && !hasAnyAuth) {
       await logger.info(requestId, "Processing request without authentication (no secrets configured)");
+    } else if (authResult.isValid) {
+      await logger.info(requestId, `Authentication successful using method: ${authResult.method}`);
     }
     
     // Get email data from request - handle both JSON and multipart form data
@@ -169,7 +182,8 @@ serve(async (req) => {
         success: true, 
         message: "Homeowner request created", 
         request,
-        trackingId: requestId
+        trackingId: requestId,
+        authMethod: authResult.method
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

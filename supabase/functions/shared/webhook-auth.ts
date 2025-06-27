@@ -19,16 +19,28 @@ export function secureCompare(a: string, b: string): boolean {
 
 /**
  * Validates an incoming webhook request using a configured secret
+ * Now supports both header-based and query parameter authentication
  * 
  * @param request The incoming request object
  * @param expectedSecret The expected webhook secret
- * @returns Boolean indicating if the webhook is valid
+ * @returns Object with validation result and method used
  */
-export function validateWebhookSecret(request: Request, expectedSecret?: string): boolean {
+export function validateWebhookSecret(request: Request, expectedSecret?: string): { isValid: boolean; method?: string } {
   // If no secret is configured, we can't validate
   if (!expectedSecret) {
     console.warn("No webhook secret configured - running in insecure mode");
-    return false; // Changed to false for better security - require explicit auth config
+    return { isValid: false };
+  }
+  
+  // First, check for token in query parameters (CloudMailin compatibility)
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get('token');
+  
+  if (queryToken) {
+    const isValid = secureCompare(queryToken, expectedSecret);
+    if (isValid) {
+      return { isValid: true, method: 'query_parameter' };
+    }
   }
   
   // Check headers for webhook signature/key
@@ -36,17 +48,25 @@ export function validateWebhookSecret(request: Request, expectedSecret?: string)
                      request.headers.get('webhook-signature') || 
                      request.headers.get('x-webhook-signature');
   
+  if (webhookKey) {
+    const isValid = secureCompare(webhookKey, expectedSecret);
+    if (isValid) {
+      return { isValid: true, method: 'webhook_header' };
+    }
+  }
+  
   // Allow regular authorization header as fallback
   const authHeader = request.headers.get('authorization');
   
-  if (webhookKey) {
-    return secureCompare(webhookKey, expectedSecret);
-  } else if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
-    return secureCompare(token, expectedSecret);
+    const isValid = secureCompare(token, expectedSecret);
+    if (isValid) {
+      return { isValid: true, method: 'bearer_token' };
+    }
   }
   
-  return false;
+  return { isValid: false };
 }
 
 /**
@@ -75,6 +95,10 @@ export function getRequestLogInfo(request: Request): Record<string, any> {
   
   // Add authorization presence flag without exposing actual token
   headers['has-authorization'] = request.headers.has('authorization') ? 'yes' : 'no';
+  
+  // Add query parameter info
+  const url = new URL(request.url);
+  headers['has-query-token'] = url.searchParams.has('token') ? 'yes' : 'no';
   
   return {
     method: request.method,

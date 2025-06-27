@@ -11,19 +11,32 @@ export interface CloudMailinAuthConfig {
 
 /**
  * Validates CloudMailin webhook authentication
- * CloudMailin typically uses HTTP Basic Auth or custom headers
+ * Now supports query parameter authentication in addition to existing methods
  */
-export function validateCloudMailinAuth(request: Request, config: CloudMailinAuthConfig): boolean {
+export function validateCloudMailinAuth(request: Request, config: CloudMailinAuthConfig): { isValid: boolean; method?: string } {
+  // First, check for query parameter authentication (common with CloudMailin)
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get('token');
+  
+  if (queryToken && config.secret) {
+    const isValid = queryToken === config.secret;
+    if (isValid) {
+      return { isValid: true, method: 'query_parameter' };
+    }
+  }
+  
   // Check for HTTP Basic Authentication (most common with CloudMailin)
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Basic ') && config.username && config.password) {
     try {
       const credentials = atob(authHeader.substring(6));
       const [username, password] = credentials.split(':');
-      return username === config.username && password === config.password;
+      const isValid = username === config.username && password === config.password;
+      if (isValid) {
+        return { isValid: true, method: 'basic_auth' };
+      }
     } catch (error) {
       console.warn('Failed to parse Basic Auth header:', error);
-      return false;
     }
   }
 
@@ -34,7 +47,10 @@ export function validateCloudMailinAuth(request: Request, config: CloudMailinAut
   if (signature && config.secret) {
     // CloudMailin signature validation would go here
     // For now, just check if signature exists with secret
-    return signature.length > 0;
+    const isValid = signature.length > 0;
+    if (isValid) {
+      return { isValid: true, method: 'signature' };
+    }
   }
 
   // Check for custom webhook key (fallback)
@@ -42,10 +58,13 @@ export function validateCloudMailinAuth(request: Request, config: CloudMailinAut
                      request.headers.get('webhook-key');
   
   if (webhookKey && config.secret) {
-    return webhookKey === config.secret;
+    const isValid = webhookKey === config.secret;
+    if (isValid) {
+      return { isValid: true, method: 'webhook_key' };
+    }
   }
 
-  return false;
+  return { isValid: false };
 }
 
 /**
@@ -65,9 +84,11 @@ export function getCloudMailinAuthConfig(): CloudMailinAuthConfig {
 export function isCloudMailinRequest(request: Request): boolean {
   const userAgent = request.headers.get('user-agent') || '';
   const contentType = request.headers.get('content-type') || '';
+  const url = new URL(request.url);
   
-  // CloudMailin typically sends multipart/form-data
+  // CloudMailin typically sends multipart/form-data or has query parameters
   return userAgent.toLowerCase().includes('cloudmailin') || 
          contentType.includes('multipart/form-data') ||
-         request.headers.has('x-cloudmailin-signature');
+         request.headers.has('x-cloudmailin-signature') ||
+         url.searchParams.has('token');
 }
