@@ -1,302 +1,259 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-};
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+}
 
 serve(async (req) => {
+  console.log(`Settings function called: ${req.method} ${req.url}`)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200 
+    });
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    )
 
-    const url = new URL(req.url);
-    const settingKey = url.pathname.split('/').pop();
-    
-    console.log('Settings function called:', {
-      method: req.method,
-      pathname: url.pathname,
-      settingKey,
-      timestamp: new Date().toISOString()
-    });
-
-    // Handle GET requests for specific settings
-    if (req.method === 'GET' && settingKey && settingKey !== 'settings') {
-      try {
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('value')
-          .eq('key', settingKey)
-          .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-          console.error(`Error fetching ${settingKey} settings:`, error);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: error.message,
-              key: settingKey 
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500 
-            }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            data: data?.value || getDefaultSetting(settingKey),
-            key: settingKey
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        );
-      } catch (err) {
-        console.error(`Unexpected error fetching ${settingKey}:`, err);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Internal server error',
-            key: settingKey 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500 
-          }
-        );
-      }
-    }
-
-    // Handle POST/PUT requests with JSON body
-    let body;
-    try {
-      const text = await req.text();
-      if (text) {
-        body = JSON.parse(text);
-      } else {
-        body = {};
-      }
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
+    // Get the JWT token from the Authorization header
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      console.error('No authorization header found')
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Invalid JSON in request body' 
-        }),
+        JSON.stringify({ success: false, error: 'Authentication required' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
+          status: 401 
         }
-      );
+      )
     }
 
-    const { action, ...bodyData } = body;
-
-    switch (action) {
-      case 'get_ai_config': {
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            config: {},
-            message: 'Configuration will be loaded from secrets when used'
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        );
-      }
-
-      case 'integrations': {
-        const { data: settings, error } = await supabase
-          .from('system_settings')
-          .select('value')
-          .eq('key', 'integrations')
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching integration settings:', error);
-          return new Response(
-            JSON.stringify({ success: false, error: error.message }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500 
-            }
-          );
+    // Set the auth context for the supabase client
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    
+    if (userError || !user) {
+      console.error('Authentication failed:', userError)
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid authentication' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401 
         }
+      )
+    }
 
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            integrationSettings: settings?.value || {} 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        );
-      }
+    console.log(`Authenticated user: ${user.id}`)
 
-      default: {
-        if (req.method === 'PUT' || req.method === 'POST') {
-          // Handle setting updates
-          if (settingKey && settingKey !== 'settings') {
-            try {
-              const { error } = await supabase
-                .from('system_settings')
-                .upsert({
-                  key: settingKey,
-                  value: bodyData
-                });
+    // Check if user has admin role
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-              if (error) {
-                console.error(`Error updating ${settingKey} settings:`, error);
-                return new Response(
-                  JSON.stringify({ success: false, error: error.message }),
-                  { 
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 500 
-                  }
-                );
-              }
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin'
+    console.log(`User admin status: ${isAdmin}`)
 
-              return new Response(
-                JSON.stringify({ success: true, key: settingKey }),
-                { 
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                  status: 200 
-                }
-              );
-            } catch (err) {
-              console.error(`Unexpected error updating ${settingKey}:`, err);
-              return new Response(
-                JSON.stringify({ 
-                  success: false, 
-                  error: 'Internal server error' 
-                }),
-                { 
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                  status: 500 
-                }
-              );
-            }
-          }
-
-          // Handle legacy integration settings update
-          const { integrationSettings } = bodyData;
-          if (integrationSettings) {
-            const { error } = await supabase
-              .from('system_settings')
-              .upsert({
-                key: 'integrations',
-                value: integrationSettings
-              });
-
-            if (error) {
-              console.error('Error updating integration settings:', error);
-              return new Response(
-                JSON.stringify({ success: false, error: error.message }),
-                { 
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                  status: 500 
-                }
-              );
-            }
-
-            return new Response(
-              JSON.stringify({ success: true }),
-              { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200 
-              }
-            );
-          }
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Admin access required' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403 
         }
+      )
+    }
 
-        console.warn('Invalid action or method:', { action, method: req.method });
+    const url = new URL(req.url)
+    const settingKey = url.pathname.split('/').pop()
+    
+    console.log(`Processing request for setting key: ${settingKey}`)
+
+    if (req.method === 'GET') {
+      // Handle GET requests for specific setting keys
+      if (!settingKey || settingKey === 'settings') {
         return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Invalid action or method',
-            received: { action, method: req.method }
-          }),
+          JSON.stringify({ success: false, error: 'Setting key is required' }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400 
           }
-        );
+        )
       }
+
+      console.log(`Fetching setting: ${settingKey}`)
+      
+      const { data, error } = await supabaseClient
+        .from('system_settings')
+        .select('value')
+        .eq('key', settingKey)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+        console.error('Database error fetching setting:', error)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Database error' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+
+      // Return the setting value or default based on key
+      const defaultSettings = {
+        appearance: {
+          theme: 'system',
+          colorScheme: 'default',
+          density: 'default',
+          animationsEnabled: true,
+          fontScale: 1,
+          showAuthDebugger: false
+        },
+        notifications: {
+          emailNotifications: true,
+          pushNotifications: true,
+          smsNotifications: false,
+          maintenanceAlerts: true,
+          securityAlerts: true,
+          newsAndUpdates: false
+        },
+        security: {
+          twoFactorAuth: false,
+          sessionTimeout: 30,
+          passwordResetInterval: 90,
+          ipWhitelist: ['192.168.1.1', '10.0.0.1']
+        },
+        preferences: {
+          defaultAssociationId: 'assoc-1',
+          defaultDateFormat: 'MM/DD/YYYY',
+          defaultTimeFormat: '12h',
+          defaultCurrency: 'USD',
+          defaultLanguage: 'en',
+          autoSave: true
+        },
+        integrations: {
+          integrationSettings: {}
+        },
+        webhook_settings: {
+          cloudmailin_webhook_url: '',
+          cloudmailin_secret: '',
+          webhook_secret: ''
+        }
+      }
+
+      const settingValue = data?.value || defaultSettings[settingKey as keyof typeof defaultSettings] || {}
+      
+      console.log(`Returning setting value for ${settingKey}:`, settingValue)
+      
+      return new Response(
+        JSON.stringify({ success: true, data: settingValue }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
     }
+
+    if (req.method === 'POST' || req.method === 'PUT') {
+      // Handle POST/PUT requests for updating settings
+      if (!settingKey || settingKey === 'settings') {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Setting key is required' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400 
+          }
+        )
+      }
+
+      let requestBody
+      try {
+        const bodyText = await req.text()
+        console.log(`Request body text: ${bodyText}`)
+        
+        if (!bodyText || bodyText.trim() === '') {
+          throw new Error('Empty request body')
+        }
+        
+        requestBody = JSON.parse(bodyText)
+        console.log(`Parsed request body:`, requestBody)
+      } catch (error) {
+        console.error('Error parsing request body:', error)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid JSON in request body' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400 
+          }
+        )
+      }
+
+      console.log(`Updating setting ${settingKey} with value:`, requestBody)
+
+      // Update the setting in the database
+      const { error: updateError } = await supabaseClient
+        .from('system_settings')
+        .upsert({
+          key: settingKey,
+          value: requestBody,
+          updated_at: new Date().toISOString()
+        })
+
+      if (updateError) {
+        console.error('Database error updating setting:', updateError)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to update setting' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+
+      console.log(`Successfully updated setting: ${settingKey}`)
+      
+      return new Response(
+        JSON.stringify({ success: true, message: 'Setting updated successfully' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    }
+
+    // Method not allowed
+    return new Response(
+      JSON.stringify({ success: false, error: 'Method not allowed' }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 405 
+      }
+    )
+
   } catch (error) {
-    console.error('Settings function error:', error);
+    console.error('Unexpected error in settings function:', error)
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        error: 'Internal server error',
+        details: error.message 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
-    );
+    )
   }
-});
-
-// Helper function to provide default settings
-function getDefaultSetting(key: string) {
-  const defaults = {
-    appearance: {
-      theme: 'system',
-      colorScheme: 'default',
-      density: 'default',
-      animationsEnabled: true,
-      fontScale: 1,
-      showAuthDebugger: false
-    },
-    notifications: {
-      emailNotifications: true,
-      pushNotifications: true,
-      smsNotifications: false,
-      maintenanceAlerts: true,
-      securityAlerts: true,
-      newsAndUpdates: false
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: 30,
-      passwordResetInterval: 90,
-      ipWhitelist: []
-    },
-    preferences: {
-      defaultAssociationId: '',
-      defaultDateFormat: 'MM/DD/YYYY',
-      defaultTimeFormat: '12h',
-      defaultCurrency: 'USD',
-      defaultLanguage: 'en',
-      autoSave: true
-    },
-    integrations: {},
-    webhook_settings: {
-      cloudmailin_webhook_url: '',
-      cloudmailin_secret: '',
-      webhook_secret: ''
-    }
-  };
-
-  return defaults[key as keyof typeof defaults] || {};
-}
+})
