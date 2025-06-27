@@ -35,11 +35,14 @@ export const useUserPreferences = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (!error && data?.column_preferences?.invoicePreview) {
-        setPreferences({
-          ...defaultPreferences,
-          ...data.column_preferences.invoicePreview
-        });
+      if (!error && data?.column_preferences && typeof data.column_preferences === 'object' && data.column_preferences !== null) {
+        const columnPrefs = data.column_preferences as Record<string, any>;
+        if (columnPrefs.invoicePreview) {
+          setPreferences({
+            ...defaultPreferences,
+            ...columnPrefs.invoicePreview
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to load user preferences:', error);

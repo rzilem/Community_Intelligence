@@ -82,8 +82,7 @@ export const EnhancedPdfProcessor: React.FC<EnhancedPdfProcessorProps> = ({
 
     } catch (error) {
       showToast('PDF Processing Failed', {
-        description: 'Unable to process PDF document',
-        variant: 'destructive'
+        description: 'Unable to process PDF document'
       });
     } finally {
       setIsProcessing(false);

@@ -1,70 +1,61 @@
 
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useEnhancedPdfPreview } from '@/hooks/invoices/useEnhancedPdfPreview';
 import { useUserPreferences } from '@/hooks/invoices/useUserPreferences';
-import { PreviewHeader } from './preview/PreviewHeader';
-import { PreviewErrorState } from './preview/PreviewErrorState';
-import { NoPreviewState } from './preview/NoPreviewState';
-import { EnhancedPdfViewer } from './preview/viewers/EnhancedPdfViewer';
-import { HtmlContentViewer } from './preview/viewers/HtmlContentViewer';
-import { EmailPreview } from './preview/EmailPreview';
+import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar';
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, BarChart3, Wrench } from 'lucide-react';
+import { DocumentViewer } from './preview/DocumentViewer';
+import { EmailPreview } from './preview/EmailPreview';
+import { PreviewErrorState } from './preview/PreviewErrorState';
+import { NoPreviewState } from './preview/NoPreviewState';
 
 interface InvoicePreviewProps {
   pdfUrl?: string;
   htmlContent?: string;
   emailContent?: string;
-  invoice?: any;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
+export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   pdfUrl,
   htmlContent,
-  emailContent,
-  invoice
+  emailContent
 }) => {
   const { preferences } = useUserPreferences();
   const [showSettings, setShowSettings] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
-  const [showProcessor, setShowProcessor] = useState(false);
-  
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>('pdf');
+
   const {
     contentType,
     isLoading,
     error,
     pdfUrl: normalizedPdfUrl,
-    hasHtmlContent,
-    hasEmailContent,
     retryPdfLoad,
-    switchToHtml,
-    switchToPdf
-  } = useEnhancedPdfPreview({ 
-    pdfUrl, 
-    htmlContent, 
+    checkPdfAccessibility
+  } = useEnhancedPdfPreview({
+    pdfUrl,
+    htmlContent,
     emailContent,
     userPreferences: preferences
   });
 
-  const [activeTab, setActiveTab] = React.useState('document');
-  const [isFullscreen, setIsFullscreen] = React.useState(false);
+  // Determine available views
+  const hasPdf = !!normalizedPdfUrl;
+  const hasHtml = !!htmlContent && htmlContent.trim().length > 0;
+  const hasEmail = !!emailContent && emailContent.trim().length > 0;
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    
-    // Auto-switch content type when switching tabs based on user preferences
-    if (value === 'document') {
-      if (preferences.preferredViewMode === 'pdf' && normalizedPdfUrl) {
-        switchToPdf();
-      } else if (preferences.preferredViewMode === 'html' && hasHtmlContent) {
-        switchToHtml();
-      }
-    }
+  // Auto-set current view based on content type
+  React.useEffect(() => {
+    if (contentType === 'pdf' && hasPdf) setCurrentView('pdf');
+    else if (contentType === 'html' && hasHtml) setCurrentView('html');
+    else if (contentType === 'email' && hasEmail) setCurrentView('email');
+  }, [contentType, hasPdf, hasHtml, hasEmail]);
+
+  const handleViewChange = (view: 'pdf' | 'html' | 'email') => {
+    setCurrentView(view);
   };
 
   const handleExternalOpen = () => {
@@ -73,166 +64,112 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     }
   };
 
-  const toggleFullscreen = () => {
+  const handleToggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  const fullscreenClass = isFullscreen
-    ? 'fixed inset-0 z-50 bg-background p-4'
-    : 'h-[600px]';
+  const handleValidate = () => {
+    setShowValidation(!showValidation);
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Loading preview...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <PreviewErrorState 
+          error={error}
+          onRetry={retryPdfLoad}
+          onSwitchToHtml={hasHtml ? () => setCurrentView('html') : undefined}
+        />
+      );
+    }
+
+    // Show content based on current view
+    switch (currentView) {
+      case 'pdf':
+        return hasPdf ? (
+          <DocumentViewer pdfUrl={normalizedPdfUrl} />
+        ) : (
+          <NoPreviewState message="PDF not available" />
+        );
+      
+      case 'html':
+        return hasHtml ? (
+          <div className="p-4" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        ) : (
+          <NoPreviewState message="Processed content not available" />
+        );
+      
+      case 'email':
+        return hasEmail ? (
+          <EmailPreview content={emailContent} />
+        ) : (
+          <NoPreviewState message="Original email not available" />
+        );
+      
+      default:
+        return <NoPreviewState message="No content available" />;
+    }
+  };
+
+  if (!hasPdf && !hasHtml && !hasEmail) {
+    return <NoPreviewState message="No document content available for preview" />;
+  }
 
   return (
-    <>
-      <div className={`flex flex-col border rounded-lg overflow-hidden ${fullscreenClass}`}>
-        <PreviewHeader
-          isPdf={contentType === 'pdf'}
-          isWordDocument={false}
-          pdfUrl={normalizedPdfUrl}
-          onExternalOpen={handleExternalOpen}
-          onToggleFullscreen={toggleFullscreen}
-          showActions={true}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          hasEmail={hasEmailContent}
-        />
-        
-        {/* Enhanced action bar with new tools */}
-        <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">View:</span>
-            {normalizedPdfUrl && (
-              <Button
-                size="sm"
-                variant={contentType === 'pdf' ? 'default' : 'outline'}
-                onClick={switchToPdf}
-              >
-                PDF
-              </Button>
-            )}
-            {hasHtmlContent && (
-              <Button
-                size="sm"
-                variant={contentType === 'html' ? 'default' : 'outline'}
-                onClick={switchToHtml}
-              >
-                Processed
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {preferences.showValidationTools && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowValidation(!showValidation)}
-                className="flex items-center gap-1"
-              >
-                <BarChart3 className="h-3 w-3" />
-                Validate
-              </Button>
-            )}
-            
-            {normalizedPdfUrl && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowProcessor(!showProcessor)}
-                className="flex items-center gap-1"
-              >
-                <Wrench className="h-3 w-3" />
-                Tools
-              </Button>
-            )}
-            
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowSettings(true)}
-              className="flex items-center gap-1"
-            >
-              <Settings className="h-3 w-3" />
-              Settings
-            </Button>
-          </div>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
-          <TabsContent value="document" className="h-full">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">
-                    Loading document...
-                    {preferences.enableAutoFallback && ' (Auto-fallback enabled)'}
-                  </p>
-                </div>
-              </div>
-            ) : error && !preferences.enableAutoFallback ? (
-              <PreviewErrorState
-                error={error}
-                pdfUrl={normalizedPdfUrl}
-                onExternalOpen={handleExternalOpen}
-                onRetry={retryPdfLoad}
-              />
-            ) : contentType === 'none' ? (
-              <NoPreviewState />
-            ) : contentType === 'pdf' ? (
-              <EnhancedPdfViewer
-                pdfUrl={normalizedPdfUrl}
-                onError={() => {
-                  if (hasHtmlContent && preferences.enableAutoFallback) {
-                    switchToHtml();
-                  }
-                }}
-                onLoad={() => console.log('PDF loaded successfully')}
-                onFallbackToHtml={hasHtmlContent ? switchToHtml : undefined}
-                hasHtmlFallback={hasHtmlContent}
-              />
-            ) : contentType === 'html' ? (
-              <HtmlContentViewer
-                htmlContent={htmlContent}
-                onError={() => console.error('HTML content error')}
-                onLoad={() => console.log('HTML content loaded')}
-              />
-            ) : null}
-          </TabsContent>
-          
-          <TabsContent value="email" className="h-full">
-            <EmailPreview 
-              emailContent={emailContent} 
-              htmlContent={htmlContent} 
-            />
-          </TabsContent>
-        </Tabs>
+    <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+      <ConsolidatedPreviewToolbar
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        hasEmail={hasEmail}
+        hasPdf={hasPdf}
+        hasHtml={hasHtml}
+        onExternalOpen={hasPdf ? handleExternalOpen : undefined}
+        onToggleFullscreen={handleToggleFullscreen}
+        onShowSettings={() => setShowSettings(true)}
+        onValidate={handleValidate}
+        onRetry={retryPdfLoad}
+        canRetry={!!error}
+      />
+      
+      <div className="flex-1 overflow-auto">
+        {renderContent()}
       </div>
 
-      {/* Enhanced side panels */}
+      {/* Enhanced Tools - Show in sidebar when enabled */}
       {showValidation && (
-        <div className="mt-4">
-          <AIValidationTools
-            pdfUrl={normalizedPdfUrl}
-            htmlContent={htmlContent}
-            invoice={invoice}
-          />
+        <div className="border-t p-4 bg-gray-50">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AIValidationTools 
+              pdfUrl={normalizedPdfUrl}
+              htmlContent={htmlContent}
+            />
+            {hasPdf && (
+              <EnhancedPdfProcessor 
+                pdfUrl={normalizedPdfUrl}
+              />
+            )}
+          </div>
         </div>
       )}
 
-      {showProcessor && normalizedPdfUrl && (
-        <div className="mt-4">
-          <EnhancedPdfProcessor
-            pdfUrl={normalizedPdfUrl}
-            onMetadataExtracted={(metadata) => console.log('PDF metadata:', metadata)}
-            onTextExtracted={(text) => console.log('Extracted text:', text)}
-          />
-        </div>
-      )}
-
-      <PreferenceSettings
+      {/* Settings Modal */}
+      <PreferenceSettings 
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
       />
-    </>
+    </div>
   );
-};
+});
+
+InvoicePreview.displayName = 'InvoicePreview';
