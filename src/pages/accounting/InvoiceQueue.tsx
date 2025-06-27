@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -8,6 +9,7 @@ import { useInvoices } from '@/hooks/invoices/useInvoices';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 import InvoiceTable from '@/components/invoices/InvoiceTable';
 import InvoiceToolbar from '@/components/invoices/InvoiceToolbar';
+import BulkAIProcessor from '@/components/common/BulkAIProcessor';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
@@ -65,6 +67,13 @@ const InvoiceQueue = () => {
       description="Process and approve incoming vendor invoices for payment."
     >
       <div className="mt-6 space-y-4">
+        {/* AI Bulk Processing */}
+        <BulkAIProcessor
+          items={invoices}
+          itemType="invoices"
+          onProcessingComplete={refreshInvoices}
+        />
+
         <Card className="p-6">
           <Tabs defaultValue="pending" onValueChange={setActiveTab}>
             <TabsList>
@@ -89,6 +98,7 @@ const InvoiceQueue = () => {
                   onViewInvoice={handleViewInvoice}
                   onApproveInvoice={handleApproveInvoice}
                   onRejectInvoice={handleRejectInvoice}
+                  onRefreshInvoices={refreshInvoices}
                 />
               </div>
             </TabsContent>
@@ -106,6 +116,7 @@ const InvoiceQueue = () => {
                   invoices={filteredInvoices}
                   isLoading={isLoading}
                   onViewInvoice={handleViewInvoice}
+                  onRefreshInvoices={refreshInvoices}
                 />
               </div>
             </TabsContent>
@@ -123,6 +134,7 @@ const InvoiceQueue = () => {
                   invoices={filteredInvoices}
                   isLoading={isLoading}
                   onViewInvoice={handleViewInvoice}
+                  onRefreshInvoices={refreshInvoices}
                 />
               </div>
             </TabsContent>
@@ -140,6 +152,7 @@ const InvoiceQueue = () => {
                   invoices={filteredInvoices}
                   isLoading={isLoading}
                   onViewInvoice={handleViewInvoice}
+                  onRefreshInvoices={refreshInvoices}
                 />
               </div>
             </TabsContent>
@@ -159,6 +172,7 @@ const InvoiceQueue = () => {
                   onViewInvoice={handleViewInvoice}
                   onApproveInvoice={handleApproveInvoice}
                   onRejectInvoice={handleRejectInvoice}
+                  onRefreshInvoices={refreshInvoices}
                 />
               </div>
             </TabsContent>

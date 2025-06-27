@@ -11,6 +11,7 @@ import LeadActionButtons from '@/components/leads/LeadActionButtons';
 import LeadColumnSelector from '@/components/leads/LeadColumnSelector';
 import LeadStatusTabs from '@/components/leads/LeadStatusTabs';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
+import BulkAIProcessor from '@/components/common/BulkAIProcessor';
 
 const LeadsDashboard = () => {
   const { 
@@ -68,6 +69,13 @@ const LeadsDashboard = () => {
       <div className="space-y-6">
         {/* Quick stats cards */}
         <LeadStatCards leadCounts={leadCounts} />
+
+        {/* AI Bulk Processing */}
+        <BulkAIProcessor
+          items={leads}
+          itemType="leads"
+          onProcessingComplete={refreshLeads}
+        />
 
         {/* Actions bar */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
