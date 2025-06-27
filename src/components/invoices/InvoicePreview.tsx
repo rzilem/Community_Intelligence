@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
-import { useEnhancedPdfPreview } from '@/hooks/invoices/useEnhancedPdfPreview';
 import { useUserPreferences } from '@/hooks/invoices/useUserPreferences';
 import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar';
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { SimplePdfViewer } from './preview/viewers/SimplePdfViewer';
+import { EnhancedPdfViewer } from './preview/viewers/EnhancedPdfViewer';
 import { EmailPreview } from './preview/EmailPreview';
-import { PreviewErrorState } from './preview/PreviewErrorState';
 import { NoPreviewState } from './preview/NoPreviewState';
 
 interface InvoicePreviewProps {
@@ -27,6 +25,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   const [showValidation, setShowValidation] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>('pdf');
+  const [pdfError, setPdfError] = useState(false);
 
   // Determine available views
   const hasPdf = !!pdfUrl && pdfUrl.trim().length > 0;
@@ -40,19 +39,23 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     pdfUrl: pdfUrl || 'none'
   });
 
-  // Auto-set current view based on available content
+  // Auto-set current view based on available content and errors
   React.useEffect(() => {
-    if (hasPdf && currentView !== 'pdf') {
+    if (hasPdf && !pdfError && currentView !== 'pdf') {
       setCurrentView('pdf');
-    } else if (!hasPdf && hasHtml && currentView === 'pdf') {
+    } else if ((!hasPdf || pdfError) && hasHtml && currentView === 'pdf') {
       setCurrentView('html');
     } else if (!hasPdf && !hasHtml && hasEmail && currentView !== 'email') {
       setCurrentView('email');
     }
-  }, [hasPdf, hasHtml, hasEmail, currentView]);
+  }, [hasPdf, hasHtml, hasEmail, currentView, pdfError]);
 
   const handleViewChange = (view: 'pdf' | 'html' | 'email') => {
     setCurrentView(view);
+    // Reset PDF error when switching back to PDF view
+    if (view === 'pdf') {
+      setPdfError(false);
+    }
   };
 
   const handleExternalOpen = () => {
@@ -69,16 +72,26 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     setShowValidation(!showValidation);
   };
 
+  const handlePdfError = () => {
+    console.log('InvoicePreview: PDF error detected, setting error state');
+    setPdfError(true);
+    // Auto-switch to HTML if available
+    if (hasHtml) {
+      setCurrentView('html');
+    }
+  };
+
   const renderContent = () => {
-    console.log('InvoicePreview: Rendering content for view:', currentView);
+    console.log('InvoicePreview: Rendering content for view:', currentView, 'PDF Error:', pdfError);
 
     // Show content based on current view
     switch (currentView) {
       case 'pdf':
         return hasPdf ? (
-          <SimplePdfViewer 
+          <EnhancedPdfViewer 
             pdfUrl={pdfUrl}
             onExternalOpen={handleExternalOpen}
+            onError={handlePdfError}
           />
         ) : (
           <NoPreviewState message="PDF not available" />
@@ -86,7 +99,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       
       case 'html':
         return hasHtml ? (
-          <div className="p-4 overflow-auto h-full">
+          <div className="p-4 overflow-auto h-full bg-white">
             <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
           </div>
         ) : (
@@ -121,8 +134,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
         onToggleFullscreen={handleToggleFullscreen}
         onShowSettings={() => setShowSettings(true)}
         onValidate={handleValidate}
-        onRetry={() => {}} // Simple retry - just refresh the current view
-        canRetry={false}
+        onRetry={() => setPdfError(false)}
+        canRetry={pdfError && hasPdf}
       />
       
       <div className="flex-1 overflow-hidden">

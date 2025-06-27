@@ -23,7 +23,7 @@ export const normalizePdfUrl = (url: string): string => {
   if (!url) return '';
   
   try {
-    // If it's already an absolute URL, return it
+    // If it's already an absolute URL, return it as-is
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
@@ -35,3 +35,6 @@ export const normalizePdfUrl = (url: string): string => {
     return url;
   }
 };
+
+// Export alias for backward compatibility
+export const normalizeUrl = normalizePdfUrl;

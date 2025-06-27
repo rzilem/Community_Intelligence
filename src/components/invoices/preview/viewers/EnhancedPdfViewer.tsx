@@ -1,166 +1,129 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ExternalLink, AlertTriangle, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, RefreshCw, Download, AlertTriangle } from 'lucide-react';
-import { createCacheBustedUrl } from '../utils/pdfUtils';
-import { showToast } from '@/utils/toast-utils';
 
 interface EnhancedPdfViewerProps {
   pdfUrl: string;
-  onError: () => void;
-  onLoad: () => void;
-  onFallbackToHtml?: () => void;
-  hasHtmlFallback?: boolean;
+  onExternalOpen: () => void;
+  onError?: () => void;
 }
 
 export const EnhancedPdfViewer: React.FC<EnhancedPdfViewerProps> = ({
   pdfUrl,
-  onError,
-  onLoad,
-  onFallbackToHtml,
-  hasHtmlFallback = false
+  onExternalOpen,
+  onError
 }) => {
-  const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [retryAttempts, setRetryAttempts] = useState(0);
-  const objectRef = useRef<HTMLObjectElement>(null);
-  const maxRetries = 3;
+  const [displayError, setDisplayError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setLoadState('loading');
-    setRetryAttempts(0);
-  }, [pdfUrl]);
+  console.log('EnhancedPdfViewer: Attempting to display PDF:', pdfUrl);
 
-  const handleLoadSuccess = () => {
-    console.log('PDF loaded successfully:', pdfUrl);
-    setLoadState('loaded');
-    onLoad();
+  const handleObjectError = () => {
+    console.error('EnhancedPdfViewer: PDF object failed to load');
+    setDisplayError(true);
+    setIsLoading(false);
+    onError?.();
   };
 
-  const handleLoadError = () => {
-    console.error('PDF load error:', { pdfUrl, attempt: retryAttempts + 1 });
-    
-    if (retryAttempts < maxRetries) {
-      // Auto-retry with cache busting
-      const newAttempt = retryAttempts + 1;
-      setRetryAttempts(newAttempt);
-      
-      setTimeout(() => {
-        const cacheBustedUrl = createCacheBustedUrl(pdfUrl);
-        if (objectRef.current) {
-          objectRef.current.data = cacheBustedUrl;
-        }
-        console.log(`Retrying PDF load (attempt ${newAttempt}):`, cacheBustedUrl);
-      }, 1000 * newAttempt); // Exponential backoff
-    } else {
-      setLoadState('error');
-      onError();
-    }
+  const handleObjectLoad = () => {
+    console.log('EnhancedPdfViewer: PDF object loaded successfully');
+    setIsLoading(false);
+    setDisplayError(false);
   };
 
-  const handleManualRetry = () => {
-    setRetryAttempts(0);
-    setLoadState('loading');
-    const cacheBustedUrl = createCacheBustedUrl(pdfUrl);
-    
-    if (objectRef.current) {
-      objectRef.current.data = cacheBustedUrl;
-    }
-    
-    showToast('Reloading PDF', {
-      description: 'Attempting to reload with fresh cache...'
-    });
-  };
-
-  const handleExternalOpen = () => {
-    const cacheBustedUrl = createCacheBustedUrl(pdfUrl);
-    window.open(cacheBustedUrl, '_blank');
-    showToast('Opening PDF externally', {
-      description: 'PDF is opening in a new tab'
-    });
+  const handleRetry = () => {
+    console.log('EnhancedPdfViewer: Retrying PDF load');
+    setDisplayError(false);
+    setIsLoading(true);
   };
 
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = pdfUrl;
-    link.download = `invoice-${Date.now()}.pdf`;
+    link.download = 'document.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    showToast('Downloading PDF', {
-      description: 'Download should start shortly'
-    });
   };
 
-  if (loadState === 'error') {
+  // Show error state immediately if PDF display is blocked
+  if (displayError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 bg-muted/10">
+      <div className="flex flex-col items-center justify-center h-full p-6 bg-gray-50">
         <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
-        <h3 className="text-lg font-medium mb-2">PDF Preview Failed</h3>
-        <p className="text-center text-muted-foreground mb-4">
-          Unable to display the PDF after {maxRetries} attempts.
+        <h3 className="text-lg font-medium mb-2">PDF Display Blocked</h3>
+        <p className="text-center mb-4 text-muted-foreground max-w-md">
+          Your browser has blocked the PDF preview for security reasons. 
+          You can still view or download the document using the options below.
         </p>
-        
-        <div className="flex flex-wrap gap-2 justify-center mb-4">
-          <Button onClick={handleExternalOpen} className="flex items-center gap-2">
-            <ExternalLink className="h-4 w-4" />
+        <div className="flex gap-2 flex-wrap justify-center">
+          <Button onClick={onExternalOpen} className="flex items-center">
+            <ExternalLink className="h-4 w-4 mr-2" />
             Open in New Tab
           </Button>
-          
-          <Button variant="outline" onClick={handleDownload} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
+          <Button variant="outline" onClick={handleDownload} className="flex items-center">
+            <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
-          
-          <Button variant="secondary" onClick={handleManualRetry} className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="outline" onClick={handleRetry} className="flex items-center">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
         </div>
-
-        {hasHtmlFallback && onFallbackToHtml && (
-          <Button 
-            variant="outline" 
-            onClick={onFallbackToHtml}
-            className="w-full max-w-xs"
-          >
-            View Processed Content Instead
-          </Button>
-        )}
+        <p className="text-xs text-muted-foreground mt-4 text-center">
+          Chrome and other browsers may block embedded PDFs for security. 
+          Opening in a new tab usually works better.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="w-full h-full relative">
-      {loadState === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
           <div className="text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">
-              Loading PDF... {retryAttempts > 0 && `(Attempt ${retryAttempts + 1})`}
-            </p>
+            <p className="text-sm text-muted-foreground">Loading PDF...</p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onExternalOpen}
+              className="mt-2 text-xs"
+            >
+              Or open in new tab
+            </Button>
           </div>
         </div>
       )}
       
+      {/* Use object tag instead of iframe for better browser compatibility */}
       <object
-        ref={objectRef}
         data={pdfUrl}
         type="application/pdf"
         width="100%"
         height="100%"
-        className="w-full h-full border-0"
-        onLoad={handleLoadSuccess}
-        onError={handleLoadError}
+        onLoad={handleObjectLoad}
+        onError={handleObjectError}
+        className="border-0"
       >
+        {/* Fallback content when object fails */}
         <div className="flex flex-col items-center justify-center h-full p-6">
-          <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
-          <p className="text-center mb-4">Your browser cannot display PDFs directly.</p>
-          <Button onClick={handleExternalOpen} className="flex items-center gap-2">
-            <ExternalLink className="h-4 w-4" />
-            Open PDF
-          </Button>
+          <AlertTriangle className="h-8 w-8 text-amber-500 mb-3" />
+          <p className="text-center text-muted-foreground mb-4">
+            PDF preview not supported in this browser.
+          </p>
+          <div className="flex gap-2">
+            <Button onClick={onExternalOpen} size="sm">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View PDF
+            </Button>
+            <Button variant="outline" onClick={handleDownload} size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </div>
         </div>
       </object>
     </div>
