@@ -6,7 +6,7 @@ import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { DocumentViewer } from './preview/DocumentViewer';
+import { SimplePdfViewer } from './preview/viewers/SimplePdfViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { NoPreviewState } from './preview/NoPreviewState';
@@ -28,39 +28,36 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentView, setCurrentView] = useState<'pdf' | 'html' | 'email'>('pdf');
 
-  const {
-    contentType,
-    isLoading,
-    error,
-    pdfUrl: normalizedPdfUrl,
-    retryPdfLoad,
-    checkPdfAccessibility
-  } = useEnhancedPdfPreview({
-    pdfUrl,
-    htmlContent,
-    emailContent,
-    userPreferences: preferences
-  });
-
   // Determine available views
-  const hasPdf = !!normalizedPdfUrl;
+  const hasPdf = !!pdfUrl && pdfUrl.trim().length > 0;
   const hasHtml = !!htmlContent && htmlContent.trim().length > 0;
   const hasEmail = !!emailContent && emailContent.trim().length > 0;
 
-  // Auto-set current view based on content type
+  console.log('InvoicePreview: Content availability:', {
+    hasPdf,
+    hasHtml,
+    hasEmail,
+    pdfUrl: pdfUrl || 'none'
+  });
+
+  // Auto-set current view based on available content
   React.useEffect(() => {
-    if (contentType === 'pdf' && hasPdf) setCurrentView('pdf');
-    else if (contentType === 'html' && hasHtml) setCurrentView('html');
-    else if (contentType === 'email' && hasEmail) setCurrentView('email');
-  }, [contentType, hasPdf, hasHtml, hasEmail]);
+    if (hasPdf && currentView !== 'pdf') {
+      setCurrentView('pdf');
+    } else if (!hasPdf && hasHtml && currentView === 'pdf') {
+      setCurrentView('html');
+    } else if (!hasPdf && !hasHtml && hasEmail && currentView !== 'email') {
+      setCurrentView('email');
+    }
+  }, [hasPdf, hasHtml, hasEmail, currentView]);
 
   const handleViewChange = (view: 'pdf' | 'html' | 'email') => {
     setCurrentView(view);
   };
 
   const handleExternalOpen = () => {
-    if (normalizedPdfUrl) {
-      window.open(normalizedPdfUrl, '_blank');
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
     }
   };
 
@@ -73,38 +70,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   };
 
   const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">Loading preview...</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <PreviewErrorState 
-          error={error}
-          pdfUrl={normalizedPdfUrl}
-          onRetry={retryPdfLoad}
-          onExternalOpen={hasHtml ? handleExternalOpen : undefined}
-        />
-      );
-    }
+    console.log('InvoicePreview: Rendering content for view:', currentView);
 
     // Show content based on current view
     switch (currentView) {
       case 'pdf':
         return hasPdf ? (
-          <DocumentViewer 
-            pdfUrl={normalizedPdfUrl} 
-            isPdf={true}
-            isWordDocument={false}
-            onIframeError={() => {}}
-            onIframeLoad={() => {}}
+          <SimplePdfViewer 
+            pdfUrl={pdfUrl}
             onExternalOpen={handleExternalOpen}
           />
         ) : (
@@ -113,7 +86,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       
       case 'html':
         return hasHtml ? (
-          <div className="p-4" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          <div className="p-4 overflow-auto h-full">
+            <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          </div>
         ) : (
           <NoPreviewState message="Processed content not available" />
         );
@@ -146,11 +121,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
         onToggleFullscreen={handleToggleFullscreen}
         onShowSettings={() => setShowSettings(true)}
         onValidate={handleValidate}
-        onRetry={retryPdfLoad}
-        canRetry={!!error}
+        onRetry={() => {}} // Simple retry - just refresh the current view
+        canRetry={false}
       />
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden">
         {renderContent()}
       </div>
 
@@ -159,12 +134,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
         <div className="border-t p-4 bg-gray-50">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <AIValidationTools 
-              pdfUrl={normalizedPdfUrl}
+              pdfUrl={pdfUrl}
               htmlContent={htmlContent}
             />
             {hasPdf && (
               <EnhancedPdfProcessor 
-                pdfUrl={normalizedPdfUrl}
+                pdfUrl={pdfUrl}
               />
             )}
           </div>
