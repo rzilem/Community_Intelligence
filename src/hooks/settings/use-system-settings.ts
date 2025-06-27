@@ -75,6 +75,22 @@ const isUserAdmin = async (): Promise<boolean> => {
   }
 };
 
+// Safe JSON response handler
+const handleJsonResponse = async (response: Response) => {
+  const text = await response.text();
+  if (!text || text.trim() === '') {
+    console.warn('Empty response received');
+    return { success: false, error: 'Empty response from server' };
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('JSON parse error:', { text, error });
+    return { success: false, error: 'Invalid JSON response from server' };
+  }
+};
+
 // Fetch a specific setting by key
 export const useSystemSetting = <T>(key: SettingKey) => {
   const { data, isLoading, error } = useQuery({
@@ -86,25 +102,40 @@ export const useSystemSetting = <T>(key: SettingKey) => {
           return (defaultSettings[key] as unknown) as T;
         }
         
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('value')
-          .eq('key', key)
-          .single();
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
         
-        if (error) {
-          console.error(`Error fetching ${key} settings:`, error);
-          // Return default settings if we can't fetch from the database
+        if (!token) {
+          console.warn('No auth token available');
+          return (defaultSettings[key] as unknown) as T;
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const result = await handleJsonResponse(response);
+        
+        if (!result.success) {
+          console.error(`Error fetching ${key} settings:`, result.error);
           return (defaultSettings[key] as unknown) as T;
         }
         
-        return data.value as T;
+        return result.data as T;
       } catch (err) {
         console.error(`Error in useSystemSetting for ${key}:`, err);
         return (defaultSettings[key] as unknown) as T;
       }
     },
     staleTime: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for network errors, but not for auth errors
+      return failureCount < 2 && !error?.toString().includes('auth');
+    },
   });
 
   return {
@@ -127,20 +158,27 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
       
       console.log(`Updating system setting ${key} with value:`, JSON.stringify(newValue, null, 2));
       
-      // Use the edge function to update settings
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(newValue),
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error updating settings:", errorData);
-        throw new Error(errorData.error || 'Failed to update settings');
+      const result = await handleJsonResponse(response);
+      
+      if (!result.success) {
+        console.error("Error updating settings:", result);
+        throw new Error(result.error || 'Failed to update settings');
       }
       
       console.log(`Successfully updated system setting: ${key}`);
@@ -198,6 +236,8 @@ export const useAllSystemSettings = () => {
       } catch (err) {
         console.error('Error fetching all settings:', err);
         setError(err as Error);
+        // Keep default settings on error
+        setSettings(defaultSettings);
       } finally {
         setIsLoading(false);
       }
