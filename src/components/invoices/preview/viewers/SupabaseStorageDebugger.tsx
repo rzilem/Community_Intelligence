@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Copy, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
-import { generateStorageDebugInfo, type StorageDebugInfo } from '@/utils/supabase-storage-utils';
+import { storageDebugService, StorageDebugInfo } from '@/services/storage';
 
 interface SupabaseStorageDebuggerProps {
   pdfUrl: string;
@@ -19,8 +19,10 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
     const loadDebugInfo = async () => {
       setIsLoading(true);
       try {
-        const info = await generateStorageDebugInfo(pdfUrl);
-        setDebugInfo(info);
+        const result = await storageDebugService.generateDebugInfo(pdfUrl);
+        if (result.success && result.data) {
+          setDebugInfo(result.data);
+        }
       } catch (error) {
         console.error('Failed to generate debug info:', error);
       } finally {
@@ -88,6 +90,8 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
     </Button>
   );
 
+  const suggestions = storageDebugService.getTroubleshootingSuggestions(debugInfo);
+
   return (
     <Card>
       <CardHeader>
@@ -140,42 +144,25 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
           </div>
         )}
 
-        {/* URLs */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Original URL:</span>
-            <div className="flex items-center gap-2">
-              <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
-                {debugInfo.originalUrl}
-              </code>
-              <CopyButton text={debugInfo.originalUrl} fieldName="original" />
+        {/* Available Strategies */}
+        {debugInfo.strategies.length > 0 && (
+          <div className="space-y-2">
+            <span className="font-medium">Available Strategies:</span>
+            <div className="space-y-1">
+              {debugInfo.strategies.map((strategy, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <span className="font-mono">{strategy.type.toUpperCase()}</span>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
+                      {strategy.url}
+                    </code>
+                    <CopyButton text={strategy.url} fieldName={`strategy-${index}`} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {debugInfo.publicUrl && (
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Public URL:</span>
-              <div className="flex items-center gap-2">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
-                  {debugInfo.publicUrl}
-                </code>
-                <CopyButton text={debugInfo.publicUrl} fieldName="public" />
-              </div>
-            </div>
-          )}
-
-          {debugInfo.signedUrl && (
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Signed URL:</span>
-              <div className="flex items-center gap-2">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded max-w-xs truncate">
-                  {debugInfo.signedUrl}
-                </code>
-                <CopyButton text={debugInfo.signedUrl} fieldName="signed" />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Errors */}
         {debugInfo.errors.length > 0 && (
@@ -191,15 +178,14 @@ export const SupabaseStorageDebugger: React.FC<SupabaseStorageDebuggerProps> = (
           </div>
         )}
 
-        {/* Test Actions */}
+        {/* Troubleshooting Tips */}
         <div className="pt-4 border-t">
           <div className="text-sm text-muted-foreground">
             <strong>Troubleshooting Tips:</strong>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>If the file is not accessible, check RLS policies on the storage bucket</li>
-              <li>Try copying the signed URL above and opening it directly in a new tab</li>
-              <li>Verify the file exists and hasn't been moved or deleted</li>
-              <li>Check if the bucket is configured as public if needed</li>
+              {suggestions.map((suggestion, index) => (
+                <li key={index}>{suggestion}</li>
+              ))}
             </ul>
           </div>
         </div>

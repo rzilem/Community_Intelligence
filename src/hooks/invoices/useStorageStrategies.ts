@@ -1,10 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { generatePdfUrls, type StorageUrlResult } from '@/utils/supabase-storage-utils';
+import { storageUrlService, StorageUrlStrategy } from '@/services/storage';
 
 export interface UseStorageStrategiesResult {
-  strategies: StorageUrlResult[];
-  currentStrategy: StorageUrlResult | null;
+  strategies: StorageUrlStrategy[];
+  currentStrategy: StorageUrlStrategy | null;
   isLoading: boolean;
   error: string | null;
   retryStrategy: () => void;
@@ -12,7 +12,7 @@ export interface UseStorageStrategiesResult {
 }
 
 export const useStorageStrategies = (pdfUrl?: string): UseStorageStrategiesResult => {
-  const [strategies, setStrategies] = useState<StorageUrlResult[]>([]);
+  const [strategies, setStrategies] = useState<StorageUrlStrategy[]>([]);
   const [currentStrategyIndex, setCurrentStrategyIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +27,15 @@ export const useStorageStrategies = (pdfUrl?: string): UseStorageStrategiesResul
     setError(null);
 
     try {
-      const urlStrategies = await generatePdfUrls(pdfUrl);
-      setStrategies(urlStrategies);
-      setCurrentStrategyIndex(0);
+      const result = await storageUrlService.generateUrlStrategies(pdfUrl);
+      
+      if (result.success && result.data) {
+        setStrategies(result.data);
+        setCurrentStrategyIndex(0);
+      } else {
+        setError(result.error || 'Failed to generate PDF URLs');
+        setStrategies([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate PDF URLs');
       setStrategies([]);
@@ -43,6 +49,8 @@ export const useStorageStrategies = (pdfUrl?: string): UseStorageStrategiesResul
   }, [loadStrategies]);
 
   const retryStrategy = useCallback(() => {
+    // Clear cache and reload
+    storageUrlService.clearExpiredCache();
     loadStrategies();
   }, [loadStrategies]);
 
