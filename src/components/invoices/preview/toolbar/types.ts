@@ -22,7 +22,7 @@ export interface ActionConfig {
   disabled?: boolean;
   loading?: boolean;
   variant?: 'default' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
   showInQuickActions?: boolean;
 }
 
