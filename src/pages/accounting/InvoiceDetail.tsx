@@ -34,23 +34,39 @@ const InvoiceDetail = () => {
     handleApprove
   } = useInvoiceActions(saveInvoice, updateInvoice, invoice);
 
-  // Debug logging
+  // Enhanced debug logging for PDF preview troubleshooting
   useEffect(() => {
-    console.group("Invoice Data Debug");
+    console.group("🔍 Invoice PDF Debug Information");
     console.log("Invoice ID:", id);
-    console.log("Invoice Data:", {
-      association: invoice.association,
-      vendor: invoice.vendor,
-      invoiceNumber: invoice.invoiceNumber,
-      hasHtmlContent: !!invoice.htmlContent,
-      htmlContentLength: invoice.htmlContent?.length || 0,
-      htmlContentExcerpt: invoice.htmlContent ? invoice.htmlContent.substring(0, 100) + '...' : 'none',
-      hasPdfUrl: !!invoice.pdfUrl,
-      pdfUrl: invoice.pdfUrl || 'none',
-      hasEmailContent: !!invoice.emailContent,
-      emailContentLength: invoice.emailContent?.length || 0,
-      emailContentExcerpt: invoice.emailContent ? invoice.emailContent.substring(0, 100) + '...' : 'none'
-    });
+    console.log("PDF URL:", invoice.pdfUrl || 'none');
+    console.log("PDF URL Length:", invoice.pdfUrl?.length || 0);
+    console.log("HTML Content Length:", invoice.htmlContent?.length || 0);
+    console.log("Email Content Length:", invoice.emailContent?.length || 0);
+    
+    if (invoice.pdfUrl) {
+      console.log("PDF URL Analysis:", {
+        isAbsolute: invoice.pdfUrl.startsWith('http'),
+        hasDoubleSlashes: invoice.pdfUrl.includes('//'),
+        domain: invoice.pdfUrl.includes('supabase.co') ? 'Supabase' : 'Other',
+        extension: invoice.pdfUrl.toLowerCase().includes('.pdf') ? 'PDF' : 'Unknown'
+      });
+      
+      // Test direct access to PDF URL
+      console.log("Testing PDF URL accessibility...");
+      fetch(invoice.pdfUrl, { method: 'HEAD' })
+        .then(response => {
+          console.log("PDF URL Test Result:", {
+            status: response.status,
+            ok: response.ok,
+            contentType: response.headers.get('content-type'),
+            accessible: response.ok
+          });
+        })
+        .catch(error => {
+          console.log("PDF URL Test Failed (might be CORS):", error.message);
+        });
+    }
+    
     console.groupEnd();
   }, [invoice, id]);
 
