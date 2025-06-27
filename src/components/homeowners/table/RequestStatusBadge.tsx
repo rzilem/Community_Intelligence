@@ -8,7 +8,7 @@ interface RequestStatusBadgeProps {
 }
 
 export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status, type }) => {
-  const getVariant = (value: string, type: 'status' | 'priority') => {
+  const getVariant = (value: string, type: 'status' | 'priority'): "default" | "secondary" | "destructive" | "outline" | "warning" | "success" => {
     if (type === 'priority') {
       switch (value) {
         case 'urgent': return 'destructive';
@@ -21,7 +21,7 @@ export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status, 
         case 'open': return 'secondary';
         case 'in-progress': 
         case 'in_progress': return 'warning';
-        case 'resolved': return 'secondary';
+        case 'resolved': return 'success';
         case 'closed': return 'outline';
         default: return 'default';
       }
