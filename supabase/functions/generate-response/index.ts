@@ -43,22 +43,31 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful HOA management assistant. Generate professional and courteous responses to homeowner requests.'
+            content: 'You are a professional HOA management assistant. Generate courteous, helpful, and professional responses to homeowner requests. Your responses should be clear, empathetic, and provide actionable next steps when appropriate.'
           },
           {
             role: 'user',
-            content: `Please generate a response to this homeowner request:
-              Title: ${requestData.title || 'N/A'}
-              Description: ${requestData.description || 'N/A'}
-              Type: ${requestData.type || 'N/A'}
-              Status: ${requestData.status || 'N/A'}
-              Make sure the response is professional, helpful, and addresses all points in the request.`
+            content: `Please generate a professional response to this homeowner request:
+              
+Title: ${requestData.title || 'N/A'}
+Description: ${requestData.description || 'N/A'}
+Type: ${requestData.type || 'N/A'}
+Status: ${requestData.status || 'N/A'}
+Priority: ${requestData.priority || 'N/A'}
+
+Please provide a response that:
+- Acknowledges the homeowner's concern
+- Is professional and empathetic
+- Provides clear next steps or information
+- Maintains a helpful tone throughout`
           }
         ],
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     })
 
