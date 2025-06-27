@@ -7,10 +7,9 @@ import { useRequestDialog } from '@/hooks/homeowners/useRequestDialog';
 import RequestDialogLayout from './detail/RequestDialogLayout';
 import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import RequestTabsContent from './detail/RequestTabsContent';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import EmailResponseDialog from './response/EmailResponseDialog';
 import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Send, Sparkles } from 'lucide-react';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -23,11 +22,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   open,
   onOpenChange
 }) => {
-  // Move all useState hooks to the top, before any conditional logic
-  const [aiResponse, setAiResponse] = useState('');
-  const [showResponse, setShowResponse] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  
+  const [emailResponseOpen, setEmailResponseOpen] = useState(false);
   const { comments, loadingComments } = useRequestComments(request?.id || null);
   const { 
     fullscreenEmail, 
@@ -38,73 +33,68 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     handleFullscreenToggle 
   } = useRequestDialog();
   
-  // Early return after all hooks are declared
   if (!request) return null;
   
   const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
 
-  const handleGenerate = async () => {
-    if (!request) return;
-    setGenerating(true);
-    const { data, error } = await supabase.functions.invoke('generate-response', { body: { requestData: request } });
-    setGenerating(false);
-    if (error) {
-      toast.error(`Failed to generate response: ${error.message}`);
-      return;
-    }
-    setAiResponse(data.generatedText);
-    setShowResponse(true);
+  const handleOpenEmailResponse = () => {
+    setEmailResponseOpen(true);
+  };
+
+  const handleResponseSent = () => {
+    // Refresh the request data or perform other actions after response is sent
+    console.log('Response sent, refreshing data...');
   };
 
   return (
     <>
-    <RequestDialogLayout
-      open={open}
-      onOpenChange={onOpenChange}
-      title={request.title}
-      showFullscreenButton={activeTab === 'email'}
-      isFullscreen={fullscreenEmail}
-      onFullscreenToggle={handleFullscreenToggle}
-      footerActions={
-        <Button onClick={handleGenerate} disabled={generating} variant="secondary">
-          {generating ? 'Generating...' : 'Generate Response'}
-        </Button>
-      }
-    >
-      <RequestDialogTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        assignedTo={request.assigned_to || null}
-        associationId={request.association_id || null}
-        propertyId={request.property_id || null}
-        onAssignChange={(value) => console.log('Assign change:', value)}
-        onAssociationChange={(value) => console.log('Association change:', value)}
-        onPropertyChange={(value) => console.log('Property change:', value)}
+      <RequestDialogLayout
+        open={open}
+        onOpenChange={onOpenChange}
+        title={request.title}
+        showFullscreenButton={activeTab === 'email'}
+        isFullscreen={fullscreenEmail}
+        onFullscreenToggle={handleFullscreenToggle}
+        footerActions={
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleOpenEmailResponse}
+              variant="default"
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              Send Response
+            </Button>
+          </div>
+        }
       >
-        <RequestTabsContent
-          request={request}
-          processedDescription={processedDescription}
-          fullscreenEmail={fullscreenEmail}
-          setFullscreenEmail={setFullscreenEmail}
-          comments={comments}
-          loadingComments={loadingComments}
-        />
-      </RequestDialogTabs>
-    </RequestDialogLayout>
+        <RequestDialogTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          assignedTo={request.assigned_to || null}
+          associationId={request.association_id || null}
+          propertyId={request.property_id || null}
+          onAssignChange={(value) => console.log('Assign change:', value)}
+          onAssociationChange={(value) => console.log('Association change:', value)}
+          onPropertyChange={(value) => console.log('Property change:', value)}
+        >
+          <RequestTabsContent
+            request={request}
+            processedDescription={processedDescription}
+            fullscreenEmail={fullscreenEmail}
+            setFullscreenEmail={setFullscreenEmail}
+            comments={comments}
+            loadingComments={loadingComments}
+          />
+        </RequestDialogTabs>
+      </RequestDialogLayout>
 
-    <AlertDialog open={showResponse} onOpenChange={setShowResponse}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Suggested Response</AlertDialogTitle>
-        </AlertDialogHeader>
-        <div className="whitespace-pre-wrap p-4 text-sm max-h-[50vh] overflow-auto">
-          {aiResponse}
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogAction onClick={() => setShowResponse(false)}>Close</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <EmailResponseDialog
+        request={request}
+        open={emailResponseOpen}
+        onOpenChange={setEmailResponseOpen}
+        onResponseSent={handleResponseSent}
+      />
     </>
   );
 };
