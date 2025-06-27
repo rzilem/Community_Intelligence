@@ -1,4 +1,4 @@
-
+// Redeployed on June 27, 2025 to load CloudMailin secrets
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
