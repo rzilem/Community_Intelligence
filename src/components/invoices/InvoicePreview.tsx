@@ -5,9 +5,10 @@ import { ConsolidatedPreviewToolbar } from './preview/ConsolidatedPreviewToolbar
 import { PreferenceSettings } from './preview/PreferenceSettings';
 import { AIValidationTools } from './preview/validators/AIValidationTools';
 import { EnhancedPdfProcessor } from './preview/enhanced/EnhancedPdfProcessor';
-import { ImprovedPdfViewer } from './preview/viewers/ImprovedPdfViewer';
+import { EnhancedStoragePdfViewer } from './preview/viewers/EnhancedStoragePdfViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { NoPreviewState } from './preview/NoPreviewState';
+import { SupabaseStorageDebugger } from './preview/viewers/SupabaseStorageDebugger';
 
 interface InvoicePreviewProps {
   pdfUrl?: string;
@@ -23,6 +24,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
   const { preferences } = useUserPreferences();
   const [showSettings, setShowSettings] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [showStorageDebug, setShowStorageDebug] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Determine available views
@@ -66,6 +68,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
     setShowValidation(!showValidation);
   };
 
+  const handleShowStorageDebug = () => {
+    setShowStorageDebug(!showStorageDebug);
+  };
+
   const renderContent = () => {
     console.log('InvoicePreview: Rendering content for view:', currentView);
 
@@ -81,7 +87,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
       
       case 'pdf':
         return hasPdf ? (
-          <ImprovedPdfViewer 
+          <EnhancedStoragePdfViewer 
             pdfUrl={pdfUrl}
             onExternalOpen={handleExternalOpen}
             onFallbackToHtml={hasHtml ? () => setCurrentView('html') : undefined}
@@ -118,6 +124,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
         onToggleFullscreen={handleToggleFullscreen}
         onShowSettings={() => setShowSettings(true)}
         onValidate={handleValidate}
+        onShowStorageDebug={handleShowStorageDebug}
       />
       
       <div className="flex-1 overflow-hidden">
@@ -138,6 +145,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = React.memo(({
               />
             )}
           </div>
+        </div>
+      )}
+
+      {/* Storage Debug Information */}
+      {showStorageDebug && hasPdf && (
+        <div className="border-t p-4 bg-gray-50">
+          <SupabaseStorageDebugger pdfUrl={pdfUrl} />
         </div>
       )}
 

@@ -18,7 +18,8 @@ import {
   FileText,
   Mail,
   Code,
-  CheckCircle
+  CheckCircle,
+  Bug
 } from 'lucide-react';
 
 interface ConsolidatedPreviewToolbarProps {
@@ -35,6 +36,7 @@ interface ConsolidatedPreviewToolbarProps {
   onShowSettings?: () => void;
   onValidate?: () => void;
   onRetry?: () => void;
+  onShowStorageDebug?: () => void;
   
   // State
   isValidating?: boolean;
@@ -52,6 +54,7 @@ export const ConsolidatedPreviewToolbar: React.FC<ConsolidatedPreviewToolbarProp
   onShowSettings,
   onValidate,
   onRetry,
+  onShowStorageDebug,
   isValidating = false,
   canRetry = false
 }) => {
@@ -174,6 +177,12 @@ export const ConsolidatedPreviewToolbar: React.FC<ConsolidatedPreviewToolbarProp
               <DropdownMenuItem onClick={onExternalOpen}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open PDF Externally
+              </DropdownMenuItem>
+            )}
+            {hasPdf && onShowStorageDebug && (
+              <DropdownMenuItem onClick={onShowStorageDebug}>
+                <Bug className="h-4 w-4 mr-2" />
+                Storage Debug Info
               </DropdownMenuItem>
             )}
             {canRetry && onRetry && (
