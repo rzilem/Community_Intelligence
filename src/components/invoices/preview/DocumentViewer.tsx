@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { PdfViewer } from './viewers/PdfViewer';
+import { EnhancedStoragePdfViewer } from './viewers/EnhancedStoragePdfViewer';
 import { WordDocViewer } from './viewers/WordDocViewer';
 import { HtmlContentViewer } from './viewers/HtmlContentViewer';
 import { UnknownFileViewer } from './viewers/UnknownFileViewer';
@@ -63,10 +63,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   if (normalizedPdfUrl && (isPdfProp || isPdfFile)) {
     console.log('Displaying PDF content from URL:', normalizedPdfUrl);
     return (
-      <PdfViewer
+      <EnhancedStoragePdfViewer
         pdfUrl={normalizedPdfUrl}
-        onError={onIframeError}
-        onLoad={onIframeLoad}
         onExternalOpen={onExternalOpen}
       />
     );
