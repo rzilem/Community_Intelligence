@@ -1,279 +1,239 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { extractPrimarySenderEmail } from '@/utils/email-utils';
+import { EmailInputField } from './EmailInputField';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { EmailInputField } from './EmailInputField';
-import { extractPrimarySenderEmail } from '@/utils/email-utils';
+import { ChevronDown, Send, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { Send, ChevronDown, ChevronUp, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 
 interface EmailResponseDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  request: HomeownerRequest | null;
-  onSuccess?: () => void;
-}
-
-interface EmailRecipients {
-  to: string[];
-  cc: string[];
-  bcc: string[];
+  request: HomeownerRequest;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onResponseSent: () => void;
 }
 
 export const EmailResponseDialog: React.FC<EmailResponseDialogProps> = ({
-  isOpen,
-  onClose,
   request,
-  onSuccess
+  open,
+  onOpenChange,
+  onResponseSent
 }) => {
+  const [toEmails, setToEmails] = useState<string[]>([]);
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
+  const [bccEmails, setBccEmails] = useState<string[]>([]);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [recipients, setRecipients] = useState<EmailRecipients>({
-    to: [],
-    cc: [],
-    bcc: []
-  });
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
-  // Auto-populate fields when request changes
+  // Auto-populate fields when dialog opens
   useEffect(() => {
-    if (request) {
-      setSubject(`Re: ${request.title}`);
-      
-      // Extract sender email from original request
+    if (open && request) {
+      // Extract sender email and populate TO field
       const senderEmail = extractPrimarySenderEmail(request.html_content);
       if (senderEmail) {
-        setRecipients(prev => ({
-          ...prev,
-          to: [senderEmail]
-        }));
+        setToEmails([senderEmail]);
       }
+      
+      // Set subject with RE: prefix
+      const subjectPrefix = request.title?.startsWith('RE:') ? '' : 'RE: ';
+      setSubject(`${subjectPrefix}${request.title || 'Response to your request'}`);
+      
+      // Clear message when opening
+      setMessage('');
     }
-  }, [request]);
+  }, [open, request]);
 
-  const generateAIResponse = async () => {
+  const handleGenerateAIResponse = async () => {
     if (!request) return;
-    
+
     setIsGeneratingAI(true);
     try {
       console.log('Generating AI response for request:', request.id);
       
       const { data, error } = await supabase.functions.invoke('generate-response', {
-        body: { requestData: request },
+        body: {
+          requestId: request.id,
+          requestContent: request.description || request.html_content,
+          requestType: request.type || 'general'
+        }
       });
-      
+
       if (error) {
-        console.error('Error invoking generate-response function:', error);
-        throw new Error(error.message || 'Failed to generate AI response');
+        console.error('Error generating AI response:', error);
+        toast.error('Failed to generate AI response');
+        return;
       }
-      
-      console.log('AI response received:', data);
-      
-      setMessage(data.generatedText);
-      toast.success('AI response generated successfully');
+
+      if (data?.response) {
+        setMessage(data.response);
+        toast.success('AI response generated successfully');
+      } else {
+        toast.error('No response generated');
+      }
     } catch (error) {
       console.error('Error generating AI response:', error);
-      toast.error(`Failed to generate AI response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error('Failed to generate AI response');
     } finally {
       setIsGeneratingAI(false);
     }
   };
 
-  const handleSend = async () => {
-    if (!request || recipients.to.length === 0) {
-      toast.error('Please add at least one recipient');
-      return;
-    }
-
-    if (!subject.trim() || !message.trim()) {
-      toast.error('Please fill in subject and message');
+  const handleSendResponse = async () => {
+    if (!toEmails.length || !message.trim()) {
+      toast.error('Please provide recipient email and message content');
       return;
     }
 
     setIsSending(true);
-    
     try {
+      console.log('Sending response for request:', request.id);
+      
       const { data, error } = await supabase.functions.invoke('send-homeowner-response', {
         body: {
           requestId: request.id,
-          recipientEmail: recipients.to[0], // Keep for backward compatibility
-          additionalRecipients: recipients,
+          recipientEmail: toEmails[0], // Primary recipient for backward compatibility
+          additionalRecipients: {
+            to: toEmails,
+            cc: ccEmails,
+            bcc: bccEmails
+          },
           subject: subject,
-          htmlContent: message.replace(/\n/g, '<br>'),
+          htmlContent: `<p>${message.replace(/\n/g, '</p><p>')}</p>`,
           plainTextContent: message
         }
       });
 
       if (error) {
-        throw new Error(error.message || 'Failed to send email');
+        console.error('Error sending response:', error);
+        toast.error('Failed to send response');
+        return;
       }
 
-      console.log('Email sent successfully:', data);
-      toast.success(`Email sent successfully to ${recipients.to.length + recipients.cc.length + recipients.bcc.length} recipients`);
-      
-      onSuccess?.();
-      onClose();
+      toast.success('Response sent successfully');
+      onResponseSent();
+      onOpenChange(false);
       
       // Reset form
+      setToEmails([]);
+      setCcEmails([]);
+      setBccEmails([]);
       setSubject('');
       setMessage('');
-      setRecipients({ to: [], cc: [], bcc: [] });
-      
     } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error(`Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error sending response:', error);
+      toast.error('Failed to send response');
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleClose = () => {
-    onClose();
-    // Reset form state
-    setSubject('');
-    setMessage('');
-    setRecipients({ to: [], cc: [], bcc: [] });
-    setShowAdvancedOptions(false);
-  };
-
-  if (!request) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Send Email Response</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
-          {/* To Recipients */}
+          {/* TO field */}
           <EmailInputField
             label="To"
-            emails={recipients.to}
-            onChange={(emails) => setRecipients(prev => ({ ...prev, to: emails }))}
+            emails={toEmails}
+            onChange={setToEmails}
             placeholder="Enter recipient email addresses..."
-            disabled={isSending}
           />
 
-          {/* Advanced Options */}
-          <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+          {/* Advanced options (CC/BCC) */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="p-0 h-auto justify-start">
-                {showAdvancedOptions ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-                Advanced Options (CC/BCC)
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                {showAdvanced ? 'Hide' : 'Show'} CC/BCC
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 mt-4">
+            <CollapsibleContent className="space-y-4">
               <EmailInputField
                 label="CC"
-                emails={recipients.cc}
-                onChange={(emails) => setRecipients(prev => ({ ...prev, cc: emails }))}
+                emails={ccEmails}
+                onChange={setCcEmails}
                 placeholder="Enter CC email addresses..."
-                disabled={isSending}
               />
-              
               <EmailInputField
                 label="BCC"
-                emails={recipients.bcc}
-                onChange={(emails) => setRecipients(prev => ({ ...prev, bcc: emails }))}
+                emails={bccEmails}
+                onChange={setBccEmails}
                 placeholder="Enter BCC email addresses..."
-                disabled={isSending}
               />
             </CollapsibleContent>
           </Collapsible>
 
-          <Separator />
-
-          {/* Subject */}
+          {/* Subject field */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
             <Input
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Email subject..."
-              disabled={isSending}
+              placeholder="Enter email subject..."
             />
           </div>
 
-          {/* AI Response Generation */}
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={generateAIResponse}
-              disabled={isGeneratingAI || isSending}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
-            >
-              {isGeneratingAI ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate AI Response
-                </>
-              )}
-            </Button>
-            
-            {message && (
+          {/* Message field with AI generation */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="message">Message</Label>
               <Button
                 type="button"
-                variant="ghost"
-                onClick={() => setMessage('')}
-                disabled={isSending}
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateAIResponse}
+                disabled={isGeneratingAI}
+                className="flex items-center gap-2"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Clear & Start Over
+                <Sparkles className="h-4 w-4" />
+                {isGeneratingAI ? 'Generating...' : 'Generate AI Response'}
               </Button>
-            )}
-          </div>
-
-          {/* Message */}
-          <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
+            </div>
             <Textarea
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your response here or generate one using AI..."
-              className="min-h-[200px]"
-              disabled={isSending}
+              placeholder="Type your response here or generate one with AI..."
+              rows={8}
+              className="resize-vertical"
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={handleClose} disabled={isSending}>
+          {/* Action buttons */}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSending}
+            >
               Cancel
             </Button>
             <Button 
-              onClick={handleSend} 
-              disabled={isSending || recipients.to.length === 0 || !subject.trim() || !message.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleSendResponse}
+              disabled={isSending || !toEmails.length || !message.trim()}
+              className="flex items-center gap-2"
             >
-              {isSending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Email
-                </>
-              )}
+              <Send className="h-4 w-4" />
+              {isSending ? 'Sending...' : 'Send Response'}
             </Button>
           </div>
         </div>
