@@ -5136,6 +5136,85 @@ export type Database = {
           },
         ]
       }
+      invoice_matching: {
+        Row: {
+          auto_matched: boolean | null
+          created_at: string | null
+          exception_description: string | null
+          exception_type: string | null
+          id: string
+          invoice_id: string | null
+          matching_status: string | null
+          override_at: string | null
+          override_by: string | null
+          override_reason: string | null
+          po_id: string | null
+          price_variance: number | null
+          quantity_variance: number | null
+          receipt_id: string | null
+          tolerance_exceeded: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_matched?: boolean | null
+          created_at?: string | null
+          exception_description?: string | null
+          exception_type?: string | null
+          id?: string
+          invoice_id?: string | null
+          matching_status?: string | null
+          override_at?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          po_id?: string | null
+          price_variance?: number | null
+          quantity_variance?: number | null
+          receipt_id?: string | null
+          tolerance_exceeded?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_matched?: boolean | null
+          created_at?: string | null
+          exception_description?: string | null
+          exception_type?: string | null
+          id?: string
+          invoice_id?: string | null
+          matching_status?: string | null
+          override_at?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          po_id?: string | null
+          price_variance?: number | null
+          quantity_variance?: number | null
+          receipt_id?: string | null
+          tolerance_exceeded?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_matching_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_matching_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_matching_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           ai_confidence: Json | null
@@ -6273,6 +6352,116 @@ export type Database = {
           },
         ]
       }
+      payment_authorizations: {
+        Row: {
+          amount_threshold: number
+          association_id: string
+          authorization_level: number
+          authorized_at: string | null
+          authorizer_id: string | null
+          created_at: string | null
+          digital_signature: string | null
+          id: string
+          ip_address: unknown | null
+          payment_batch_id: string | null
+          rejection_reason: string | null
+          status: string | null
+        }
+        Insert: {
+          amount_threshold: number
+          association_id: string
+          authorization_level: number
+          authorized_at?: string | null
+          authorizer_id?: string | null
+          created_at?: string | null
+          digital_signature?: string | null
+          id?: string
+          ip_address?: unknown | null
+          payment_batch_id?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount_threshold?: number
+          association_id?: string
+          authorization_level?: number
+          authorized_at?: string | null
+          authorizer_id?: string | null
+          created_at?: string | null
+          digital_signature?: string | null
+          id?: string
+          ip_address?: unknown | null
+          payment_batch_id?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      payment_batches: {
+        Row: {
+          ach_file_path: string | null
+          approved_by: string | null
+          association_id: string
+          bank_account_id: string | null
+          batch_date: string
+          batch_number: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          payment_method: string
+          processed_at: string | null
+          status: string | null
+          total_amount: number
+          total_count: number
+          transmission_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ach_file_path?: string | null
+          approved_by?: string | null
+          association_id: string
+          bank_account_id?: string | null
+          batch_date?: string
+          batch_number: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          payment_method: string
+          processed_at?: string | null
+          status?: string | null
+          total_amount?: number
+          total_count?: number
+          transmission_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ach_file_path?: string | null
+          approved_by?: string | null
+          association_id?: string
+          bank_account_id?: string | null
+          batch_date?: string
+          batch_number?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          payment_method?: string
+          processed_at?: string | null
+          status?: string | null
+          total_amount?: number
+          total_count?: number
+          transmission_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_batches_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           brand: string | null
@@ -6322,6 +6511,129 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_plan_installments: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          created_at: string | null
+          due_date: string
+          id: string
+          installment_number: number
+          late_fee_assessed: number | null
+          payment_date: string | null
+          payment_plan_id: string | null
+          payment_transaction_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string | null
+          due_date: string
+          id?: string
+          installment_number: number
+          late_fee_assessed?: number | null
+          payment_date?: string | null
+          payment_plan_id?: string | null
+          payment_transaction_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number
+          late_fee_assessed?: number | null
+          payment_date?: string | null
+          payment_plan_id?: string | null
+          payment_transaction_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plan_installments_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plan_installments_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions_enhanced"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_plans: {
+        Row: {
+          agreement_document_url: string | null
+          agreement_signed_date: string | null
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          down_payment: number | null
+          end_date: string
+          id: string
+          installment_amount: number
+          late_fee_waived: boolean | null
+          payment_frequency: string | null
+          plan_name: string
+          property_id: string
+          remaining_balance: number
+          resident_id: string
+          start_date: string
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          agreement_document_url?: string | null
+          agreement_signed_date?: string | null
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          down_payment?: number | null
+          end_date: string
+          id?: string
+          installment_amount: number
+          late_fee_waived?: boolean | null
+          payment_frequency?: string | null
+          plan_name: string
+          property_id: string
+          remaining_balance: number
+          resident_id: string
+          start_date: string
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          agreement_document_url?: string | null
+          agreement_signed_date?: string | null
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          down_payment?: number | null
+          end_date?: string
+          id?: string
+          installment_amount?: number
+          late_fee_waived?: boolean | null
+          payment_frequency?: string | null
+          plan_name?: string
+          property_id?: string
+          remaining_balance?: number
+          resident_id?: string
+          start_date?: string
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       payment_transactions: {
         Row: {
@@ -7087,6 +7399,56 @@ export type Database = {
           },
         ]
       }
+      purchase_order_lines: {
+        Row: {
+          created_at: string | null
+          description: string
+          gl_account_code: string | null
+          id: string
+          invoiced_quantity: number | null
+          line_number: number
+          line_total: number
+          po_id: string | null
+          quantity: number
+          received_quantity: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          gl_account_code?: string | null
+          id?: string
+          invoiced_quantity?: number | null
+          line_number: number
+          line_total: number
+          po_id?: string | null
+          quantity: number
+          received_quantity?: number | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          gl_account_code?: string | null
+          id?: string
+          invoiced_quantity?: number | null
+          line_number?: number
+          line_total?: number
+          po_id?: string | null
+          quantity?: number
+          received_quantity?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_orders: {
         Row: {
           approved_by: string | null
@@ -7167,6 +7529,107 @@ export type Database = {
           vendor_name?: string
         }
         Relationships: []
+      }
+      receipt_lines: {
+        Row: {
+          condition_notes: string | null
+          created_at: string | null
+          id: string
+          po_line_id: string | null
+          quantity_received: number
+          receipt_id: string | null
+          rejected_quantity: number | null
+          rejection_reason: string | null
+        }
+        Insert: {
+          condition_notes?: string | null
+          created_at?: string | null
+          id?: string
+          po_line_id?: string | null
+          quantity_received: number
+          receipt_id?: string | null
+          rejected_quantity?: number | null
+          rejection_reason?: string | null
+        }
+        Update: {
+          condition_notes?: string | null
+          created_at?: string | null
+          id?: string
+          po_line_id?: string | null
+          quantity_received?: number
+          receipt_id?: string | null
+          rejected_quantity?: number | null
+          rejection_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_lines_po_line_id_fkey"
+            columns: ["po_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_lines_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          delivery_date: string | null
+          id: string
+          notes: string | null
+          po_id: string | null
+          receipt_date: string
+          receipt_number: string
+          received_by: string | null
+          status: string | null
+          updated_at: string | null
+          vendor_packing_slip: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          po_id?: string | null
+          receipt_date?: string
+          receipt_number: string
+          received_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_packing_slip?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          po_id?: string | null
+          receipt_date?: string
+          receipt_number?: string
+          received_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_packing_slip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipient_groups: {
         Row: {
@@ -7536,6 +7999,57 @@ export type Database = {
           },
         ]
       }
+      resident_payment_methods: {
+        Row: {
+          account_nickname: string | null
+          account_type: string | null
+          bank_name: string | null
+          created_at: string | null
+          expiry_month: number | null
+          expiry_year: number | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          last_four_digits: string | null
+          payment_type: string
+          resident_id: string
+          stripe_payment_method_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_nickname?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          last_four_digits?: string | null
+          payment_type: string
+          resident_id: string
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_nickname?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          last_four_digits?: string | null
+          payment_type?: string
+          resident_id?: string
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       resident_portal_settings: {
         Row: {
           created_at: string | null
@@ -7699,6 +8213,75 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      tax_1099_records: {
+        Row: {
+          association_id: string
+          box_1_amount: number | null
+          box_2_amount: number | null
+          box_3_amount: number | null
+          box_4_amount: number | null
+          correction_form: boolean | null
+          created_at: string | null
+          form_type: string | null
+          id: string
+          submitted_date: string | null
+          submitted_to_irs: boolean | null
+          tax_year: number
+          total_amount: number
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          association_id: string
+          box_1_amount?: number | null
+          box_2_amount?: number | null
+          box_3_amount?: number | null
+          box_4_amount?: number | null
+          correction_form?: boolean | null
+          created_at?: string | null
+          form_type?: string | null
+          id?: string
+          submitted_date?: string | null
+          submitted_to_irs?: boolean | null
+          tax_year: number
+          total_amount?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          association_id?: string
+          box_1_amount?: number | null
+          box_2_amount?: number | null
+          box_3_amount?: number | null
+          box_4_amount?: number | null
+          correction_form?: boolean | null
+          created_at?: string | null
+          form_type?: string | null
+          id?: string
+          submitted_date?: string | null
+          submitted_to_irs?: boolean | null
+          tax_year?: number
+          total_amount?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_1099_records_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_1099_records_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       three_way_matching: {
         Row: {
@@ -8825,6 +9408,105 @@ export type Database = {
           },
         ]
       }
+      vendor_management_enhanced: {
+        Row: {
+          average_payment_days: number | null
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_routing_number: string | null
+          business_type: string | null
+          created_at: string | null
+          created_by: string | null
+          credit_limit: number | null
+          discount_percentage: number | null
+          discount_terms_days: number | null
+          id: string
+          insurance_cert_on_file: boolean | null
+          insurance_expiry_date: string | null
+          onboarding_completed_at: string | null
+          onboarding_status: string | null
+          payment_method: string | null
+          payment_terms_days: number | null
+          performance_rating: number | null
+          tax_id: string | null
+          total_amount_paid: number | null
+          total_invoices_processed: number | null
+          updated_at: string | null
+          vendor_id: string | null
+          w9_date_received: string | null
+          w9_on_file: boolean | null
+        }
+        Insert: {
+          average_payment_days?: number | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_routing_number?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_limit?: number | null
+          discount_percentage?: number | null
+          discount_terms_days?: number | null
+          id?: string
+          insurance_cert_on_file?: boolean | null
+          insurance_expiry_date?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_status?: string | null
+          payment_method?: string | null
+          payment_terms_days?: number | null
+          performance_rating?: number | null
+          tax_id?: string | null
+          total_amount_paid?: number | null
+          total_invoices_processed?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          w9_date_received?: string | null
+          w9_on_file?: boolean | null
+        }
+        Update: {
+          average_payment_days?: number | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_routing_number?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_limit?: number | null
+          discount_percentage?: number | null
+          discount_terms_days?: number | null
+          id?: string
+          insurance_cert_on_file?: boolean | null
+          insurance_expiry_date?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_status?: string | null
+          payment_method?: string | null
+          payment_terms_days?: number | null
+          performance_rating?: number | null
+          tax_id?: string | null
+          total_amount_paid?: number | null
+          total_invoices_processed?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          w9_date_received?: string | null
+          w9_on_file?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_management_enhanced_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_management_enhanced_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_performance_metrics: {
         Row: {
           association_id: string
@@ -9486,6 +10168,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_approvals: {
+        Row: {
+          approval_level: number
+          approved_at: string | null
+          approver_id: string | null
+          association_id: string
+          comments: string | null
+          created_at: string | null
+          deadline: string | null
+          escalated_at: string | null
+          escalated_to: string | null
+          id: string
+          record_id: string
+          required_approver_role: string | null
+          status: string | null
+          workflow_type: string
+        }
+        Insert: {
+          approval_level: number
+          approved_at?: string | null
+          approver_id?: string | null
+          association_id: string
+          comments?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          escalated_at?: string | null
+          escalated_to?: string | null
+          id?: string
+          record_id: string
+          required_approver_role?: string | null
+          status?: string | null
+          workflow_type: string
+        }
+        Update: {
+          approval_level?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          association_id?: string
+          comments?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          escalated_at?: string | null
+          escalated_to?: string | null
+          id?: string
+          record_id?: string
+          required_approver_role?: string | null
+          status?: string | null
+          workflow_type?: string
+        }
+        Relationships: []
       }
       workflow_events: {
         Row: {
