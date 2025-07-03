@@ -674,6 +674,116 @@ export type Database = {
           },
         ]
       }
+      assessment_billing_cycles: {
+        Row: {
+          assessment_types: Json
+          association_id: string
+          auto_generate: boolean | null
+          billing_day: number
+          created_at: string | null
+          created_by: string | null
+          cycle_name: string
+          cycle_type: string
+          due_day: number
+          grace_period_days: number | null
+          id: string
+          is_active: boolean | null
+          last_generated_date: string | null
+          late_fee_day: number | null
+          next_billing_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assessment_types?: Json
+          association_id: string
+          auto_generate?: boolean | null
+          billing_day?: number
+          created_at?: string | null
+          created_by?: string | null
+          cycle_name: string
+          cycle_type: string
+          due_day?: number
+          grace_period_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          late_fee_day?: number | null
+          next_billing_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assessment_types?: Json
+          association_id?: string
+          auto_generate?: boolean | null
+          billing_day?: number
+          created_at?: string | null
+          created_by?: string | null
+          cycle_name?: string
+          cycle_type?: string
+          due_day?: number
+          grace_period_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          late_fee_day?: number | null
+          next_billing_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      assessment_billing_runs: {
+        Row: {
+          association_id: string
+          billing_cycle_id: string
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string | null
+          created_by: string | null
+          error_details: string | null
+          id: string
+          run_date: string
+          status: string
+          total_amount: number | null
+          total_assessments_generated: number | null
+        }
+        Insert: {
+          association_id: string
+          billing_cycle_id: string
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string | null
+          created_by?: string | null
+          error_details?: string | null
+          id?: string
+          run_date: string
+          status?: string
+          total_amount?: number | null
+          total_assessments_generated?: number | null
+        }
+        Update: {
+          association_id?: string
+          billing_cycle_id?: string
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string | null
+          created_by?: string | null
+          error_details?: string | null
+          id?: string
+          run_date?: string
+          status?: string
+          total_amount?: number | null
+          total_assessments_generated?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_billing_runs_billing_cycle_id_fkey"
+            columns: ["billing_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_billing_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_schedules: {
         Row: {
           amount: number
@@ -792,59 +902,89 @@ export type Database = {
       }
       assessment_types_enhanced: {
         Row: {
+          approval_threshold: number | null
           association_id: string
+          auto_generate: boolean | null
           base_amount: number | null
+          calculation_formula: string | null
           calculation_method: string | null
           category: string
+          compound_late_fees: boolean | null
           created_at: string | null
           created_by: string | null
           description: string | null
           effective_date: string | null
           expiry_date: string | null
           gl_account_code: string | null
+          grace_period_days: number | null
           id: string
           is_active: boolean | null
           is_recurring: boolean | null
+          late_fee_amount: number | null
+          late_fee_type: string | null
           name: string
+          payment_terms_days: number | null
+          proration_method: string | null
           recurrence_pattern: Json | null
+          requires_approval: boolean | null
           tax_code: string | null
           updated_at: string | null
         }
         Insert: {
+          approval_threshold?: number | null
           association_id: string
+          auto_generate?: boolean | null
           base_amount?: number | null
+          calculation_formula?: string | null
           calculation_method?: string | null
           category: string
+          compound_late_fees?: boolean | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           effective_date?: string | null
           expiry_date?: string | null
           gl_account_code?: string | null
+          grace_period_days?: number | null
           id?: string
           is_active?: boolean | null
           is_recurring?: boolean | null
+          late_fee_amount?: number | null
+          late_fee_type?: string | null
           name: string
+          payment_terms_days?: number | null
+          proration_method?: string | null
           recurrence_pattern?: Json | null
+          requires_approval?: boolean | null
           tax_code?: string | null
           updated_at?: string | null
         }
         Update: {
+          approval_threshold?: number | null
           association_id?: string
+          auto_generate?: boolean | null
           base_amount?: number | null
+          calculation_formula?: string | null
           calculation_method?: string | null
           category?: string
+          compound_late_fees?: boolean | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           effective_date?: string | null
           expiry_date?: string | null
           gl_account_code?: string | null
+          grace_period_days?: number | null
           id?: string
           is_active?: boolean | null
           is_recurring?: boolean | null
+          late_fee_amount?: number | null
+          late_fee_type?: string | null
           name?: string
+          payment_terms_days?: number | null
+          proration_method?: string | null
           recurrence_pattern?: Json | null
+          requires_approval?: boolean | null
           tax_code?: string | null
           updated_at?: string | null
         }
@@ -1393,6 +1533,137 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_reconciliation_items: {
+        Row: {
+          amount: number
+          bank_transaction_id: string | null
+          cleared_date: string | null
+          created_at: string | null
+          description: string
+          gl_transaction_id: string | null
+          id: string
+          notes: string | null
+          reconciliation_id: string
+          reference_number: string | null
+          status: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          bank_transaction_id?: string | null
+          cleared_date?: string | null
+          created_at?: string | null
+          description: string
+          gl_transaction_id?: string | null
+          id?: string
+          notes?: string | null
+          reconciliation_id: string
+          reference_number?: string | null
+          status?: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          bank_transaction_id?: string | null
+          cleared_date?: string | null
+          created_at?: string | null
+          description?: string
+          gl_transaction_id?: string | null
+          id?: string
+          notes?: string | null
+          reconciliation_id?: string
+          reference_number?: string | null
+          status?: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_reconciliation_items_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_reconciliation_items_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "bank_reconciliations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_reconciliations: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          bank_account_id: string
+          beginning_balance: number
+          created_at: string | null
+          difference: number | null
+          ending_balance: number
+          id: string
+          notes: string | null
+          reconciled_at: string | null
+          reconciled_balance: number
+          reconciled_by: string | null
+          reconciliation_date: string
+          statement_balance: number
+          statement_date: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_id: string
+          beginning_balance: number
+          created_at?: string | null
+          difference?: number | null
+          ending_balance: number
+          id?: string
+          notes?: string | null
+          reconciled_at?: string | null
+          reconciled_balance: number
+          reconciled_by?: string | null
+          reconciliation_date: string
+          statement_balance: number
+          statement_date: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_id?: string
+          beginning_balance?: number
+          created_at?: string | null
+          difference?: number | null
+          ending_balance?: number
+          id?: string
+          notes?: string | null
+          reconciled_at?: string | null
+          reconciled_balance?: number
+          reconciled_by?: string | null
+          reconciliation_date?: string
+          statement_balance?: number
+          statement_date?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_reconciliations_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -4972,6 +5243,191 @@ export type Database = {
           vendor?: string
         }
         Relationships: []
+      }
+      journal_entries: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          entry_date: string
+          entry_number: string
+          id: string
+          posted_at: string | null
+          posted_by: string | null
+          reference_number: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          source_id: string | null
+          source_type: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          entry_date: string
+          entry_number: string
+          id?: string
+          posted_at?: string | null
+          posted_by?: string | null
+          reference_number?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          source_id?: string | null
+          source_type: string
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          entry_date?: string
+          entry_number?: string
+          id?: string
+          posted_at?: string | null
+          posted_by?: string | null
+          reference_number?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      journal_entry_lines: {
+        Row: {
+          created_at: string | null
+          credit_amount: number | null
+          debit_amount: number | null
+          description: string | null
+          gl_account_id: string
+          id: string
+          journal_entry_id: string
+          line_number: number
+          property_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          gl_account_id: string
+          id?: string
+          journal_entry_id: string
+          line_number: number
+          property_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          gl_account_id?: string
+          id?: string
+          journal_entry_id?: string
+          line_number?: number
+          property_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_lines_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts_enhanced"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_lines_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      late_fee_rules: {
+        Row: {
+          applies_to_partial_payments: boolean | null
+          assessment_type_id: string | null
+          association_id: string
+          compound_fees: boolean | null
+          created_at: string | null
+          created_by: string | null
+          effective_date: string
+          expiry_date: string | null
+          fee_amount: number
+          fee_type: string
+          id: string
+          is_active: boolean | null
+          maximum_fee: number | null
+          rule_name: string
+          trigger_days_past_due: number
+          updated_at: string | null
+          waiver_threshold: number | null
+        }
+        Insert: {
+          applies_to_partial_payments?: boolean | null
+          assessment_type_id?: string | null
+          association_id: string
+          compound_fees?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          effective_date: string
+          expiry_date?: string | null
+          fee_amount: number
+          fee_type: string
+          id?: string
+          is_active?: boolean | null
+          maximum_fee?: number | null
+          rule_name: string
+          trigger_days_past_due: number
+          updated_at?: string | null
+          waiver_threshold?: number | null
+        }
+        Update: {
+          applies_to_partial_payments?: boolean | null
+          assessment_type_id?: string | null
+          association_id?: string
+          compound_fees?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          effective_date?: string
+          expiry_date?: string | null
+          fee_amount?: number
+          fee_type?: string
+          id?: string
+          is_active?: boolean | null
+          maximum_fee?: number | null
+          rule_name?: string
+          trigger_days_past_due?: number
+          updated_at?: string | null
+          waiver_threshold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "late_fee_rules_assessment_type_id_fkey"
+            columns: ["assessment_type_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_types_enhanced"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_documents: {
         Row: {

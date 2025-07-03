@@ -43,13 +43,8 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
 
       <TabsContent value="master">
         <GLAccountsTable
-          accounts={accounts}
           searchTerm={searchTerm}
           accountType={accountType}
-          visibleColumns={visibleColumns}
-          onSearchChange={onSearchChange}
-          onAccountTypeChange={onAccountTypeChange}
-          onColumnChange={onColumnChange}
         />
       </TabsContent>
 

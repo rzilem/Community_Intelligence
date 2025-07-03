@@ -11,6 +11,8 @@ import BudgetPlanning from "@/pages/accounting/BudgetPlanning";
 import AssessmentManagement from "@/pages/accounting/AssessmentManagement";
 import AccountsPayable from "@/pages/accounting/AccountsPayable";
 import FinancialStatements from "@/pages/accounting/FinancialStatements";
+import JournalEntries from "@/pages/accounting/JournalEntries";
+import BankReconciliation from "@/pages/accounting/BankReconciliation";
 
 // Accounting Routes
 export const accountingRoutes: RouteObject[] = [
@@ -53,5 +55,13 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/financial-statements",
     element: <RequireAuth><FinancialStatements /></RequireAuth>
+  },
+  {
+    path: "/accounting/journal-entries",
+    element: <RequireAuth><JournalEntries /></RequireAuth>
+  },
+  {
+    path: "/accounting/bank-reconciliation",
+    element: <RequireAuth><BankReconciliation /></RequireAuth>
   }
 ];
