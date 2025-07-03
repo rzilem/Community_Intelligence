@@ -7451,6 +7451,7 @@ export type Database = {
       }
       purchase_orders: {
         Row: {
+          approval_status: string | null
           approved_by: string | null
           association_id: string
           billing_address: string | null
@@ -7458,6 +7459,8 @@ export type Database = {
           created_by: string | null
           currency: string | null
           delivery_date: string | null
+          department: string | null
+          description: string | null
           discount_amount: number | null
           id: string
           net_amount: number
@@ -7477,6 +7480,7 @@ export type Database = {
           vendor_name: string
         }
         Insert: {
+          approval_status?: string | null
           approved_by?: string | null
           association_id: string
           billing_address?: string | null
@@ -7484,6 +7488,8 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           delivery_date?: string | null
+          department?: string | null
+          description?: string | null
           discount_amount?: number | null
           id?: string
           net_amount: number
@@ -7503,6 +7509,7 @@ export type Database = {
           vendor_name: string
         }
         Update: {
+          approval_status?: string | null
           approved_by?: string | null
           association_id?: string
           billing_address?: string | null
@@ -7510,6 +7517,8 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           delivery_date?: string | null
+          department?: string | null
+          description?: string | null
           discount_amount?: number | null
           id?: string
           net_amount?: number
@@ -7540,6 +7549,8 @@ export type Database = {
           receipt_id: string | null
           rejected_quantity: number | null
           rejection_reason: string | null
+          total_amount: number | null
+          unit_price: number | null
         }
         Insert: {
           condition_notes?: string | null
@@ -7550,6 +7561,8 @@ export type Database = {
           receipt_id?: string | null
           rejected_quantity?: number | null
           rejection_reason?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
         }
         Update: {
           condition_notes?: string | null
@@ -7560,6 +7573,8 @@ export type Database = {
           receipt_id?: string | null
           rejected_quantity?: number | null
           rejection_reason?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
         }
         Relationships: [
           {
@@ -7590,7 +7605,9 @@ export type Database = {
           receipt_number: string
           received_by: string | null
           status: string | null
+          total_received: number | null
           updated_at: string | null
+          vendor_id: string | null
           vendor_packing_slip: string | null
         }
         Insert: {
@@ -7604,7 +7621,9 @@ export type Database = {
           receipt_number: string
           received_by?: string | null
           status?: string | null
+          total_received?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
           vendor_packing_slip?: string | null
         }
         Update: {
@@ -7618,7 +7637,9 @@ export type Database = {
           receipt_number?: string
           received_by?: string | null
           status?: string | null
+          total_received?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
           vendor_packing_slip?: string | null
         }
         Relationships: [
@@ -7627,6 +7648,20 @@ export type Database = {
             columns: ["po_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -8279,6 +8314,96 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_way_matches: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          exception_reason: string | null
+          id: string
+          invoice_id: string | null
+          match_status: string
+          match_type: string
+          matched_at: string | null
+          matched_by: string | null
+          purchase_order_id: string
+          receipt_id: string | null
+          tolerance_exceeded: boolean | null
+          updated_at: string | null
+          variance_amount: number | null
+          variance_percentage: number | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          exception_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          match_status?: string
+          match_type?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          purchase_order_id: string
+          receipt_id?: string | null
+          tolerance_exceeded?: boolean | null
+          updated_at?: string | null
+          variance_amount?: number | null
+          variance_percentage?: number | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          exception_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          match_status?: string
+          match_type?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          purchase_order_id?: string
+          receipt_id?: string | null
+          tolerance_exceeded?: boolean | null
+          updated_at?: string | null
+          variance_amount?: number | null
+          variance_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_way_matches_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_way_matches_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_way_matches_matched_by_fkey"
+            columns: ["matched_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_way_matches_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_way_matches_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
             referencedColumns: ["id"]
           },
         ]
