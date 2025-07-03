@@ -8,7 +8,7 @@ type PurchaseOrderLine = Database['public']['Tables']['purchase_order_lines']['R
 type PurchaseOrderLineInsert = Database['public']['Tables']['purchase_order_lines']['Insert'];
 
 export interface CreatePurchaseOrderData {
-  vendor_id: string;
+  vendor_name: string;
   association_id: string;
   description?: string;
   requested_by?: string;
@@ -22,10 +22,11 @@ export interface CreatePurchaseOrderData {
 }
 
 export interface PurchaseOrderWithLines extends Omit<PurchaseOrder, 'vendor_name'> {
-  purchase_order_lines: PurchaseOrderLine[];
-  vendor_name?: string;
-  requested_by_name?: string;
+  lines?: PurchaseOrderLine[];
+  vendor_name: string;
+  created_by_name?: string;
   approved_by_name?: string;
+  purchase_order_lines?: PurchaseOrderLine[];
 }
 
 export class PurchaseOrderService {
@@ -35,23 +36,19 @@ export class PurchaseOrderService {
       .from('purchase_orders')
       .select(`
         *,
-        purchase_order_lines (*),
-        vendor:vendors (name),
-        requested_by_profile:profiles!purchase_orders_requested_by_fkey (first_name, last_name),
-        approved_by_profile:profiles!purchase_orders_approved_by_fkey (first_name, last_name)
+        purchase_order_lines(*)
       `)
       .eq('association_id', associationId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return data.map(po => ({
+    return (data || []).map(po => ({
       ...po,
-      vendor_name: po.vendor?.name,
-      requested_by_name: po.requested_by_profile ? 
-        `${po.requested_by_profile.first_name} ${po.requested_by_profile.last_name}` : undefined,
-      approved_by_name: po.approved_by_profile ? 
-        `${po.approved_by_profile.first_name} ${po.approved_by_profile.last_name}` : undefined
+      lines: po.purchase_order_lines || [],
+      vendor_name: po.vendor_name || 'Unknown Vendor',
+      created_by_name: 'System',
+      approved_by_name: null,
     }));
   }
 
@@ -60,10 +57,7 @@ export class PurchaseOrderService {
       .from('purchase_orders')
       .select(`
         *,
-        purchase_order_lines (*),
-        vendor:vendors (name),
-        requested_by_profile:profiles!purchase_orders_requested_by_fkey (first_name, last_name),
-        approved_by_profile:profiles!purchase_orders_approved_by_fkey (first_name, last_name)
+        purchase_order_lines(*)
       `)
       .eq('id', id)
       .single();
@@ -72,11 +66,10 @@ export class PurchaseOrderService {
 
     return {
       ...data,
-      vendor_name: data.vendor?.name,
-      requested_by_name: data.requested_by_profile ? 
-        `${data.requested_by_profile.first_name} ${data.requested_by_profile.last_name}` : undefined,
-      approved_by_name: data.approved_by_profile ? 
-        `${data.approved_by_profile.first_name} ${data.approved_by_profile.last_name}` : undefined
+      lines: data.purchase_order_lines || [],
+      vendor_name: data.vendor_name || 'Unknown Vendor',
+      created_by_name: 'System',
+      approved_by_name: null,
     };
   }
 
@@ -95,13 +88,16 @@ export class PurchaseOrderService {
     // Create purchase order
     const poData: PurchaseOrderInsert = {
       po_number: poNumber,
-      vendor_id: data.vendor_id,
+      vendor_name: data.vendor_name,
       association_id: data.association_id,
       total_amount: totalAmount,
+      net_amount: totalAmount,
+      po_date: new Date().toISOString().split('T')[0],
       notes: data.description,
-      requested_by: user.id,
+      created_by: user.id,
       status: 'draft',
-      approval_status: 'pending'
+      description: data.description,
+      department: data.department
     };
 
     const { data: newPO, error: poError } = await supabase
@@ -167,11 +163,9 @@ export class PurchaseOrderService {
     if (!user) throw new Error('User not authenticated');
 
     const updates: PurchaseOrderUpdate = {
-      approval_status: 'approved',
+      status: 'approved',
       approved_by: user.id,
-      approved_at: new Date().toISOString(),
-      approval_level: approvalLevel,
-      status: 'approved'
+      notes: `Approved at level ${approvalLevel}`
     };
 
     const { error } = await supabase
@@ -187,11 +181,9 @@ export class PurchaseOrderService {
     if (!user) throw new Error('User not authenticated');
 
     const updates: PurchaseOrderUpdate = {
-      approval_status: 'rejected',
+      status: 'rejected',
       approved_by: user.id,
-      approved_at: new Date().toISOString(),
-      rejection_reason: rejectionReason,
-      status: 'rejected'
+      notes: rejectionReason
     };
 
     const { error } = await supabase
@@ -204,9 +196,7 @@ export class PurchaseOrderService {
 
   static async submitForApproval(id: string): Promise<void> {
     const updates: PurchaseOrderUpdate = {
-      status: 'pending_approval',
-      approval_status: 'pending',
-      submitted_at: new Date().toISOString()
+      status: 'pending_approval'
     };
 
     const { error } = await supabase
