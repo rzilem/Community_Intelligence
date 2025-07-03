@@ -91,6 +91,10 @@ export class AdvancedGLService {
     // Generate entry number if not provided
     const entryNumber = data.entry_number || await this.generateJournalEntryNumber();
 
+    // Calculate total amount from line items
+    const totalAmount = data.line_items.reduce((sum, line) => 
+      sum + Math.max(line.debit_amount || 0, line.credit_amount || 0), 0);
+
     // Create journal entry header
     const { data: journalEntry, error: headerError } = await supabase
       .from('journal_entries')
@@ -101,6 +105,8 @@ export class AdvancedGLService {
         description: data.description,
         entry_date: data.entry_date,
         status: 'posted',
+        source_type: 'manual',
+        total_amount: totalAmount,
         created_by: user.id
       })
       .select()
