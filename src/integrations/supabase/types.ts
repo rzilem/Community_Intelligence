@@ -66,6 +66,108 @@ export type Database = {
         }
         Relationships: []
       }
+      accounts_payable: {
+        Row: {
+          aging_bucket: string | null
+          aging_days: number | null
+          ap_number: string
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          current_balance: number
+          description: string | null
+          discount_amount: number | null
+          due_date: string
+          gl_account_code: string | null
+          id: string
+          invoice_date: string
+          invoice_id: string | null
+          invoice_number: string | null
+          is_recurring: boolean | null
+          original_amount: number
+          paid_amount: number | null
+          payment_batch_id: string | null
+          payment_terms: string | null
+          purchase_order_number: string | null
+          recurring_schedule: Json | null
+          reference_number: string | null
+          status: string
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_name: string
+          withholding_amount: number | null
+        }
+        Insert: {
+          aging_bucket?: string | null
+          aging_days?: number | null
+          ap_number: string
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          current_balance: number
+          description?: string | null
+          discount_amount?: number | null
+          due_date: string
+          gl_account_code?: string | null
+          id?: string
+          invoice_date: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          is_recurring?: boolean | null
+          original_amount: number
+          paid_amount?: number | null
+          payment_batch_id?: string | null
+          payment_terms?: string | null
+          purchase_order_number?: string | null
+          recurring_schedule?: Json | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+          withholding_amount?: number | null
+        }
+        Update: {
+          aging_bucket?: string | null
+          aging_days?: number | null
+          ap_number?: string
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_balance?: number
+          description?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          gl_account_code?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          is_recurring?: boolean | null
+          original_amount?: number
+          paid_amount?: number | null
+          payment_batch_id?: string | null
+          payment_terms?: string | null
+          purchase_order_number?: string | null
+          recurring_schedule?: Json | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+          withholding_amount?: number | null
+        }
+        Relationships: []
+      }
       accounts_receivable: {
         Row: {
           aging_bucket: string | null
@@ -4062,6 +4164,77 @@ export type Database = {
           },
         ]
       }
+      gl_accounts_enhanced: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_subtype: string
+          account_type: string
+          association_id: string
+          budget_account: boolean | null
+          cash_flow_category: string | null
+          created_at: string | null
+          current_balance: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_system_account: boolean | null
+          normal_balance: string
+          parent_account_id: string | null
+          tax_line_mapping: string | null
+          updated_at: string | null
+          ytd_balance: number | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_subtype: string
+          account_type: string
+          association_id: string
+          budget_account?: boolean | null
+          cash_flow_category?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system_account?: boolean | null
+          normal_balance: string
+          parent_account_id?: string | null
+          tax_line_mapping?: string | null
+          updated_at?: string | null
+          ytd_balance?: number | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_subtype?: string
+          account_type?: string
+          association_id?: string
+          budget_account?: boolean | null
+          cash_flow_category?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system_account?: boolean | null
+          normal_balance?: string
+          parent_account_id?: string | null
+          tax_line_mapping?: string | null
+          updated_at?: string | null
+          ytd_balance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_accounts_enhanced_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts_enhanced"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gl_budget_entries: {
         Row: {
           annual_total: number
@@ -6396,6 +6569,149 @@ export type Database = {
           },
         ]
       }
+      purchase_order_line_items: {
+        Row: {
+          created_at: string | null
+          delivery_date: string | null
+          gl_account_code: string | null
+          id: string
+          invoiced_quantity: number | null
+          item_code: string | null
+          item_description: string
+          line_number: number
+          line_total: number
+          notes: string | null
+          po_id: string
+          quantity: number
+          received_quantity: number | null
+          unit_of_measure: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          invoiced_quantity?: number | null
+          item_code?: string | null
+          item_description: string
+          line_number: number
+          line_total: number
+          notes?: string | null
+          po_id: string
+          quantity: number
+          received_quantity?: number | null
+          unit_of_measure?: string | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          delivery_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          invoiced_quantity?: number | null
+          item_code?: string | null
+          item_description?: string
+          line_number?: number
+          line_total?: number
+          notes?: string | null
+          po_id?: string
+          quantity?: number
+          received_quantity?: number | null
+          unit_of_measure?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_line_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          approved_by: string | null
+          association_id: string
+          billing_address: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          delivery_date: string | null
+          discount_amount: number | null
+          id: string
+          net_amount: number
+          notes: string | null
+          payment_terms: string | null
+          po_date: string
+          po_number: string
+          requested_by: string | null
+          shipping_address: string | null
+          shipping_amount: number | null
+          status: string
+          tax_amount: number | null
+          terms_conditions: string | null
+          total_amount: number
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          approved_by?: string | null
+          association_id: string
+          billing_address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          delivery_date?: string | null
+          discount_amount?: number | null
+          id?: string
+          net_amount: number
+          notes?: string | null
+          payment_terms?: string | null
+          po_date: string
+          po_number: string
+          requested_by?: string | null
+          shipping_address?: string | null
+          shipping_amount?: number | null
+          status?: string
+          tax_amount?: number | null
+          terms_conditions?: string | null
+          total_amount: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          approved_by?: string | null
+          association_id?: string
+          billing_address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          delivery_date?: string | null
+          discount_amount?: number | null
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          payment_terms?: string | null
+          po_date?: string
+          po_number?: string
+          requested_by?: string | null
+          shipping_address?: string | null
+          shipping_amount?: number | null
+          status?: string
+          tax_amount?: number | null
+          terms_conditions?: string | null
+          total_amount?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: []
+      }
       recipient_groups: {
         Row: {
           association_id: string
@@ -6927,6 +7243,80 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      three_way_matching: {
+        Row: {
+          ap_id: string | null
+          association_id: string
+          auto_matched: boolean | null
+          created_at: string | null
+          exception_reasons: Json | null
+          id: string
+          invoice_id: string | null
+          matched_at: string | null
+          matched_by: string | null
+          matching_status: string
+          price_variance: number | null
+          purchase_order_id: string | null
+          quantity_variance: number | null
+          receiving_record_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          tolerance_exceeded: boolean | null
+          total_variance: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ap_id?: string | null
+          association_id: string
+          auto_matched?: boolean | null
+          created_at?: string | null
+          exception_reasons?: Json | null
+          id?: string
+          invoice_id?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          matching_status?: string
+          price_variance?: number | null
+          purchase_order_id?: string | null
+          quantity_variance?: number | null
+          receiving_record_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tolerance_exceeded?: boolean | null
+          total_variance?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ap_id?: string | null
+          association_id?: string
+          auto_matched?: boolean | null
+          created_at?: string | null
+          exception_reasons?: Json | null
+          id?: string
+          invoice_id?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          matching_status?: string
+          price_variance?: number | null
+          purchase_order_id?: string | null
+          quantity_variance?: number | null
+          receiving_record_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tolerance_exceeded?: boolean | null
+          total_variance?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_way_matching_ap_id_fkey"
+            columns: ["ap_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_payable"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transaction_batches: {
         Row: {
