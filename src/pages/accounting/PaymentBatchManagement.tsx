@@ -13,6 +13,7 @@ import { Plus, Download, CheckCircle, Clock, XCircle, Upload, DollarSign } from 
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { PaymentService } from '@/services/accounting/payment-service';
+import { PaymentBatch } from '@/types/payment-types';
 import { useToast } from '@/hooks/use-toast';
 
 interface PaymentBatch {
@@ -80,13 +81,13 @@ const PaymentBatchManagement = () => {
     try {
       const batch = await PaymentService.createPaymentBatch({
         association_id: selectedAssociation,
-        payment_method: newBatch.payment_method,
-        scheduled_date: newBatch.scheduled_date || undefined,
-        description: newBatch.description,
-        filter_criteria: newBatch.filter_criteria
+        payment_method: newBatch.payment_method as 'ach' | 'check' | 'wire',
+        payment_count: 0,
+        total_amount: 0,
+        batch_date: newBatch.scheduled_date || new Date().toISOString().split('T')[0],
       });
 
-      setBatches(prev => [batch, ...prev]);
+      setBatches(prev => [batch as PaymentBatch, ...prev]);
       setIsCreateDialogOpen(false);
       setNewBatch({ payment_method: '', scheduled_date: '', description: '', filter_criteria: {} });
       
@@ -106,7 +107,7 @@ const PaymentBatchManagement = () => {
 
   const handleProcessBatch = async (batchId: string) => {
     try {
-      await PaymentService.processBatch(batchId);
+      await PaymentService.processPaymentBatch(batchId);
       await loadBatches();
       toast({
         title: "Success",
@@ -179,8 +180,8 @@ const PaymentBatchManagement = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <AssociationSelector
-            onValueChange={setSelectedAssociation}
-            placeholder="Select association to manage payment batches"
+            onAssociationChange={setSelectedAssociation}
+            label="Select Association"
           />
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

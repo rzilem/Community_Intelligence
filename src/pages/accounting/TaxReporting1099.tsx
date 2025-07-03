@@ -11,6 +11,7 @@ import { Download, FileText, Check, AlertTriangle, Calendar, Filter } from 'luci
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { TaxReportingService } from '@/services/accounting/tax-reporting-service';
+import { Vendor1099Record } from '@/types/payment-types';
 import { useToast } from '@/hooks/use-toast';
 
 interface Vendor1099Record {
@@ -205,9 +206,9 @@ const TaxReporting1099 = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <AssociationSelector
-            value={selectedAssociation}
-            onValueChange={setSelectedAssociation}
-            placeholder="Select association for tax reporting"
+            onAssociationChange={setSelectedAssociation}
+            label="Select Association"
+            initialAssociationId={selectedAssociation}
           />
 
           <div className="flex gap-2">

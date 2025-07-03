@@ -298,6 +298,96 @@ export class PaymentService {
     // TODO: Implement when payment_plans and payment_transactions_enhanced tables are properly set up
   }
 
+  static async processBatch(batchId: string): Promise<void> {
+    return this.processPaymentBatch(batchId);
+  }
+
+  static async getPaymentHistory(residentId: string): Promise<PaymentTransaction[]> {
+    const { data, error } = await supabase
+      .from('payment_transactions_enhanced')
+      .select('*')
+      .eq('resident_id', residentId)
+      .order('payment_date', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async getAutoPaySettings(residentId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('payment_plans')
+      .select('*')
+      .eq('resident_id', residentId)
+      .eq('is_active', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  }
+
+  static async addPaymentMethod(data: {
+    resident_id: string;
+    payment_type: 'ach' | 'card' | 'bank_transfer';
+    account_nickname?: string;
+    is_default?: boolean;
+    bank_name?: string;
+    account_type?: string;
+    last_four_digits?: string;
+  }): Promise<string> {
+    return this.addResidentPaymentMethod(data);
+  }
+
+  static async deletePaymentMethod(methodId: string): Promise<void> {
+    const { error } = await supabase
+      .from('resident_payment_methods')
+      .update({ is_active: false })
+      .eq('id', methodId);
+
+    if (error) throw error;
+  }
+
+  static async updateAutoPaySettings(residentId: string, settings: any): Promise<void> {
+    const { error } = await supabase
+      .from('payment_plans')
+      .upsert({
+        resident_id: residentId,
+        ...settings,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+  }
+
+  static async generatePaymentReceipt(paymentId: string): Promise<string> {
+    const { data: payment, error } = await supabase
+      .from('payment_transactions_enhanced')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (error) throw error;
+
+    // Generate receipt content
+    const receiptContent = {
+      payment_id: payment.id,
+      amount: payment.net_amount,
+      date: payment.payment_date,
+      method: payment.payment_method,
+      reference: payment.reference_number
+    };
+
+    // Store receipt in storage
+    const fileName = `receipt_${payment.reference_number}.json`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('financial_documents')
+      .upload(`receipts/${fileName}`, JSON.stringify(receiptContent, null, 2), {
+        contentType: 'application/json'
+      });
+
+    if (uploadError) throw uploadError;
+    return uploadData.path;
+  }
+
   private static async generateBatchNumber(paymentMethod: string): Promise<string> {
     const today = new Date();
     const year = today.getFullYear();

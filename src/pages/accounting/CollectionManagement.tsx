@@ -13,6 +13,7 @@ import { Plus, Clock, AlertTriangle, DollarSign, FileText, Phone, Mail, User } f
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { CollectionService } from '@/services/accounting/collection-service';
+import { CollectionCase, CollectionAction } from '@/types/payment-types';
 import { useToast } from '@/hooks/use-toast';
 
 interface CollectionCase {
@@ -110,7 +111,7 @@ const CollectionManagement = () => {
         association_id: selectedAssociation,
         property_id: newCase.property_id,
         total_amount_owed: parseFloat(newCase.total_amount_owed),
-        priority_level: newCase.priority_level,
+        
         notes: newCase.notes
       });
 
@@ -246,8 +247,8 @@ const CollectionManagement = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <AssociationSelector
-            onValueChange={setSelectedAssociation}
-            placeholder="Select association to manage collections"
+            onAssociationChange={setSelectedAssociation}
+            label="Select Association"
           />
 
           <div className="flex gap-2">
