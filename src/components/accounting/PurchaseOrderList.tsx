@@ -216,7 +216,7 @@ const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({ associationId }) 
                     <TableCell>${order.total_amount?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell>{getStatusBadge(order.status, order.approval_status)}</TableCell>
                     <TableCell className="text-sm">
-                      {order.requested_by_name || 'Unknown'}
+                      {order.requested_by || 'Unknown'}
                     </TableCell>
                     <TableCell>
                       {order.po_date ? new Date(order.po_date).toLocaleDateString() : 'N/A'}

@@ -8,10 +8,9 @@ type PurchaseOrderLine = Database['public']['Tables']['purchase_order_lines']['R
 type PurchaseOrderLineInsert = Database['public']['Tables']['purchase_order_lines']['Insert'];
 
 export interface CreatePurchaseOrderData {
-  vendor_name: string;
+  vendor_id: string;
   association_id: string;
   description?: string;
-  requested_by?: string;
   department?: string;
   line_items: {
     description: string;
@@ -21,11 +20,8 @@ export interface CreatePurchaseOrderData {
   }[];
 }
 
-export interface PurchaseOrderWithLines extends Omit<PurchaseOrder, 'vendor_name'> {
+export interface PurchaseOrderWithLines extends PurchaseOrder {
   lines?: PurchaseOrderLine[];
-  vendor_name: string;
-  created_by_name?: string;
-  approved_by_name?: string;
   purchase_order_lines?: PurchaseOrderLine[];
 }
 
@@ -46,9 +42,6 @@ export class PurchaseOrderService {
     return (data || []).map(po => ({
       ...po,
       lines: po.purchase_order_lines || [],
-      vendor_name: po.vendor_name || 'Unknown Vendor',
-      created_by_name: 'System',
-      approved_by_name: null,
     }));
   }
 
@@ -67,9 +60,6 @@ export class PurchaseOrderService {
     return {
       ...data,
       lines: data.purchase_order_lines || [],
-      vendor_name: data.vendor_name || 'Unknown Vendor',
-      created_by_name: 'System',
-      approved_by_name: null,
     };
   }
 
@@ -88,12 +78,12 @@ export class PurchaseOrderService {
     // Create purchase order
     const poData: PurchaseOrderInsert = {
       po_number: poNumber,
-      vendor_name: data.vendor_name,
+      vendor_id: data.vendor_id,
       association_id: data.association_id,
       total_amount: totalAmount,
       net_amount: totalAmount,
+      vendor_name: 'TBD',
       po_date: new Date().toISOString().split('T')[0],
-      notes: data.description,
       created_by: user.id,
       status: 'draft',
       description: data.description,

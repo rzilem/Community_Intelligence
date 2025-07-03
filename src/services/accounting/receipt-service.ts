@@ -52,8 +52,8 @@ export class ReceiptService {
     return data.map(receipt => ({
       ...receipt,
       vendor_name: receipt.vendor?.name,
-      received_by_name: receipt.received_by_profile ? 
-        `${receipt.received_by_profile.first_name} ${receipt.received_by_profile.last_name}` : undefined
+      received_by_name: receipt.received_by_profile && Array.isArray(receipt.received_by_profile) && receipt.received_by_profile.length > 0 ? 
+        `${receipt.received_by_profile[0].first_name} ${receipt.received_by_profile[0].last_name}` : undefined
     }));
   }
 
@@ -75,8 +75,8 @@ export class ReceiptService {
     return data.map(receipt => ({
       ...receipt,
       vendor_name: receipt.vendor?.name,
-      received_by_name: receipt.received_by_profile ? 
-        `${receipt.received_by_profile.first_name} ${receipt.received_by_profile.last_name}` : undefined
+      received_by_name: receipt.received_by_profile && Array.isArray(receipt.received_by_profile) && receipt.received_by_profile.length > 0 ? 
+        `${receipt.received_by_profile[0].first_name} ${receipt.received_by_profile[0].last_name}` : undefined
     }));
   }
 
@@ -98,8 +98,8 @@ export class ReceiptService {
     return {
       ...data,
       vendor_name: data.vendor?.name,
-      received_by_name: data.received_by_profile ? 
-        `${data.received_by_profile.first_name} ${data.received_by_profile.last_name}` : undefined
+      received_by_name: data.received_by_profile && Array.isArray(data.received_by_profile) && data.received_by_profile.length > 0 ? 
+        `${data.received_by_profile[0].first_name} ${data.received_by_profile[0].last_name}` : undefined
     };
   }
 
@@ -122,7 +122,7 @@ export class ReceiptService {
       association_id: data.association_id,
       vendor_id: data.vendor_id,
       total_received: totalReceived,
-      delivery_note: data.delivery_note,
+      delivery_date: new Date().toISOString(),
       received_by: user.id,
       status: 'received'
     };
