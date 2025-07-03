@@ -8932,6 +8932,10 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
+      auto_allocate_payment: {
+        Args: { p_payment_id: string }
+        Returns: undefined
+      }
       bulk_import_documents: {
         Args: {
           p_documents: Json
