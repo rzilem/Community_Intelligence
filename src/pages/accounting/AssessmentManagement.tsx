@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AssessmentService } from '@/services/accounting/assessment-service';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt, Plus, Calendar, DollarSign, Users, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,23 @@ import AssociationSelector from '@/components/associations/AssociationSelector';
 
 const AssessmentManagement = () => {
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>();
+  const [agingData, setAgingData] = useState<any>(null);
+
+  useEffect(() => {
+    if (selectedAssociationId) {
+      loadAgingData();
+    }
+  }, [selectedAssociationId]);
+
+  const loadAgingData = async () => {
+    if (!selectedAssociationId) return;
+    try {
+      const aging = await AssessmentService.getAgingReport(selectedAssociationId);
+      setAgingData(aging);
+    } catch (error) {
+      console.error('Error loading aging data:', error);
+    }
+  };
 
   const mockAssessments = [
     {

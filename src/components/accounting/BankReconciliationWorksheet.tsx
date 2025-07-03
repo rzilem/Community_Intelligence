@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BankReconciliationService } from '@/services/accounting/bank-reconciliation-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,12 +103,29 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
     return balances.statementBalance - balances.bookBalance;
   };
 
-  const handleSave = () => {
-    console.log('Saving reconciliation...');
+  const handleSave = async () => {
+    if (!reconciliation?.id) return;
+    try {
+      await BankReconciliationService.updateReconciliation(reconciliation.id, {
+        statement_balance: balances.statementBalance,
+        reconciled_balance: balances.bookBalance,
+        difference: calculateDifference()
+      });
+    } catch (error) {
+      console.error('Error saving reconciliation:', error);
+    }
   };
 
-  const handleComplete = () => {
-    console.log('Completing reconciliation...');
+  const handleComplete = async () => {
+    if (!reconciliation?.id || calculateDifference() !== 0) return;
+    try {
+      await BankReconciliationService.updateReconciliation(reconciliation.id, {
+        status: 'completed',
+        reconciled_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error completing reconciliation:', error);
+    }
   };
 
   if (!selectedAccount) {

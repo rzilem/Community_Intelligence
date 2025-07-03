@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BankReconciliationService } from '@/services/accounting/bank-reconciliation-service';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,24 +32,26 @@ const BankStatementUpload: React.FC<BankStatementUploadProps> = ({
   };
 
   const handleUpload = async () => {
-    if (!file || !statementDate) return;
+    if (!file || !statementDate || !selectedAccount) return;
 
     setIsUploading(true);
     
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log('Uploading statement:', {
-      file: file.name,
-      account: selectedAccount,
-      date: statementDate,
-      type: uploadType
-    });
-    
-    setIsUploading(false);
-    onOpenChange(false);
-    setFile(null);
-    setStatementDate('');
+    try {
+      await BankReconciliationService.uploadStatement(
+        file,
+        selectedAccount,
+        statementDate,
+        uploadType as 'csv' | 'pdf' | 'ofx'
+      );
+      
+      onOpenChange(false);
+      setFile(null);
+      setStatementDate('');
+    } catch (error) {
+      console.error('Error uploading statement:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
