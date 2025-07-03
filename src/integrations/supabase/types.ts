@@ -557,6 +557,66 @@ export type Database = {
           },
         ]
       }
+      assessment_types_enhanced: {
+        Row: {
+          association_id: string
+          base_amount: number | null
+          calculation_method: string | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          effective_date: string | null
+          expiry_date: string | null
+          gl_account_code: string | null
+          id: string
+          is_active: boolean | null
+          is_recurring: boolean | null
+          name: string
+          recurrence_pattern: Json | null
+          tax_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          base_amount?: number | null
+          calculation_method?: string | null
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          name: string
+          recurrence_pattern?: Json | null
+          tax_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          base_amount?: number | null
+          calculation_method?: string | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          name?: string
+          recurrence_pattern?: Json | null
+          tax_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       assessments: {
         Row: {
           amount: number
@@ -1935,6 +1995,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collections_cases: {
+        Row: {
+          assigned_to: string | null
+          association_id: string
+          case_number: string
+          closed_at: string | null
+          closed_reason: string | null
+          collection_stage: string
+          created_at: string | null
+          current_balance: number
+          days_delinquent: number | null
+          external_agency: string | null
+          id: string
+          last_payment_date: string | null
+          notes: string | null
+          original_balance: number
+          priority_level: string | null
+          property_id: string
+          status: string
+          total_amount_due: number
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          association_id: string
+          case_number: string
+          closed_at?: string | null
+          closed_reason?: string | null
+          collection_stage?: string
+          created_at?: string | null
+          current_balance: number
+          days_delinquent?: number | null
+          external_agency?: string | null
+          id?: string
+          last_payment_date?: string | null
+          notes?: string | null
+          original_balance: number
+          priority_level?: string | null
+          property_id: string
+          status?: string
+          total_amount_due: number
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          association_id?: string
+          case_number?: string
+          closed_at?: string | null
+          closed_reason?: string | null
+          collection_stage?: string
+          created_at?: string | null
+          current_balance?: number
+          days_delinquent?: number | null
+          external_agency?: string | null
+          id?: string
+          last_payment_date?: string | null
+          notes?: string | null
+          original_balance?: number
+          priority_level?: string | null
+          property_id?: string
+          status?: string
+          total_amount_due?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       collections_payment_plans: {
         Row: {
@@ -5414,6 +5540,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_transactions_enhanced: {
+        Row: {
+          amount: number
+          association_id: string
+          batch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          external_transaction_id: string | null
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          net_amount: number
+          payment_date: string | null
+          payment_method_id: string | null
+          processed_at: string | null
+          processing_fee: number | null
+          property_id: string
+          reconciliation_status: string | null
+          reference_number: string | null
+          status: string
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          association_id: string
+          batch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          external_transaction_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          payment_date?: string | null
+          payment_method_id?: string | null
+          processed_at?: string | null
+          processing_fee?: number | null
+          property_id: string
+          reconciliation_status?: string | null
+          reference_number?: string | null
+          status?: string
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          association_id?: string
+          batch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          external_transaction_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          payment_date?: string | null
+          payment_method_id?: string | null
+          processed_at?: string | null
+          processing_fee?: number | null
+          property_id?: string
+          reconciliation_status?: string | null
+          reference_number?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       poll_responses: {
         Row: {
