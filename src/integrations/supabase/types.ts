@@ -2326,6 +2326,130 @@ export type Database = {
           },
         ]
       }
+      collection_cases: {
+        Row: {
+          assigned_to: string | null
+          association_id: string
+          attorney_assigned: string | null
+          attorney_fees: number | null
+          case_number: string
+          case_status: string
+          collection_fees: number | null
+          collection_stage: string
+          court_case_number: string | null
+          court_costs: number | null
+          created_at: string | null
+          created_by: string | null
+          escalation_date: string | null
+          id: string
+          last_contact_date: string | null
+          next_action_date: string | null
+          notes: string | null
+          original_balance: number
+          payment_plan_id: string | null
+          property_id: string
+          resident_id: string | null
+          settlement_amount: number | null
+          total_amount_owed: number
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          association_id: string
+          attorney_assigned?: string | null
+          attorney_fees?: number | null
+          case_number: string
+          case_status?: string
+          collection_fees?: number | null
+          collection_stage?: string
+          court_case_number?: string | null
+          court_costs?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          escalation_date?: string | null
+          id?: string
+          last_contact_date?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          original_balance: number
+          payment_plan_id?: string | null
+          property_id: string
+          resident_id?: string | null
+          settlement_amount?: number | null
+          total_amount_owed: number
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          association_id?: string
+          attorney_assigned?: string | null
+          attorney_fees?: number | null
+          case_number?: string
+          case_status?: string
+          collection_fees?: number | null
+          collection_stage?: string
+          court_case_number?: string | null
+          court_costs?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          escalation_date?: string | null
+          id?: string
+          last_contact_date?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          original_balance?: number
+          payment_plan_id?: string | null
+          property_id?: string
+          resident_id?: string | null
+          settlement_amount?: number | null
+          total_amount_owed?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_cases_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collections_account_documents: {
         Row: {
           collections_account_id: string
@@ -6304,6 +6428,60 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_allocation_rules: {
+        Row: {
+          allocation_type: string
+          association_id: string
+          charge_types: Json
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          priority_order: number
+          rule_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          allocation_type: string
+          association_id: string
+          charge_types?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority_order: number
+          rule_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          allocation_type?: string
+          association_id?: string
+          charge_types?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority_order?: number
+          rule_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_allocation_rules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_allocation_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_allocations: {
         Row: {
           accounts_receivable_id: string
@@ -8654,6 +8832,85 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      vendor_1099_records: {
+        Row: {
+          association_id: string
+          backup_withholding: boolean | null
+          box_number: string | null
+          correction_filed: boolean | null
+          created_at: string | null
+          form_generated: boolean | null
+          form_sent: boolean | null
+          form_type: string
+          id: string
+          sent_date: string | null
+          tax_id: string | null
+          tax_id_type: string | null
+          tax_year: number
+          total_payments: number
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          association_id: string
+          backup_withholding?: boolean | null
+          box_number?: string | null
+          correction_filed?: boolean | null
+          created_at?: string | null
+          form_generated?: boolean | null
+          form_sent?: boolean | null
+          form_type?: string
+          id?: string
+          sent_date?: string | null
+          tax_id?: string | null
+          tax_id_type?: string | null
+          tax_year: number
+          total_payments?: number
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          association_id?: string
+          backup_withholding?: boolean | null
+          box_number?: string | null
+          correction_filed?: boolean | null
+          created_at?: string | null
+          form_generated?: boolean | null
+          form_sent?: boolean | null
+          form_type?: string
+          id?: string
+          sent_date?: string | null
+          tax_id?: string | null
+          tax_id_type?: string | null
+          tax_year?: number
+          total_payments?: number
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_1099_records_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_1099_records_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_1099_records_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_applications: {
         Row: {
