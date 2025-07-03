@@ -2199,6 +2199,89 @@ export type Database = {
           },
         ]
       }
+      budget_entries: {
+        Row: {
+          actual_amount: number
+          association_id: string
+          budget_year: number
+          budgeted_amount: number
+          created_at: string | null
+          created_by: string | null
+          gl_account_id: string
+          id: string
+          notes: string | null
+          period_number: number
+          period_type: string
+          updated_at: string | null
+          updated_by: string | null
+          variance_amount: number | null
+          variance_percent: number | null
+        }
+        Insert: {
+          actual_amount?: number
+          association_id: string
+          budget_year: number
+          budgeted_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          gl_account_id: string
+          id?: string
+          notes?: string | null
+          period_number: number
+          period_type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          variance_amount?: number | null
+          variance_percent?: number | null
+        }
+        Update: {
+          actual_amount?: number
+          association_id?: string
+          budget_year?: number
+          budgeted_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          gl_account_id?: string
+          id?: string
+          notes?: string | null
+          period_number?: number
+          period_type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          variance_amount?: number | null
+          variance_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_entries_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_entries_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_entries_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           amenity_id: string | null
@@ -2322,6 +2405,84 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_flow_forecasts: {
+        Row: {
+          actual_balance: number | null
+          actual_disbursements: number | null
+          actual_receipts: number | null
+          association_id: string
+          confidence_level: number | null
+          created_at: string | null
+          created_by: string | null
+          forecast_date: string
+          forecast_type: string
+          id: string
+          notes: string | null
+          opening_balance: number
+          projected_balance: number
+          projected_disbursements: number
+          projected_receipts: number
+          updated_at: string | null
+          variance_disbursements: number | null
+          variance_receipts: number | null
+        }
+        Insert: {
+          actual_balance?: number | null
+          actual_disbursements?: number | null
+          actual_receipts?: number | null
+          association_id: string
+          confidence_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          forecast_date: string
+          forecast_type?: string
+          id?: string
+          notes?: string | null
+          opening_balance?: number
+          projected_balance?: number
+          projected_disbursements?: number
+          projected_receipts?: number
+          updated_at?: string | null
+          variance_disbursements?: number | null
+          variance_receipts?: number | null
+        }
+        Update: {
+          actual_balance?: number | null
+          actual_disbursements?: number | null
+          actual_receipts?: number | null
+          association_id?: string
+          confidence_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          forecast_date?: string
+          forecast_type?: string
+          id?: string
+          notes?: string | null
+          opening_balance?: number
+          projected_balance?: number
+          projected_disbursements?: number
+          projected_receipts?: number
+          updated_at?: string | null
+          variance_disbursements?: number | null
+          variance_receipts?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_flow_forecasts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_flow_forecasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3955,6 +4116,129 @@ export type Database = {
           },
         ]
       }
+      financial_periods: {
+        Row: {
+          association_id: string
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          end_date: string
+          fiscal_year: number
+          id: string
+          is_closed: boolean | null
+          period_name: string
+          period_type: string
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          end_date: string
+          fiscal_year: number
+          id?: string
+          is_closed?: boolean | null
+          period_name: string
+          period_type?: string
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          end_date?: string
+          fiscal_year?: number
+          id?: string
+          is_closed?: boolean | null
+          period_name?: string
+          period_type?: string
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_periods_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_periods_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_reports: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          expires_at: string | null
+          generated_at: string | null
+          generated_by: string | null
+          id: string
+          is_cached: boolean | null
+          period_end: string
+          period_start: string
+          report_data: Json
+          report_name: string
+          report_type: string
+          template_config: Json | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          is_cached?: boolean | null
+          period_end: string
+          period_start: string
+          report_data?: Json
+          report_name: string
+          report_type: string
+          template_config?: Json | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          is_cached?: boolean | null
+          period_end?: string
+          period_start?: string
+          report_data?: Json
+          report_name?: string
+          report_type?: string
+          template_config?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_reports_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_statements: {
         Row: {
           association_id: string
@@ -4461,6 +4745,66 @@ export type Database = {
             columns: ["form_submission_id"]
             isOneToOne: false
             referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_account_balances: {
+        Row: {
+          association_id: string
+          closing_balance: number
+          created_at: string | null
+          gl_account_id: string
+          id: string
+          opening_balance: number
+          period_end: string
+          period_start: string
+          total_credits: number
+          total_debits: number
+          updated_at: string | null
+          ytd_balance: number
+        }
+        Insert: {
+          association_id: string
+          closing_balance?: number
+          created_at?: string | null
+          gl_account_id: string
+          id?: string
+          opening_balance?: number
+          period_end: string
+          period_start: string
+          total_credits?: number
+          total_debits?: number
+          updated_at?: string | null
+          ytd_balance?: number
+        }
+        Update: {
+          association_id?: string
+          closing_balance?: number
+          created_at?: string | null
+          gl_account_id?: string
+          id?: string
+          opening_balance?: number
+          period_end?: string
+          period_start?: string
+          total_credits?: number
+          total_debits?: number
+          updated_at?: string | null
+          ytd_balance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_account_balances_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gl_account_balances_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -5560,6 +5904,113 @@ export type Database = {
             columns: ["journal_entry_id"]
             isOneToOne: false
             referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_definitions: {
+        Row: {
+          association_id: string
+          calculation_formula: string
+          created_at: string | null
+          created_by: string | null
+          critical_threshold: number | null
+          id: string
+          is_active: boolean | null
+          kpi_category: string
+          kpi_name: string
+          target_value: number | null
+          unit_of_measure: string | null
+          updated_at: string | null
+          warning_threshold: number | null
+        }
+        Insert: {
+          association_id: string
+          calculation_formula: string
+          created_at?: string | null
+          created_by?: string | null
+          critical_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          kpi_category: string
+          kpi_name: string
+          target_value?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+          warning_threshold?: number | null
+        }
+        Update: {
+          association_id?: string
+          calculation_formula?: string
+          created_at?: string | null
+          created_by?: string | null
+          critical_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          kpi_category?: string
+          kpi_name?: string
+          target_value?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+          warning_threshold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_definitions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_definitions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_values: {
+        Row: {
+          actual_value: number
+          created_at: string | null
+          id: string
+          kpi_definition_id: string
+          measurement_date: string
+          performance_status: string | null
+          target_value: number | null
+          variance_amount: number | null
+          variance_percent: number | null
+        }
+        Insert: {
+          actual_value: number
+          created_at?: string | null
+          id?: string
+          kpi_definition_id: string
+          measurement_date: string
+          performance_status?: string | null
+          target_value?: number | null
+          variance_amount?: number | null
+          variance_percent?: number | null
+        }
+        Update: {
+          actual_value?: number
+          created_at?: string | null
+          id?: string
+          kpi_definition_id?: string
+          measurement_date?: string
+          performance_status?: string | null
+          target_value?: number | null
+          variance_amount?: number | null
+          variance_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_values_kpi_definition_id_fkey"
+            columns: ["kpi_definition_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_definitions"
             referencedColumns: ["id"]
           },
         ]
