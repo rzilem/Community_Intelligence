@@ -5,15 +5,44 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import GLAccountsTable from "@/components/accounting/GLAccountsTable";
 import GLAccountDialog from "@/components/accounting/GLAccountDialog";
 import ChartOfAccountsTree from "@/components/accounting/ChartOfAccountsTree";
+import type { Database } from "@/integrations/supabase/types";
+
+type GLAccount = Database['public']['Tables']['gl_accounts_enhanced']['Row'];
 
 const GLAccounts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [accountType, setAccountType] = useState("all");
   const [showDialog, setShowDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("table");
+  const [editingAccount, setEditingAccount] = useState<GLAccount | undefined>();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { toast } = useToast();
+
+  // TODO: Get from user's association - for now using placeholder
+  const associationId = "placeholder-association-id";
+
+  const handleEditAccount = (account: GLAccount) => {
+    setEditingAccount(account);
+    setShowDialog(true);
+  };
+
+  const handleCreateAccount = () => {
+    setEditingAccount(undefined);
+    setShowDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setShowDialog(false);
+    setEditingAccount(undefined);
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <div className="space-y-6">
@@ -33,10 +62,10 @@ const GLAccounts = () => {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setShowDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Account
-          </Button>
+        <Button onClick={handleCreateAccount}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Account
+        </Button>
         </div>
       </div>
 
@@ -79,8 +108,12 @@ const GLAccounts = () => {
             </CardHeader>
             <CardContent>
               <GLAccountsTable 
+                key={refreshKey}
                 searchTerm={searchTerm}
                 accountType={accountType}
+                associationId={associationId}
+                onEditAccount={handleEditAccount}
+                onRefresh={handleRefresh}
               />
             </CardContent>
           </Card>
@@ -92,7 +125,10 @@ const GLAccounts = () => {
               <CardTitle>Chart of Accounts Structure</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartOfAccountsTree />
+              <ChartOfAccountsTree 
+                associationId={associationId}
+                refreshKey={refreshKey}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -100,7 +136,10 @@ const GLAccounts = () => {
 
       <GLAccountDialog 
         open={showDialog}
-        onOpenChange={setShowDialog}
+        onOpenChange={handleDialogClose}
+        account={editingAccount}
+        associationId={associationId}
+        onSave={handleRefresh}
       />
     </div>
   );

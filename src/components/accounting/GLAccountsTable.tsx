@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { GLAccountsService } from '@/services/accounting/gl-accounts-service';
 import {
   Table,
   TableBody,
@@ -10,75 +12,72 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type { Database } from '@/integrations/supabase/types';
 
-interface GLAccount {
-  id: string;
-  account_code: string;
-  account_name: string;
-  account_type: string;
-  account_subtype: string;
-  current_balance: number;
-  is_active: boolean;
-  parent_account_id?: string;
-}
+type GLAccount = Database['public']['Tables']['gl_accounts_enhanced']['Row'];
 
 interface GLAccountsTableProps {
   searchTerm: string;
   accountType: string;
+  associationId: string;
+  onEditAccount: (account: GLAccount) => void;
+  onRefresh?: () => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   searchTerm,
-  accountType
+  accountType,
+  associationId,
+  onEditAccount,
+  onRefresh
 }) => {
-  // Mock data - in real app this would come from API
-  const accounts: GLAccount[] = [
-    {
-      id: '1',
-      account_code: '1000',
-      account_name: 'Cash - Operating',
-      account_type: 'asset',
-      account_subtype: 'current_asset',
-      current_balance: 125430.25,
-      is_active: true
-    },
-    {
-      id: '2',
-      account_code: '1100',
-      account_name: 'Accounts Receivable',
-      account_type: 'asset',
-      account_subtype: 'current_asset',
-      current_balance: 45672.80,
-      is_active: true
-    },
-    {
-      id: '3',
-      account_code: '2000',
-      account_name: 'Accounts Payable',
-      account_type: 'liability',
-      account_subtype: 'current_liability',
-      current_balance: -18945.50,
-      is_active: true
-    },
-    {
-      id: '4',
-      account_code: '4000',
-      account_name: 'Assessment Income',
-      account_type: 'revenue',
-      account_subtype: 'assessment_income',
-      current_balance: -250000.00,
-      is_active: true
-    },
-    {
-      id: '5',
-      account_code: '6000',
-      account_name: 'Maintenance Expenses',
-      account_type: 'expense',
-      account_subtype: 'maintenance_expense',
-      current_balance: 85420.15,
-      is_active: true
+  const [accounts, setAccounts] = useState<GLAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadAccounts();
+  }, [associationId]);
+
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      const data = await GLAccountsService.getAccounts(associationId);
+      setAccounts(data);
+    } catch (error) {
+      console.error('Error loading GL accounts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load GL accounts",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleDeleteAccount = async (account: GLAccount) => {
+    if (!confirm(`Are you sure you want to delete account ${account.account_code} - ${account.account_name}?`)) {
+      return;
+    }
+
+    try {
+      await GLAccountsService.deleteAccount(account.id);
+      toast({
+        title: "Success",
+        description: "Account deleted successfully",
+      });
+      loadAccounts();
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete account",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = account.account_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,6 +85,14 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
     const matchesType = accountType === 'all' || account.account_type === accountType;
     return matchesSearch && matchesType;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-muted-foreground">Loading accounts...</div>
+      </div>
+    );
+  }
 
   const formatBalance = (balance: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -144,12 +151,22 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onEditAccount(account)}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {!account.is_system_account && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteAccount(account)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
@@ -159,7 +176,14 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
       
       {filteredAccounts.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          No accounts found matching your criteria.
+          {accounts.length === 0 ? (
+            <div className="space-y-2">
+              <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p>No accounts found. Create your first GL account to get started.</p>
+            </div>
+          ) : (
+            <p>No accounts found matching your criteria.</p>
+          )}
         </div>
       )}
     </div>

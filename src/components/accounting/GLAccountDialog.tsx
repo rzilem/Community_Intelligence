@@ -11,12 +11,16 @@ interface GLAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   account?: any;
+  associationId: string;
+  onSave: () => void;
 }
 
 const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   open,
   onOpenChange,
-  account
+  account,
+  associationId,
+  onSave
 }) => {
   const [formData, setFormData] = useState({
     account_code: account?.account_code || '',

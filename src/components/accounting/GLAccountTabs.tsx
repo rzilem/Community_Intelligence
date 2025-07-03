@@ -3,7 +3,9 @@ import React from 'react';
 import { Database } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import GLAccountsTable from './GLAccountsTable';
-import { GLAccount } from '@/types/accounting-types';
+import type { Database as DatabaseType } from '@/integrations/supabase/types';
+
+type GLAccount = DatabaseType['public']['Tables']['gl_accounts_enhanced']['Row'];
 
 interface GLAccountTabsProps {
   activeTab: string;
@@ -45,6 +47,8 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
         <GLAccountsTable
           searchTerm={searchTerm}
           accountType={accountType}
+          associationId={'placeholder-association-id'}
+          onEditAccount={() => {}}
         />
       </TabsContent>
 

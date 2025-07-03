@@ -13,7 +13,12 @@ interface AccountNode {
   isExpanded?: boolean;
 }
 
-const ChartOfAccountsTree: React.FC = () => {
+interface ChartOfAccountsTreeProps {
+  associationId: string;
+  refreshKey: number;
+}
+
+const ChartOfAccountsTree: React.FC<ChartOfAccountsTreeProps> = ({ associationId, refreshKey }) => {
   // Mock hierarchical data
   const accountTree: AccountNode[] = [
     {
