@@ -1,43 +1,33 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
-interface GLAccountExtended {
+export interface GLAccountExtended {
+  id: string;
   code: string;
   name: string;
-  category: string;
-  subcategory?: string;
-  account_type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  normal_balance: 'debit' | 'credit';
+  type: string;
+  category?: string;
+  description?: string;
   is_active: boolean;
-  parent_account_code?: string;
-  cost_center?: string;
-  department?: string;
-  property_specific?: boolean;
-  current_balance: number;
+  balance: number;
   ytd_balance: number;
   budget_amount?: number;
   variance_amount?: number;
   variance_percentage?: number;
 }
 
-interface FinancialPeriod {
-  year: number;
-  month: number;
-  is_closed: boolean;
-  closing_date?: string;
-  total_debits: number;
-  total_credits: number;
-  net_income: number;
-}
-
-interface BudgetLineItem {
-  gl_account_code: string;
-  period_type: 'monthly' | 'quarterly' | 'annually';
-  budget_amount: number;
-  actual_amount: number;
-  variance_amount: number;
-  variance_percentage: number;
-  forecast_amount?: number;
+export interface JournalEntryData {
+  association_id: string;
+  entry_number?: string;
+  reference_number?: string;
+  description: string;
+  entry_date: string;
+  line_items: {
+    gl_account_id: string;
+    debit_amount?: number;
+    credit_amount?: number;
+    description?: string;
+    property_id?: string;
+  }[];
 }
 
 export class AdvancedGLService {
@@ -45,29 +35,21 @@ export class AdvancedGLService {
   static async getChartOfAccounts(associationId: string): Promise<GLAccountExtended[]> {
     const { data, error } = await supabase
       .from('gl_accounts')
-      .select(`
-        *,
-        gl_account_balances(current_balance, ytd_balance),
-        budget_lines(budget_amount)
-      `)
+      .select('*')
       .eq('association_id', associationId)
       .order('code');
 
     if (error) throw error;
 
     return (data || []).map(account => ({
+      id: account.id,
       code: account.code,
       name: account.name,
-      category: account.category || 'Other',
-      subcategory: account.category,
-      account_type: account.type as any,
-      normal_balance: 'debit' as any,
+      type: account.type,
+      category: account.category,
+      description: account.description,
       is_active: account.is_active,
-      parent_account_code: null,
-      cost_center: null,
-      department: null,
-      property_specific: false,
-      current_balance: account.balance || 0,
+      balance: account.balance || 0,
       ytd_balance: account.balance || 0,
       budget_amount: 0,
       variance_amount: 0,
@@ -79,56 +61,27 @@ export class AdvancedGLService {
     association_id: string;
     code: string;
     name: string;
-    account_type: string;
+    type: string;
     category?: string;
-    subcategory?: string;
-    parent_account_code?: string;
-    cost_center?: string;
-    department?: string;
-    normal_balance?: string;
+    description?: string;
     is_active?: boolean;
   }): Promise<void> {
     const { error } = await supabase
       .from('gl_accounts')
       .insert({
-        ...data,
-        normal_balance: data.normal_balance || this.getDefaultNormalBalance(data.account_type),
+        association_id: data.association_id,
+        code: data.code,
+        name: data.name,
+        type: data.type,
+        category: data.category,
+        description: data.description,
         is_active: data.is_active !== false
       });
 
     if (error) throw error;
   }
 
-  private static getDefaultNormalBalance(accountType: string): string {
-    switch (accountType) {
-      case 'asset':
-      case 'expense':
-        return 'debit';
-      case 'liability':
-      case 'equity':
-      case 'revenue':
-        return 'credit';
-      default:
-        return 'debit';
-    }
-  }
-
-  static async postJournalEntry(data: {
-    association_id: string;
-    entry_number?: string;
-    reference_number?: string;
-    description: string;
-    post_date: string;
-    line_items: {
-      gl_account_code: string;
-      debit_amount?: number;
-      credit_amount?: number;
-      description?: string;
-      cost_center?: string;
-      department?: string;
-      property_id?: string;
-    }[];
-  }): Promise<string> {
+  static async postJournalEntry(data: JournalEntryData): Promise<string> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -146,10 +99,8 @@ export class AdvancedGLService {
         entry_number: entryNumber,
         reference_number: data.reference_number,
         description: data.description,
-        post_date: data.post_date,
-        entry_status: 'posted',
-        total_debits: data.line_items.reduce((sum, line) => sum + (line.debit_amount || 0), 0),
-        total_credits: data.line_items.reduce((sum, line) => sum + (line.credit_amount || 0), 0),
+        entry_date: data.entry_date,
+        status: 'posted',
         created_by: user.id
       })
       .select()
@@ -161,12 +112,10 @@ export class AdvancedGLService {
     const lineItems = data.line_items.map((line, index) => ({
       journal_entry_id: journalEntry.id,
       line_number: index + 1,
-      gl_account_code: line.gl_account_code,
+      gl_account_id: line.gl_account_id,
       debit_amount: line.debit_amount || 0,
       credit_amount: line.credit_amount || 0,
       description: line.description || data.description,
-      cost_center: line.cost_center,
-      department: line.department,
       property_id: line.property_id
     }));
 
@@ -176,15 +125,12 @@ export class AdvancedGLService {
 
     if (linesError) throw linesError;
 
-    // Update GL account balances
-    await this.updateGLBalances(data.association_id, data.line_items, data.post_date);
-
     return journalEntry.id;
   }
 
-  private static validateJournalEntry(data: any): void {
-    const totalDebits = data.line_items.reduce((sum: number, line: any) => sum + (line.debit_amount || 0), 0);
-    const totalCredits = data.line_items.reduce((sum: number, line: any) => sum + (line.credit_amount || 0), 0);
+  private static validateJournalEntry(data: JournalEntryData): void {
+    const totalDebits = data.line_items.reduce((sum, line) => sum + (line.debit_amount || 0), 0);
+    const totalCredits = data.line_items.reduce((sum, line) => sum + (line.credit_amount || 0), 0);
 
     if (Math.abs(totalDebits - totalCredits) > 0.01) {
       throw new Error('Journal entry is not balanced. Debits must equal credits.');
@@ -194,8 +140,7 @@ export class AdvancedGLService {
       throw new Error('Journal entry must have at least 2 line items.');
     }
 
-    // Validate each line has either debit or credit (but not both)
-    data.line_items.forEach((line: any, index: number) => {
+    data.line_items.forEach((line, index) => {
       if ((line.debit_amount || 0) > 0 && (line.credit_amount || 0) > 0) {
         throw new Error(`Line ${index + 1}: Cannot have both debit and credit amounts.`);
       }
@@ -205,80 +150,12 @@ export class AdvancedGLService {
     });
   }
 
-  private static async updateGLBalances(
-    associationId: string,
-    lineItems: any[],
-    postDate: string
-  ): Promise<void> {
-    for (const line of lineItems) {
-      // Get current balance
-      const { data: currentBalance } = await supabase
-        .from('gl_account_balances')
-        .select('*')
-        .eq('association_id', associationId)
-        .eq('gl_account_code', line.gl_account_code)
-        .eq('period_year', new Date(postDate).getFullYear())
-        .eq('period_month', new Date(postDate).getMonth() + 1)
-        .single();
-
-      const debitAmount = line.debit_amount || 0;
-      const creditAmount = line.credit_amount || 0;
-      const netChange = debitAmount - creditAmount;
-
-      if (currentBalance) {
-        // Update existing balance
-        await supabase
-          .from('gl_account_balances')
-          .update({
-            current_balance: currentBalance.current_balance + netChange,
-            ytd_balance: currentBalance.ytd_balance + netChange,
-            total_debits: currentBalance.total_debits + debitAmount,
-            total_credits: currentBalance.total_credits + creditAmount,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', currentBalance.id);
-      } else {
-        // Create new balance record
-        await supabase
-          .from('gl_account_balances')
-          .insert({
-            association_id: associationId,
-            gl_account_code: line.gl_account_code,
-            period_year: new Date(postDate).getFullYear(),
-            period_month: new Date(postDate).getMonth() + 1,
-            current_balance: netChange,
-            ytd_balance: netChange,
-            total_debits: debitAmount,
-            total_credits: creditAmount
-          });
-      }
-    }
-  }
-
-  static async generateTrialBalance(
-    associationId: string,
-    asOfDate: string
-  ): Promise<any[]> {
-    const year = new Date(asOfDate).getFullYear();
-    const month = new Date(asOfDate).getMonth() + 1;
-
+  static async generateTrialBalance(associationId: string, asOfDate: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('gl_accounts')
-      .select(`
-        code,
-        name,
-        account_type,
-        normal_balance,
-        gl_account_balances!inner(
-          current_balance,
-          total_debits,
-          total_credits
-        )
-      `)
+      .select('*')
       .eq('association_id', associationId)
       .eq('is_active', true)
-      .eq('gl_account_balances.period_year', year)
-      .eq('gl_account_balances.period_month', month)
       .order('code');
 
     if (error) throw error;
@@ -286,93 +163,35 @@ export class AdvancedGLService {
     return (data || []).map(account => ({
       account_code: account.code,
       account_name: account.name,
-      account_type: account.account_type,
-      normal_balance: account.normal_balance,
-      current_balance: account.gl_account_balances?.[0]?.current_balance || 0,
-      total_debits: account.gl_account_balances?.[0]?.total_debits || 0,
-      total_credits: account.gl_account_balances?.[0]?.total_credits || 0,
-      debit_balance: account.normal_balance === 'debit' && (account.gl_account_balances?.[0]?.current_balance || 0) > 0 
-        ? account.gl_account_balances?.[0]?.current_balance || 0 : 0,
-      credit_balance: account.normal_balance === 'credit' && (account.gl_account_balances?.[0]?.current_balance || 0) > 0 
-        ? account.gl_account_balances?.[0]?.current_balance || 0 : 0
+      account_type: account.type,
+      current_balance: account.balance || 0,
+      debit_balance: account.balance > 0 ? account.balance : 0,
+      credit_balance: account.balance < 0 ? Math.abs(account.balance) : 0
     }));
   }
 
-  static async closePeriod(associationId: string, year: number, month: number): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    // Validate period can be closed
-    await this.validatePeriodClose(associationId, year, month);
-
-    // Calculate period totals
-    const { data: balances } = await supabase
+  static async getAccountBalance(accountId: string): Promise<{
+    closing_balance: number;
+    ytd_balance: number;
+    total_debits: number;
+    total_credits: number;
+  }> {
+    const { data, error } = await supabase
       .from('gl_account_balances')
       .select('*')
-      .eq('association_id', associationId)
-      .eq('period_year', year)
-      .eq('period_month', month);
+      .eq('gl_account_id', accountId)
+      .order('period_end', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const totalDebits = (balances || []).reduce((sum, b) => sum + (b.total_debits || 0), 0);
-    const totalCredits = (balances || []).reduce((sum, b) => sum + (b.total_credits || 0), 0);
+    if (error) throw error;
 
-    // Calculate net income
-    const { data: incomeAccounts } = await supabase
-      .from('gl_accounts')
-      .select(`
-        code,
-        account_type,
-        gl_account_balances!inner(current_balance)
-      `)
-      .eq('association_id', associationId)
-      .in('account_type', ['revenue', 'expense']);
-
-    const netIncome = (incomeAccounts || []).reduce((net, account) => {
-      const balance = account.gl_account_balances?.[0]?.current_balance || 0;
-      return account.account_type === 'revenue' ? net + balance : net - balance;
-    }, 0);
-
-    // Create period record
-    await supabase
-      .from('financial_periods')
-      .insert({
-        association_id: associationId,
-        year: year,
-        month: month,
-        is_closed: true,
-        closing_date: new Date().toISOString(),
-        total_debits: totalDebits,
-        total_credits: totalCredits,
-        net_income: netIncome,
-        closed_by: user.id
-      });
-
-    // Close period balances
-    await supabase
-      .from('gl_account_balances')
-      .update({ is_closed: true })
-      .eq('association_id', associationId)
-      .eq('period_year', year)
-      .eq('period_month', month);
-  }
-
-  private static async validatePeriodClose(associationId: string, year: number, month: number): Promise<void> {
-    // Check if period is already closed
-    const { data: existingPeriod } = await supabase
-      .from('financial_periods')
-      .select('*')
-      .eq('association_id', associationId)
-      .eq('year', year)
-      .eq('month', month)
-      .eq('is_closed', true)
-      .single();
-
-    if (existingPeriod) {
-      throw new Error('Period is already closed');
-    }
-
-    // Check if all required reconciliations are complete
-    // This would check bank reconciliations, etc.
+    return {
+      closing_balance: data?.closing_balance || 0,
+      ytd_balance: data?.ytd_balance || 0,
+      total_debits: data?.total_debits || 0,
+      total_credits: data?.total_credits || 0,
+    };
   }
 
   private static async generateJournalEntryNumber(): Promise<string> {
@@ -396,48 +215,5 @@ export class AdvancedGLService {
     }
 
     return `JE-${year}${month}-${String(sequenceNumber).padStart(4, '0')}`;
-  }
-
-  private static calculateVariancePercentage(actual: number, budget: number): number {
-    if (budget === 0) return actual === 0 ? 0 : 100;
-    return ((actual - budget) / Math.abs(budget)) * 100;
-  }
-
-  static async getAccountHierarchy(associationId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('gl_accounts')
-      .select('*')
-      .eq('association_id', associationId)
-      .eq('is_active', true)
-      .order('code');
-
-    if (error) throw error;
-
-    // Build hierarchical structure
-    const accounts = data || [];
-    const hierarchy: any[] = [];
-    const accountMap = new Map();
-
-    // Create map for quick lookup
-    accounts.forEach(account => {
-      accountMap.set(account.code, { ...account, children: [] });
-    });
-
-    // Build hierarchy
-    accounts.forEach(account => {
-      const accountNode = accountMap.get(account.code);
-      if (account.parent_account_code) {
-        const parent = accountMap.get(account.parent_account_code);
-        if (parent) {
-          parent.children.push(accountNode);
-        } else {
-          hierarchy.push(accountNode);
-        }
-      } else {
-        hierarchy.push(accountNode);
-      }
-    });
-
-    return hierarchy;
   }
 }
