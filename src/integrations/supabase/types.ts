@@ -9,6 +9,137 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_credits: {
+        Row: {
+          amount: number
+          applied_to_invoice_id: string | null
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          credit_date: string
+          credit_type: string
+          description: string | null
+          expiry_date: string | null
+          gl_account_code: string | null
+          id: string
+          property_id: string
+          reference_number: string | null
+          remaining_balance: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          applied_to_invoice_id?: string | null
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          credit_date: string
+          credit_type: string
+          description?: string | null
+          expiry_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          property_id: string
+          reference_number?: string | null
+          remaining_balance: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          applied_to_invoice_id?: string | null
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          credit_date?: string
+          credit_type?: string
+          description?: string | null
+          expiry_date?: string | null
+          gl_account_code?: string | null
+          id?: string
+          property_id?: string
+          reference_number?: string | null
+          remaining_balance?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      accounts_receivable: {
+        Row: {
+          aging_bucket: string | null
+          aging_days: number | null
+          association_id: string
+          collections_case_id: string | null
+          created_at: string | null
+          current_balance: number
+          due_date: string
+          gl_account_code: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          invoice_type: string
+          is_in_collections: boolean | null
+          last_payment_date: string | null
+          original_amount: number
+          paid_amount: number | null
+          property_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          aging_bucket?: string | null
+          aging_days?: number | null
+          association_id: string
+          collections_case_id?: string | null
+          created_at?: string | null
+          current_balance: number
+          due_date: string
+          gl_account_code?: string | null
+          id?: string
+          invoice_date: string
+          invoice_number?: string | null
+          invoice_type: string
+          is_in_collections?: boolean | null
+          last_payment_date?: string | null
+          original_amount: number
+          paid_amount?: number | null
+          property_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          aging_bucket?: string | null
+          aging_days?: number | null
+          association_id?: string
+          collections_case_id?: string | null
+          created_at?: string | null
+          current_balance?: number
+          due_date?: string
+          gl_account_code?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          invoice_type?: string
+          is_in_collections?: boolean | null
+          last_payment_date?: string | null
+          original_amount?: number
+          paid_amount?: number | null
+          property_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_receivable_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "collections_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_learning_corrections: {
         Row: {
           confidence_after: number | null
@@ -1992,6 +2123,59 @@ export type Database = {
             columns: ["resident_id"]
             isOneToOne: false
             referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_activities: {
+        Row: {
+          activity_type: string
+          amount: number | null
+          assigned_to: string | null
+          collections_case_id: string
+          completed_date: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          metadata: Json | null
+          status: string | null
+        }
+        Insert: {
+          activity_type: string
+          amount?: number | null
+          assigned_to?: string | null
+          collections_case_id: string
+          completed_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+        }
+        Update: {
+          activity_type?: string
+          amount?: number | null
+          assigned_to?: string | null
+          collections_case_id?: string
+          completed_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_activities_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "collections_cases"
             referencedColumns: ["id"]
           },
         ]
@@ -5411,6 +5595,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_allocations: {
+        Row: {
+          accounts_receivable_id: string
+          allocated_amount: number
+          allocation_date: string | null
+          allocation_type: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          payment_transaction_id: string
+        }
+        Insert: {
+          accounts_receivable_id: string
+          allocated_amount: number
+          allocation_date?: string | null
+          allocation_type?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_transaction_id: string
+        }
+        Update: {
+          accounts_receivable_id?: string
+          allocated_amount?: number
+          allocation_date?: string | null
+          allocation_type?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_allocations_accounts_receivable_id_fkey"
+            columns: ["accounts_receivable_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_receivable"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_allocations_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions_enhanced"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
