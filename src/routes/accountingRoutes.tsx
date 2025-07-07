@@ -13,6 +13,12 @@ import AccountsPayable from "@/pages/accounting/AccountsPayable";
 import FinancialStatements from "@/pages/accounting/FinancialStatements";
 import JournalEntries from "@/pages/accounting/JournalEntries";
 import BankReconciliation from "@/pages/accounting/BankReconciliation";
+import FinancialReports from "@/pages/accounting/FinancialReports";
+import CollectionManagement from "@/pages/accounting/CollectionManagement";
+import PaymentBatchManagement from "@/pages/accounting/PaymentBatchManagement";
+import TaxReporting1099 from "@/pages/accounting/TaxReporting1099";
+import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
+import ResidentPaymentPortal from "@/pages/accounting/ResidentPaymentPortal";
 
 // Accounting Routes
 export const accountingRoutes: RouteObject[] = [
@@ -63,5 +69,29 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/bank-reconciliation",
     element: <RequireAuth><BankReconciliation /></RequireAuth>
+  },
+  {
+    path: "/accounting/financial-reports",
+    element: <RequireAuth><FinancialReports /></RequireAuth>
+  },
+  {
+    path: "/accounting/collections",
+    element: <RequireAuth><CollectionManagement /></RequireAuth>
+  },
+  {
+    path: "/accounting/payment-batches",
+    element: <RequireAuth><PaymentBatchManagement /></RequireAuth>
+  },
+  {
+    path: "/accounting/tax-reporting",
+    element: <RequireAuth><TaxReporting1099 /></RequireAuth>
+  },
+  {
+    path: "/accounting/financial-report-mapping",
+    element: <RequireAuth><FinancialReportMapping /></RequireAuth>
+  },
+  {
+    path: "/accounting/resident-portal",
+    element: <RequireAuth><ResidentPaymentPortal /></RequireAuth>
   }
 ];

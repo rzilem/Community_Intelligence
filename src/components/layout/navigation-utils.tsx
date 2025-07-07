@@ -67,12 +67,38 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       path: '/accounting', 
       icon: DollarSign,
       submenu: [
+        // Dashboard & Overview
         { name: 'Dashboard', path: '/accounting/dashboard', icon: BarChart },
+        { name: 'Financial Reports', path: '/accounting/financial-reports', icon: BarChart2 },
+        
+        // Data Management
+        { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
+        { name: 'Journal Entries', path: '/accounting/journal-entries', icon: BookOpen },
         { name: 'Bank Accounts', path: '/accounting/bank-accounts', icon: Building },
+        { name: 'Bank Reconciliation', path: '/accounting/bank-reconciliation', icon: ClipboardCheck },
+        
+        // Transactions
         { name: 'Invoice Queue', path: '/accounting/invoice-queue', icon: Receipt },
         { name: 'Transactions & Payments', path: '/accounting/transactions-payments', icon: CreditCard },
-        { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
+        { name: 'Accounts Payable', path: '/accounting/accounts-payable', icon: Wallet },
+        
+        // Assessment & Collections
+        { name: 'Assessment Management', path: '/accounting/assessment-management', icon: ListOrdered },
+        { name: 'Collection Management', path: '/accounting/collections', icon: ClipboardList },
+        
+        // Payment Processing
+        { name: 'Payment Batches', path: '/accounting/payment-batches', icon: CreditCard },
+        { name: 'Resident Payment Portal', path: '/accounting/resident-portal', icon: User },
+        
+        // Budgeting & Planning
         { name: 'Budget Planning', path: '/accounting/budget-planning', icon: PiggyBank },
+        
+        // Tax & Compliance
+        { name: 'Tax Reporting', path: '/accounting/tax-reporting', icon: FileText },
+        { name: 'Financial Statements', path: '/accounting/financial-statements', icon: BarChart2 },
+        
+        // System Integration
+        { name: 'Financial Report Mapping', path: '/accounting/financial-report-mapping', icon: FileBarChart },
       ]
     });
   }
