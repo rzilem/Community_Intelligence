@@ -105,7 +105,7 @@ export class PredictiveAnalyticsEngine {
       return forecast;
     } catch (error) {
       console.error('Financial forecast generation failed:', error);
-      throw new Error(`Financial forecast failed: ${error.message}`);
+      throw new Error(`Financial forecast failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -141,7 +141,7 @@ export class PredictiveAnalyticsEngine {
       return predictions;
     } catch (error) {
       console.error('Maintenance prediction failed:', error);
-      throw new Error(`Maintenance prediction failed: ${error.message}`);
+      throw new Error(`Maintenance prediction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -174,7 +174,7 @@ export class PredictiveAnalyticsEngine {
       return insights;
     } catch (error) {
       console.error('Resident behavior analysis failed:', error);
-      throw new Error(`Resident behavior analysis failed: ${error.message}`);
+      throw new Error(`Resident behavior analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

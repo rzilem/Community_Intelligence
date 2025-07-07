@@ -85,7 +85,7 @@ export class IntelligentDocumentProcessor {
       return result;
     } catch (error) {
       console.error('Document processing failed:', error);
-      throw new Error(`Document processing failed: ${error.message}`);
+      throw new Error(`Document processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -123,7 +123,7 @@ export class IntelligentDocumentProcessor {
       return result;
     } catch (error) {
       console.error('Vision analysis failed:', error);
-      throw new Error(`Vision analysis failed: ${error.message}`);
+      throw new Error(`Vision analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
