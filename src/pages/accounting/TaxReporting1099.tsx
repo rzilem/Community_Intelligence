@@ -11,23 +11,10 @@ import { Download, FileText, Check, AlertTriangle, Calendar, Filter } from 'luci
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { TaxReportingService } from '@/services/accounting/tax-reporting-service';
-import { Vendor1099Record } from '@/types/payment-types';
+import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 
-interface Vendor1099Record {
-  id: string;
-  vendor_id: string;
-  vendor_name: string;
-  vendor_tin: string;
-  tax_year: number;
-  total_payments: number;
-  is_1099_required: boolean;
-  form_type: string;
-  status: string;
-  generated_date?: string;
-  submitted_date?: string;
-  corrections_count: number;
-}
+type Vendor1099Record = Database['public']['Tables']['vendor_1099_records']['Row'];
 
 interface TaxYear {
   year: number;
@@ -191,8 +178,8 @@ const TaxReporting1099 = () => {
 
   const filteredRecords = records.filter(record => {
     if (filterStatus === 'all') return true;
-    if (filterStatus === 'required') return record.is_1099_required;
-    return record.status === filterStatus;
+    if (filterStatus === 'required') return record.backup_withholding;
+    return record.form_generated ? 'generated' : 'pending' === filterStatus;
   });
 
   const currentTaxYear = taxYears.find(ty => ty.year === selectedYear);
@@ -283,18 +270,18 @@ const TaxReporting1099 = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleBulkDownload}
-                    disabled={records.filter(r => r.status === 'generated').length === 0}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download All
-                  </Button>
-                  <Button
-                    onClick={handleSubmitToIRS}
-                    disabled={records.filter(r => r.status === 'generated').length === 0}
-                  >
+                   <Button
+                     variant="outline"
+                     onClick={handleBulkDownload}
+                     disabled={records.filter(r => r.form_generated).length === 0}
+                   >
+                     <Download className="h-4 w-4 mr-2" />
+                     Download All
+                   </Button>
+                   <Button
+                     onClick={handleSubmitToIRS}
+                     disabled={records.filter(r => r.form_generated).length === 0}
+                   >
                     Submit to IRS
                   </Button>
                 </div>
@@ -361,7 +348,7 @@ const TaxReporting1099 = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                {record.status === 'generated' && (
+                                {record.form_generated && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -371,11 +358,11 @@ const TaxReporting1099 = () => {
                                     Download
                                   </Button>
                                 )}
-                                {record.corrections_count > 0 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {record.corrections_count} corrections
-                                  </Badge>
-                                )}
+                                 {record.correction_filed && (
+                                   <Badge variant="outline" className="text-xs">
+                                     Corrected
+                                   </Badge>
+                                 )}
                               </div>
                             </TableCell>
                           </TableRow>

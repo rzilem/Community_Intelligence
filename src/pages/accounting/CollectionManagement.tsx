@@ -13,35 +13,11 @@ import { Plus, Clock, AlertTriangle, DollarSign, FileText, Phone, Mail, User } f
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { CollectionService } from '@/services/accounting/collection-service';
-import { CollectionCase, CollectionAction } from '@/types/payment-types';
+import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 
-interface CollectionCase {
-  id: string;
-  case_number: string;
-  property_id: string;
-  property_address: string;
-  resident_name: string;
-  total_amount_owed: number;
-  status: string;
-  priority_level: string;
-  created_at: string;
-  last_action_date?: string;
-  next_action_date?: string;
-  assigned_to?: string;
-  notes?: string;
-}
-
-interface CollectionAction {
-  id: string;
-  case_id: string;
-  action_type: string;
-  action_date: string;
-  description: string;
-  amount?: number;
-  outcome: string;
-  performed_by: string;
-}
+type CollectionCase = Database['public']['Tables']['collection_cases']['Row'];
+type CollectionAction = Database['public']['Tables']['collection_actions']['Row'];
 
 const CollectionManagement = () => {
   const [selectedAssociation, setSelectedAssociation] = useState<string>('');
@@ -173,7 +149,7 @@ const CollectionManagement = () => {
   const handleUpdateCaseStatus = async (caseId: string, status: string) => {
     try {
       await CollectionService.updateCaseStatus(caseId, status);
-      setCases(prev => prev.map(c => c.id === caseId ? { ...c, status } : c));
+      setCases(prev => prev.map(c => c.id === caseId ? { ...c, case_status: status } : c));
       toast({
         title: "Success",
         description: "Case status updated successfully"
@@ -444,21 +420,21 @@ const CollectionManagement = () => {
                             className={selectedCase === collectionCase.id ? "bg-muted" : ""}
                             onClick={() => setSelectedCase(collectionCase.id)}
                           >
-                            <TableCell className="font-medium">{collectionCase.case_number}</TableCell>
-                            <TableCell>{collectionCase.property_address}</TableCell>
-                            <TableCell>{collectionCase.resident_name}</TableCell>
-                            <TableCell>${collectionCase.total_amount_owed.toLocaleString()}</TableCell>
-                            <TableCell>{getPriorityBadge(collectionCase.priority_level)}</TableCell>
-                            <TableCell>{getStatusBadge(collectionCase.status)}</TableCell>
-                            <TableCell>
-                              {collectionCase.last_action_date 
-                                ? new Date(collectionCase.last_action_date).toLocaleDateString()
-                                : '-'
-                              }
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                {collectionCase.status === 'active' && (
+                             <TableCell className="font-medium">{collectionCase.case_number}</TableCell>
+                             <TableCell>{collectionCase.property_id}</TableCell>
+                             <TableCell>N/A</TableCell>
+                             <TableCell>${collectionCase.total_amount_owed.toLocaleString()}</TableCell>
+                             <TableCell>{getPriorityBadge(collectionCase.collection_stage || 'medium')}</TableCell>
+                             <TableCell>{getStatusBadge(collectionCase.case_status)}</TableCell>
+                             <TableCell>
+                               {collectionCase.next_action_date 
+                                 ? new Date(collectionCase.next_action_date).toLocaleDateString()
+                                 : '-'
+                               }
+                             </TableCell>
+                             <TableCell>
+                               <div className="flex gap-2">
+                                 {collectionCase.case_status === 'open' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -537,7 +513,7 @@ const CollectionManagement = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {cases.filter(c => c.status === 'active').length}
+                      {cases.filter(c => c.case_status === 'open').length}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Cases currently in collection
@@ -565,7 +541,7 @@ const CollectionManagement = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {cases.filter(c => ['high', 'urgent'].includes(c.priority_level)).length}
+                      {cases.filter(c => ['urgent', 'high'].includes(c.collection_stage || '')).length}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Cases requiring immediate attention

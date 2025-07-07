@@ -13,21 +13,10 @@ import { Plus, Download, CheckCircle, Clock, XCircle, Upload, DollarSign } from 
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { PaymentService } from '@/services/accounting/payment-service';
-import { PaymentBatch } from '@/types/payment-types';
+import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 
-interface PaymentBatch {
-  id: string;
-  batch_number: string;
-  payment_method: string;
-  status: string;
-  total_amount: number;
-  payment_count: number;
-  created_at: string;
-  scheduled_date?: string;
-  processed_date?: string;
-  description?: string;
-}
+type PaymentBatch = Database['public']['Tables']['payment_batches']['Row'];
 
 const PaymentBatchManagement = () => {
   const [selectedAssociation, setSelectedAssociation] = useState<string>('');
@@ -283,7 +272,7 @@ const PaymentBatchManagement = () => {
                             <TableCell className="capitalize">{batch.payment_method}</TableCell>
                             <TableCell>{getStatusBadge(batch.status)}</TableCell>
                             <TableCell>${batch.total_amount.toLocaleString()}</TableCell>
-                            <TableCell>{batch.payment_count}</TableCell>
+                           <TableCell>{batch.total_count}</TableCell>
                             <TableCell>
                               {new Date(batch.created_at).toLocaleDateString()}
                             </TableCell>
@@ -346,9 +335,9 @@ const PaymentBatchManagement = () => {
                           <TableCell className="font-medium">{batch.batch_number}</TableCell>
                           <TableCell className="capitalize">{batch.payment_method}</TableCell>
                           <TableCell>${batch.total_amount.toLocaleString()}</TableCell>
-                          <TableCell>{batch.payment_count}</TableCell>
+                          <TableCell>{batch.total_count}</TableCell>
                           <TableCell>
-                            {batch.processed_date ? new Date(batch.processed_date).toLocaleDateString() : '-'}
+                            {batch.processed_at ? new Date(batch.processed_at).toLocaleDateString() : '-'}
                           </TableCell>
                           <TableCell>
                             {batch.payment_method === 'ach' && (
@@ -396,7 +385,7 @@ const PaymentBatchManagement = () => {
                         <TableRow key={batch.id}>
                           <TableCell className="font-medium">{batch.batch_number}</TableCell>
                           <TableCell className="capitalize">{batch.payment_method}</TableCell>
-                          <TableCell>{batch.description || '-'}</TableCell>
+                          <TableCell>{batch.notes || '-'}</TableCell>
                           <TableCell>
                             {new Date(batch.created_at).toLocaleDateString()}
                           </TableCell>

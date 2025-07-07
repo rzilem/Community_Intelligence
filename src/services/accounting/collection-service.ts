@@ -41,9 +41,8 @@ export class CollectionService {
       total_amount_owed: data.total_amount_owed,
       current_balance: data.total_amount_owed,
       case_status: 'open',
-      priority_level: 'medium',
-      notes: data.notes,
-      created_by: user.id
+      collection_stage: 'initial',
+      original_balance: data.total_amount_owed,
     };
 
     const { data: newCase, error } = await supabase
