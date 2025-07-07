@@ -1425,6 +1425,48 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_pay_settings: {
+        Row: {
+          amount_type: string | null
+          association_id: string
+          created_at: string
+          fixed_amount: number | null
+          id: string
+          is_enabled: boolean | null
+          next_payment_date: string | null
+          payment_method_id: string | null
+          process_day: number | null
+          resident_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_type?: string | null
+          association_id: string
+          created_at?: string
+          fixed_amount?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          next_payment_date?: string | null
+          payment_method_id?: string | null
+          process_day?: number | null
+          resident_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_type?: string | null
+          association_id?: string
+          created_at?: string
+          fixed_amount?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          next_payment_date?: string | null
+          payment_method_id?: string | null
+          process_day?: number | null
+          resident_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           action_sequence: Json
@@ -2486,6 +2528,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collection_actions: {
+        Row: {
+          action_date: string
+          action_type: string
+          amount: number | null
+          case_id: string
+          completed_date: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          outcome: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action_date?: string
+          action_type: string
+          amount?: number | null
+          case_id: string
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          outcome?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action_date?: string
+          action_type?: string
+          amount?: number | null
+          case_id?: string
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          outcome?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       collection_cases: {
         Row: {

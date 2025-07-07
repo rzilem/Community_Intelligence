@@ -6,11 +6,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import JournalEntryDialog from "@/components/accounting/JournalEntryDialog";
 
 const JournalEntries = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [showDialog, setShowDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // TODO: Get from user's association - for now using placeholder
+  const associationId = "placeholder-association-id";
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <div className="space-y-6">
@@ -21,7 +31,7 @@ const JournalEntries = () => {
             Create and manage general ledger journal entries with double-entry validation
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Entry
         </Button>
@@ -143,6 +153,13 @@ const JournalEntries = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <JournalEntryDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        associationId={associationId}
+        onSave={handleRefresh}
+      />
     </div>
   );
 };

@@ -1,206 +1,198 @@
-import React from 'react';
-import { ChevronRight, ChevronDown, Folder, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, ChevronDown, DollarSign, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-
-interface AccountNode {
-  id: string;
-  account_code: string;
-  account_name: string;
-  account_type: string;
-  current_balance: number;
-  children?: AccountNode[];
-  isExpanded?: boolean;
-}
+import { Skeleton } from '@/components/ui/skeleton';
+import { AdvancedGLService } from '@/services/accounting/advanced-gl-service';
+import type { GLAccountExtended } from '@/services/accounting/advanced-gl-service';
 
 interface ChartOfAccountsTreeProps {
   associationId: string;
   refreshKey: number;
 }
 
-const ChartOfAccountsTree: React.FC<ChartOfAccountsTreeProps> = ({ associationId, refreshKey }) => {
-  // Mock hierarchical data
-  const accountTree: AccountNode[] = [
-    {
-      id: '1',
-      account_code: '1000',
-      account_name: 'Assets',
-      account_type: 'asset',
-      current_balance: 500000,
-      isExpanded: true,
-      children: [
-        {
-          id: '2',
-          account_code: '1100',
-          account_name: 'Current Assets',
-          account_type: 'asset',
-          current_balance: 200000,
-          isExpanded: true,
-          children: [
-            {
-              id: '3',
-              account_code: '1110',
-              account_name: 'Cash - Operating',
-              account_type: 'asset',
-              current_balance: 125430.25
-            },
-            {
-              id: '4',
-              account_code: '1120',
-              account_name: 'Cash - Reserve',
-              account_type: 'asset',
-              current_balance: 75000.00
-            },
-            {
-              id: '5',
-              account_code: '1130',
-              account_name: 'Accounts Receivable',
-              account_type: 'asset',
-              current_balance: 45672.80
-            }
-          ]
-        },
-        {
-          id: '6',
-          account_code: '1200',
-          account_name: 'Fixed Assets',
-          account_type: 'asset',
-          current_balance: 300000,
-          children: [
-            {
-              id: '7',
-              account_code: '1210',
-              account_name: 'Equipment',
-              account_type: 'asset',
-              current_balance: 150000
-            },
-            {
-              id: '8',
-              account_code: '1220',
-              account_name: 'Accumulated Depreciation',
-              account_type: 'asset',
-              current_balance: -50000
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: '9',
-      account_code: '2000',
-      account_name: 'Liabilities',
-      account_type: 'liability',
-      current_balance: -50000,
-      isExpanded: true,
-      children: [
-        {
-          id: '10',
-          account_code: '2100',
-          account_name: 'Current Liabilities',
-          account_type: 'liability',
-          current_balance: -30000,
-          children: [
-            {
-              id: '11',
-              account_code: '2110',
-              account_name: 'Accounts Payable',
-              account_type: 'liability',
-              current_balance: -18945.50
-            },
-            {
-              id: '12',
-              account_code: '2120',
-              account_name: 'Accrued Expenses',
-              account_type: 'liability',
-              current_balance: -11054.50
-            }
-          ]
-        }
-      ]
+interface AccountNode extends GLAccountExtended {
+  children: AccountNode[];
+  level: number;
+}
+
+const ChartOfAccountsTree: React.FC<ChartOfAccountsTreeProps> = ({
+  associationId,
+  refreshKey
+}) => {
+  const [accounts, setAccounts] = useState<AccountNode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [associationId, refreshKey]);
+
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const accountData = await AdvancedGLService.getChartOfAccounts(associationId);
+      const treeData = buildAccountTree(accountData);
+      setAccounts(treeData);
+    } catch (error) {
+      console.error('Failed to fetch accounts:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const buildAccountTree = (accounts: GLAccountExtended[]): AccountNode[] => {
+    const accountMap = new Map<string, AccountNode>();
+    const rootNodes: AccountNode[] = [];
+
+    // Sort accounts by code for proper hierarchy
+    const sortedAccounts = [...accounts].sort((a, b) => a.code.localeCompare(b.code));
+
+    // Create nodes
+    sortedAccounts.forEach(account => {
+      accountMap.set(account.id, {
+        ...account,
+        children: [],
+        level: 0
+      });
+    });
+
+    // Build tree structure based on account codes
+    sortedAccounts.forEach(account => {
+      const node = accountMap.get(account.id);
+      if (!node) return;
+
+      // Determine parent based on account code pattern
+      const parentCode = findParentCode(account.code, sortedAccounts);
+      if (parentCode) {
+        const parent = Array.from(accountMap.values()).find(n => n.code === parentCode);
+        if (parent) {
+          node.level = parent.level + 1;
+          parent.children.push(node);
+        } else {
+          rootNodes.push(node);
+        }
+      } else {
+        rootNodes.push(node);
+      }
+    });
+
+    return rootNodes;
+  };
+
+  const findParentCode = (code: string, accounts: GLAccountExtended[]): string | null => {
+    // Find potential parent by matching shorter code patterns
+    for (let i = code.length - 1; i > 0; i--) {
+      const potentialParent = code.substring(0, i);
+      if (accounts.some(acc => acc.code === potentialParent)) {
+        return potentialParent;
+      }
+    }
+    return null;
+  };
+
+  const toggleNode = (nodeId: string) => {
+    const newExpanded = new Set(expandedNodes);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedNodes(newExpanded);
+  };
 
   const formatBalance = (balance: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    }).format(Math.abs(balance));
+    }).format(balance);
+  };
+
+  const getBalanceIcon = (balance: number) => {
+    if (balance > 0) return <TrendingUp className="h-4 w-4 text-green-600" />;
+    if (balance < 0) return <TrendingDown className="h-4 w-4 text-red-600" />;
+    return <Minus className="h-4 w-4 text-gray-400" />;
   };
 
   const getAccountTypeColor = (type: string) => {
-    switch (type) {
-      case 'asset': return 'bg-blue-100 text-blue-800';
-      case 'liability': return 'bg-red-100 text-red-800';
-      case 'equity': return 'bg-purple-100 text-purple-800';
-      case 'revenue': return 'bg-green-100 text-green-800';
-      case 'expense': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors = {
+      asset: 'bg-blue-100 text-blue-800',
+      liability: 'bg-red-100 text-red-800',
+      equity: 'bg-purple-100 text-purple-800',
+      revenue: 'bg-green-100 text-green-800',
+      expense: 'bg-orange-100 text-orange-800'
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const renderAccountNode = (account: AccountNode, level: number = 0) => {
-    const hasChildren = account.children && account.children.length > 0;
-    const indent = level * 24;
+  const renderAccountNode = (node: AccountNode) => {
+    const isExpanded = expandedNodes.has(node.id);
+    const hasChildren = node.children.length > 0;
 
     return (
-      <div key={account.id}>
-        <div 
-          className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md"
-          style={{ paddingLeft: `${12 + indent}px` }}
+      <div key={node.id} className="select-none">
+        <div
+          className={`flex items-center gap-2 p-2 hover:bg-muted/50 rounded-md cursor-pointer`}
+          style={{ paddingLeft: `${node.level * 24 + 8}px` }}
+          onClick={() => hasChildren && toggleNode(node.id)}
         >
-          <div className="flex items-center gap-2">
-            {hasChildren ? (
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                {account.isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <div className="w-6" />
-            )}
-            
-            {hasChildren ? (
-              <Folder className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            )}
-            
-            <span className="font-mono text-sm text-muted-foreground">
-              {account.account_code}
-            </span>
-            <span className="font-medium">{account.account_name}</span>
-            
-            <Badge className={getAccountTypeColor(account.account_type)} variant="outline">
-              {account.account_type}
-            </Badge>
-          </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )
+          ) : (
+            <div className="w-4" />
+          )}
           
-          <div className="flex items-center gap-4">
-            <span className={`font-mono text-sm ${account.current_balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {formatBalance(account.current_balance)}
-            </span>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          
+          <div className="flex-1 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-medium">{node.code}</span>
+              <span className="font-medium">{node.name}</span>
+              <Badge variant="secondary" className={getAccountTypeColor(node.type)}>
+                {node.type}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              {getBalanceIcon(node.balance)}
+              <span className="font-mono">
+                {formatBalance(node.balance)}
+              </span>
+            </div>
           </div>
         </div>
-        
-        {hasChildren && account.isExpanded && (
+
+        {hasChildren && isExpanded && (
           <div>
-            {account.children?.map(child => renderAccountNode(child, level + 1))}
+            {node.children.map(renderAccountNode)}
           </div>
         )}
       </div>
     );
   };
 
-  return (
-    <div className="space-y-1">
-      <div className="text-sm text-muted-foreground mb-4">
-        Click on folders to expand/collapse account groups
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
       </div>
-      
-      {accountTree.map(account => renderAccountNode(account))}
-    </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="space-y-1">
+          {accounts.map(renderAccountNode)}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
