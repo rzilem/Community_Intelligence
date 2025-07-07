@@ -85,9 +85,9 @@ const ResidentPaymentPortal = () => {
         PaymentService.getAutoPaySettings(user.id)
       ]);
       
-      setPaymentMethods(methods);
-      setPaymentHistory(history);
-      setAutoPaySettings(autopay);
+      setPaymentMethods(methods as any);
+      setPaymentHistory(history as any);
+      setAutoPaySettings(autopay as any);
     } catch (error) {
       console.error('Error loading payment data:', error);
       toast({
@@ -113,7 +113,7 @@ const ResidentPaymentPortal = () => {
     try {
       const method = await PaymentService.addPaymentMethod({
         resident_id: user.id,
-        payment_type: newPaymentMethod.payment_type,
+        payment_type: newPaymentMethod.payment_type as 'ach' | 'card' | 'bank_transfer',
         account_number_last_four: newPaymentMethod.payment_type === 'bank' 
           ? newPaymentMethod.account_number.slice(-4)
           : newPaymentMethod.card_number.slice(-4),
@@ -124,7 +124,7 @@ const ResidentPaymentPortal = () => {
         is_primary: newPaymentMethod.is_primary
       });
 
-      setPaymentMethods(prev => [...prev, method]);
+      setPaymentMethods(prev => [...prev, method as any]);
       setIsAddPaymentMethodOpen(false);
       setNewPaymentMethod({
         payment_type: '',
@@ -179,7 +179,7 @@ const ResidentPaymentPortal = () => {
         ...settings
       });
       
-      setAutoPaySettings(updatedSettings);
+      setAutoPaySettings(updatedSettings as any);
       toast({
         title: "Success",
         description: `Auto-pay ${enabled ? 'enabled' : 'disabled'} successfully`

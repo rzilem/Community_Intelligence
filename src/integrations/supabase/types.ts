@@ -2324,6 +2324,105 @@ export type Database = {
           },
         ]
       }
+      budget_line_items: {
+        Row: {
+          actual_amount: number | null
+          budget_id: string
+          budgeted_amount: number
+          category: string | null
+          created_at: string
+          description: string | null
+          gl_account_id: string
+          id: string
+          updated_at: string
+          variance_amount: number | null
+        }
+        Insert: {
+          actual_amount?: number | null
+          budget_id: string
+          budgeted_amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id: string
+          id?: string
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Update: {
+          actual_amount?: number | null
+          budget_id?: string
+          budgeted_amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id?: string
+          id?: string
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_items_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          association_id: string
+          budget_year: number
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: string
+          total_expenses: number | null
+          total_revenue: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id: string
+          budget_year: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id?: string
+          budget_year?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           amenity_id: string | null
@@ -2541,6 +2640,7 @@ export type Database = {
           description: string
           id: string
           outcome: string | null
+          performed_by: string | null
           scheduled_date: string | null
           status: string
           updated_at: string
@@ -2556,6 +2656,7 @@ export type Database = {
           description: string
           id?: string
           outcome?: string | null
+          performed_by?: string | null
           scheduled_date?: string | null
           status?: string
           updated_at?: string
@@ -2571,6 +2672,7 @@ export type Database = {
           description?: string
           id?: string
           outcome?: string | null
+          performed_by?: string | null
           scheduled_date?: string | null
           status?: string
           updated_at?: string
@@ -5944,6 +6046,57 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_entry_line_items: {
+        Row: {
+          created_at: string
+          credit_amount: number | null
+          debit_amount: number | null
+          description: string | null
+          gl_account_id: string
+          id: string
+          journal_entry_id: string
+          line_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          gl_account_id: string
+          id?: string
+          journal_entry_id: string
+          line_number: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          gl_account_id?: string
+          id?: string
+          journal_entry_id?: string
+          line_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_line_items_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_line_items_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_entry_lines: {
         Row: {
           created_at: string | null
@@ -7127,6 +7280,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          notes: string | null
           payment_method: string
           processed_at: string | null
           status: string | null
@@ -7145,6 +7299,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          notes?: string | null
           payment_method: string
           processed_at?: string | null
           status?: string | null
@@ -7163,6 +7318,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          notes?: string | null
           payment_method?: string
           processed_at?: string | null
           status?: string | null
@@ -9384,14 +9540,20 @@ export type Database = {
           form_generated: boolean | null
           form_sent: boolean | null
           form_type: string
+          generated_date: string | null
           id: string
+          is_1099_required: boolean | null
           sent_date: string | null
+          status: string
           tax_id: string | null
           tax_id_type: string | null
           tax_year: number
+          total_amount: number | null
           total_payments: number
           updated_at: string | null
           vendor_id: string
+          vendor_name: string | null
+          vendor_tin: string | null
         }
         Insert: {
           association_id: string
@@ -9402,14 +9564,20 @@ export type Database = {
           form_generated?: boolean | null
           form_sent?: boolean | null
           form_type?: string
+          generated_date?: string | null
           id?: string
+          is_1099_required?: boolean | null
           sent_date?: string | null
+          status?: string
           tax_id?: string | null
           tax_id_type?: string | null
           tax_year: number
+          total_amount?: number | null
           total_payments?: number
           updated_at?: string | null
           vendor_id: string
+          vendor_name?: string | null
+          vendor_tin?: string | null
         }
         Update: {
           association_id?: string
@@ -9420,14 +9588,20 @@ export type Database = {
           form_generated?: boolean | null
           form_sent?: boolean | null
           form_type?: string
+          generated_date?: string | null
           id?: string
+          is_1099_required?: boolean | null
           sent_date?: string | null
+          status?: string
           tax_id?: string | null
           tax_id_type?: string | null
           tax_year?: number
+          total_amount?: number | null
           total_payments?: number
           updated_at?: string | null
           vendor_id?: string
+          vendor_name?: string | null
+          vendor_tin?: string | null
         }
         Relationships: [
           {

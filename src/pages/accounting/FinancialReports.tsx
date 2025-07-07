@@ -24,7 +24,6 @@ const FinancialReports = () => {
       
       <AssociationSelector
         onAssociationChange={handleAssociationChange}
-        placeholder="Select association to generate reports"
       />
 
       {selectedAssociationId && (

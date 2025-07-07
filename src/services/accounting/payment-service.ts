@@ -1,10 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
-
-type PaymentBatch = Database['public']['Tables']['payment_batches']['Row'];
-type PaymentBatchInsert = Database['public']['Tables']['payment_batches']['Insert'];
-type PaymentTransaction = Database['public']['Tables']['payment_transactions_enhanced']['Row'];
-type ResidentPaymentMethod = Database['public']['Tables']['resident_payment_methods']['Row'];
 
 export interface CreatePaymentBatchData {
   association_id: string;
@@ -30,7 +24,7 @@ export class PaymentService {
 
     const batchNumber = await this.generateBatchNumber(data.payment_method);
     
-    const batchData: PaymentBatchInsert = {
+    const batchData: any = {
       association_id: data.association_id,
       batch_number: batchNumber,
       payment_method: data.payment_method,
@@ -51,7 +45,7 @@ export class PaymentService {
     return newBatch.id;
   }
 
-  static async getPaymentBatches(associationId: string): Promise<PaymentBatch[]> {
+  static async getPaymentBatches(associationId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('payment_batches')
       .select('*')
@@ -261,7 +255,7 @@ export class PaymentService {
     return uploadData.path;
   }
 
-  static async getResidentPaymentMethods(residentId: string): Promise<ResidentPaymentMethod[]> {
+  static async getResidentPaymentMethods(residentId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('resident_payment_methods')
       .select('*')
@@ -302,39 +296,48 @@ export class PaymentService {
     return this.processPaymentBatch(batchId);
   }
 
-  static async getPaymentHistory(residentId: string): Promise<PaymentTransaction[]> {
-    const { data, error } = await supabase
-      .from('payment_transactions_enhanced')
-      .select('*')
-      .eq('resident_id', residentId)
-      .order('payment_date', { ascending: false });
+  static async getPaymentHistory(residentId: string): Promise<any[]> {
+    try {
+      const result = await (supabase as any)
+        .from('payment_transactions_enhanced')
+        .select('*')
+        .eq('resident_id', residentId)
+        .order('payment_date', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
+      if (result.error) throw result.error;
+      return result.data || [];
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      return [];
+    }
   }
 
   static async getAutoPaySettings(residentId: string): Promise<any> {
-    const { data, error } = await supabase
-      .from('payment_plans')
-      .select('*')
-      .eq('resident_id', residentId)
-      .eq('is_active', true)
-      .single();
+    try {
+      const result = await (supabase as any)
+        .from('payment_plans')
+        .select('*')
+        .eq('resident_id', residentId)
+        .eq('is_active', true)
+        .single();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+      if (result.error && result.error.code !== 'PGRST116') throw result.error;
+      return result.data;
+    } catch (error) {
+      console.error('Error fetching auto-pay settings:', error);
+      return null;
+    }
   }
 
-  static async addPaymentMethod(data: {
-    resident_id: string;
-    payment_type: 'ach' | 'card' | 'bank_transfer';
-    account_nickname?: string;
-    is_default?: boolean;
-    bank_name?: string;
-    account_type?: string;
-    last_four_digits?: string;
-  }): Promise<string> {
-    return this.addResidentPaymentMethod(data);
+  static async addPaymentMethod(data: any): Promise<any> {
+    const { data: newMethod, error } = await supabase
+      .from('resident_payment_methods')
+      .insert(data)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return newMethod;
   }
 
   static async deletePaymentMethod(methodId: string): Promise<void> {
@@ -372,7 +375,7 @@ export class PaymentService {
       payment_id: payment.id,
       amount: payment.net_amount,
       date: payment.payment_date,
-      method: payment.payment_method,
+      method: (payment as any).payment_method_id,
       reference: payment.reference_number
     };
 

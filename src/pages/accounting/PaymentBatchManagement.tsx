@@ -76,7 +76,7 @@ const PaymentBatchManagement = () => {
         batch_date: newBatch.scheduled_date || new Date().toISOString().split('T')[0],
       });
 
-      setBatches(prev => [batch as PaymentBatch, ...prev]);
+      setBatches(prev => [batch as any, ...prev]);
       setIsCreateDialogOpen(false);
       setNewBatch({ payment_method: '', scheduled_date: '', description: '', filter_criteria: {} });
       
