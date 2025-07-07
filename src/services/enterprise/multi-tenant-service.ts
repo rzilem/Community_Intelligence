@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface Tenant {
   id: string;
@@ -69,18 +70,7 @@ export class MultiTenantService {
 
       if (error || !data) return null;
 
-      return {
-        id: data.id,
-        name: data.name,
-        domain: data.domain,
-        customDomain: data.custom_domain || undefined,
-        branding: (data.branding as unknown as TenantBranding) || this.getDefaultBranding(),
-        settings: (data.settings as unknown as TenantSettings) || this.getDefaultSettings(),
-        subscription: (data.subscription as unknown as TenantSubscription) || this.getTrialSubscription(),
-        status: (data.status as 'active' | 'suspended' | 'trial' | 'expired') || 'trial',
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
-      };
+      return this.mapTenantFromDb(data);
     } catch (error) {
       console.error('Error getting tenant:', error);
       return null;
@@ -97,18 +87,7 @@ export class MultiTenantService {
 
       if (error || !data) return null;
 
-      return {
-        id: data.id,
-        name: data.name,
-        domain: data.domain,
-        customDomain: data.custom_domain || undefined,
-        branding: (data.branding as unknown as TenantBranding) || this.getDefaultBranding(),
-        settings: (data.settings as unknown as TenantSettings) || this.getDefaultSettings(),
-        subscription: (data.subscription as unknown as TenantSubscription) || this.getTrialSubscription(),
-        status: (data.status as 'active' | 'suspended' | 'trial' | 'expired') || 'trial',
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
-      };
+      return this.mapTenantFromDb(data);
     } catch (error) {
       console.error('Error getting tenant by domain:', error);
       return null;
@@ -117,17 +96,19 @@ export class MultiTenantService {
 
   static async createTenant(tenantData: Partial<Tenant>): Promise<Tenant | null> {
     try {
+      const insertData = {
+        name: tenantData.name!,
+        domain: tenantData.domain!,
+        custom_domain: tenantData.customDomain || null,
+        branding: (tenantData.branding || this.getDefaultBranding()) as unknown as Json,
+        settings: (tenantData.settings || this.getDefaultSettings()) as unknown as Json,
+        subscription: (tenantData.subscription || this.getTrialSubscription()) as unknown as Json,
+        status: tenantData.status || 'trial'
+      };
+
       const { data, error } = await supabase
         .from('tenants')
-        .insert({
-          name: tenantData.name!,
-          domain: tenantData.domain!,
-          custom_domain: tenantData.customDomain,
-          branding: tenantData.branding || this.getDefaultBranding(),
-          settings: tenantData.settings || this.getDefaultSettings(),
-          subscription: tenantData.subscription || this.getTrialSubscription(),
-          status: tenantData.status || 'trial'
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -139,18 +120,7 @@ export class MultiTenantService {
       // Initialize tenant schema and default data
       await this.initializeTenantData(data.id);
 
-      return {
-        id: data.id,
-        name: data.name,
-        domain: data.domain,
-        customDomain: data.custom_domain || undefined,
-        branding: (data.branding as unknown as TenantBranding) || this.getDefaultBranding(),
-        settings: (data.settings as unknown as TenantSettings) || this.getDefaultSettings(),
-        subscription: (data.subscription as unknown as TenantSubscription) || this.getTrialSubscription(),
-        status: (data.status as 'active' | 'suspended' | 'trial' | 'expired') || 'trial',
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
-      };
+      return this.mapTenantFromDb(data);
     } catch (error) {
       console.error('Error creating tenant:', error);
       return null;
@@ -160,11 +130,12 @@ export class MultiTenantService {
   static async updateTenant(tenantId: string, updates: Partial<Tenant>): Promise<boolean> {
     try {
       const updateData: any = {};
+      
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.customDomain !== undefined) updateData.custom_domain = updates.customDomain;
-      if (updates.branding !== undefined) updateData.branding = updates.branding as any;
-      if (updates.settings !== undefined) updateData.settings = updates.settings as any;
-      if (updates.subscription !== undefined) updateData.subscription = updates.subscription as any;
+      if (updates.branding !== undefined) updateData.branding = updates.branding as unknown as Json;
+      if (updates.settings !== undefined) updateData.settings = updates.settings as unknown as Json;
+      if (updates.subscription !== undefined) updateData.subscription = updates.subscription as unknown as Json;
       if (updates.status !== undefined) updateData.status = updates.status;
 
       const { error } = await supabase
@@ -328,5 +299,33 @@ export class MultiTenantService {
       companyName: 'Community Intelligence',
       supportEmail: 'support@example.com'
     };
+  }
+
+  private static mapTenantFromDb(data: any): Tenant {
+    return {
+      id: data.id,
+      name: data.name,
+      domain: data.domain,
+      customDomain: data.custom_domain || undefined,
+      branding: this.safeParse(data.branding, this.getDefaultBranding()),
+      settings: this.safeParse(data.settings, this.getDefaultSettings()),
+      subscription: this.safeParse(data.subscription, this.getTrialSubscription()),
+      status: (data.status as 'active' | 'suspended' | 'trial' | 'expired') || 'trial',
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private static safeParse<T>(jsonData: Json | null, defaultValue: T): T {
+    try {
+      if (!jsonData) return defaultValue;
+      if (typeof jsonData === 'object' && jsonData !== null) {
+        return jsonData as T;
+      }
+      return defaultValue;
+    } catch (error) {
+      console.warn('Failed to parse JSON data, using default:', error);
+      return defaultValue;
+    }
   }
 }

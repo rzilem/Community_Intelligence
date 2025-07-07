@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface SecurityPolicy {
   id: string;
@@ -75,16 +76,7 @@ export class SecurityService {
         .eq('type', 'password')
         .eq('is_active', true);
 
-      return data ? data.map(policy => ({
-        id: policy.id,
-        name: policy.name,
-        type: policy.type as 'password' | 'session' | 'access' | 'audit',
-        rules: (policy.rules as unknown as SecurityRule[]) || [],
-        isActive: policy.is_active,
-        appliesTo: policy.applies_to || [],
-        createdAt: new Date(policy.created_at),
-        updatedAt: new Date(policy.updated_at)
-      })) : [];
+      return data ? data.map(policy => this.mapSecurityPolicyFromDb(policy)) : [];
     } catch (error) {
       console.error('Error getting password policies:', error);
       return [];
@@ -148,7 +140,7 @@ export class SecurityService {
           action: event.action,
           resource_type: event.resource_type,
           resource_id: event.resource_id,
-          details: event.details,
+          details: event.details as Json,
           ip_address: event.ip_address,
           user_agent: event.user_agent,
           session_id: event.session_id,
@@ -203,19 +195,7 @@ export class SecurityService {
 
       const { data } = await query;
 
-      return data ? data.map(log => ({
-        id: log.id,
-        user_id: log.user_id,
-        action: log.action,
-        resource_type: log.resource_type,
-        resource_id: log.resource_id || undefined,
-        details: (log.details as Record<string, any>) || {},
-        ip_address: log.ip_address || undefined,
-        user_agent: log.user_agent || undefined,
-        session_id: log.session_id || undefined,
-        timestamp: new Date(log.timestamp),
-        risk_level: log.risk_level as 'low' | 'medium' | 'high' | 'critical'
-      })) : [];
+      return data ? data.map(log => this.mapAuditLogFromDb(log)) : [];
     } catch (error) {
       console.error('Error getting audit logs:', error);
       return [];
@@ -231,7 +211,7 @@ export class SecurityService {
           type: alert.type,
           severity: alert.severity,
           message: alert.message,
-          details: alert.details,
+          details: alert.details as Json,
           resolved: alert.resolved,
           assigned_to: alert.assignedTo,
           created_at: new Date().toISOString()
@@ -249,17 +229,7 @@ export class SecurityService {
         .eq('resolved', resolved)
         .order('created_at', { ascending: false });
 
-      return data ? data.map(alert => ({
-        id: alert.id,
-        type: alert.type as 'failed_login' | 'suspicious_activity' | 'policy_violation' | 'data_breach',
-        severity: alert.severity as 'low' | 'medium' | 'high' | 'critical',
-        message: alert.message,
-        details: (alert.details as Record<string, any>) || {},
-        resolved: alert.resolved,
-        assignedTo: alert.assigned_to || undefined,
-        createdAt: new Date(alert.created_at),
-        resolvedAt: alert.resolved_at ? new Date(alert.resolved_at) : undefined
-      })) : [];
+      return data ? data.map(alert => this.mapSecurityAlertFromDb(alert)) : [];
     } catch (error) {
       console.error('Error getting security alerts:', error);
       return [];
@@ -278,7 +248,7 @@ export class SecurityService {
       return data ? data.map(entry => ({
         id: entry.id,
         ip_address: entry.ip_address,
-        description: entry.description,
+        description: entry.description || '',
         is_active: entry.is_active,
         created_by: entry.created_by,
         created_at: new Date(entry.created_at)
@@ -297,7 +267,7 @@ export class SecurityService {
           ip_address: ip,
           description,
           is_active: true,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          created_by: (await supabase.auth.getUser()).data.user?.id || ''
         });
 
       return !error;
@@ -340,8 +310,8 @@ export class SecurityService {
       return data ? data.map(session => ({
         id: session.id,
         user_id: session.user_id,
-        ip_address: session.ip_address,
-        user_agent: session.user_agent,
+        ip_address: session.ip_address || '',
+        user_agent: session.user_agent || '',
         created_at: new Date(session.created_at),
         last_activity: new Date(session.last_activity),
         is_active: session.is_active,
@@ -409,5 +379,62 @@ export class SecurityService {
     if (riskScore >= 3) return 'high';
     if (riskScore >= 2) return 'medium';
     return 'low';
+  }
+
+  // Helper methods for type conversion
+  private static mapSecurityPolicyFromDb(data: any): SecurityPolicy {
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type as 'password' | 'session' | 'access' | 'audit',
+      rules: this.safeParse(data.rules, []),
+      isActive: data.is_active,
+      appliesTo: data.applies_to || [],
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private static mapAuditLogFromDb(data: any): AuditLog {
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      action: data.action,
+      resource_type: data.resource_type,
+      resource_id: data.resource_id || undefined,
+      details: this.safeParse(data.details, {}),
+      ip_address: data.ip_address || undefined,
+      user_agent: data.user_agent || undefined,
+      session_id: data.session_id || undefined,
+      timestamp: new Date(data.timestamp),
+      risk_level: data.risk_level as 'low' | 'medium' | 'high' | 'critical'
+    };
+  }
+
+  private static mapSecurityAlertFromDb(data: any): SecurityAlert {
+    return {
+      id: data.id,
+      type: data.type as 'failed_login' | 'suspicious_activity' | 'policy_violation' | 'data_breach',
+      severity: data.severity as 'low' | 'medium' | 'high' | 'critical',
+      message: data.message,
+      details: this.safeParse(data.details, {}),
+      resolved: data.resolved,
+      assignedTo: data.assigned_to || undefined,
+      createdAt: new Date(data.created_at),
+      resolvedAt: data.resolved_at ? new Date(data.resolved_at) : undefined
+    };
+  }
+
+  private static safeParse<T>(jsonData: Json | null, defaultValue: T): T {
+    try {
+      if (!jsonData) return defaultValue;
+      if (typeof jsonData === 'object' && jsonData !== null) {
+        return jsonData as T;
+      }
+      return defaultValue;
+    } catch (error) {
+      console.warn('Failed to parse JSON data, using default:', error);
+      return defaultValue;
+    }
   }
 }
