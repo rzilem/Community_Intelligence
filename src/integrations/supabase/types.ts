@@ -247,6 +247,114 @@ export type Database = {
           },
         ]
       }
+      ai_conversation_history: {
+        Row: {
+          association_id: string
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_type: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_document_processing_results: {
+        Row: {
+          association_id: string
+          compliance_check: Json | null
+          confidence: number
+          created_at: string
+          document_type: string
+          extracted_data: Json
+          id: string
+          metadata: Json
+          risk_assessment: Json | null
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          compliance_check?: Json | null
+          confidence: number
+          created_at?: string
+          document_type: string
+          extracted_data?: Json
+          id?: string
+          metadata?: Json
+          risk_assessment?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          compliance_check?: Json | null
+          confidence?: number
+          created_at?: string
+          document_type?: string
+          extracted_data?: Json
+          id?: string
+          metadata?: Json
+          risk_assessment?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_financial_forecasts: {
+        Row: {
+          accuracy: number
+          association_id: string
+          created_at: string
+          forecast_type: string
+          id: string
+          metadata: Json
+          predictions: Json
+          recommendations: Json
+          updated_at: string
+        }
+        Insert: {
+          accuracy: number
+          association_id: string
+          created_at?: string
+          forecast_type: string
+          id?: string
+          metadata?: Json
+          predictions?: Json
+          recommendations?: Json
+          updated_at?: string
+        }
+        Update: {
+          accuracy?: number
+          association_id?: string
+          created_at?: string
+          forecast_type?: string
+          id?: string
+          metadata?: Json
+          predictions?: Json
+          recommendations?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_learning_corrections: {
         Row: {
           confidence_after: number | null
@@ -308,6 +416,48 @@ export type Database = {
           },
         ]
       }
+      ai_maintenance_predictions: {
+        Row: {
+          created_at: string
+          equipment_type: string
+          estimated_cost: Json
+          id: string
+          prediction_type: string
+          preventive_actions: string[] | null
+          probability: number
+          property_id: string
+          risk_factors: string[] | null
+          timeframe: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_type: string
+          estimated_cost: Json
+          id?: string
+          prediction_type: string
+          preventive_actions?: string[] | null
+          probability: number
+          property_id: string
+          risk_factors?: string[] | null
+          timeframe: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          equipment_type?: string
+          estimated_cost?: Json
+          id?: string
+          prediction_type?: string
+          preventive_actions?: string[] | null
+          probability?: number
+          property_id?: string
+          risk_factors?: string[] | null
+          timeframe?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_model_performance: {
         Row: {
           accuracy_score: number | null
@@ -342,6 +492,48 @@ export type Database = {
           model_name?: string
           model_version?: string
           performance_metrics?: Json
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_model_training_jobs: {
+        Row: {
+          accuracy_improvement: number | null
+          association_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_status: string
+          model_type: string
+          started_at: string | null
+          training_data_size: number | null
+          updated_at: string
+        }
+        Insert: {
+          accuracy_improvement?: number | null
+          association_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_status?: string
+          model_type: string
+          started_at?: string | null
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accuracy_improvement?: number | null
+          association_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_status?: string
+          model_type?: string
+          started_at?: string | null
           training_data_size?: number | null
           updated_at?: string
         }
@@ -501,6 +693,39 @@ export type Database = {
           },
         ]
       }
+      ai_resident_insights: {
+        Row: {
+          action_items: Json
+          association_id: string
+          created_at: string
+          id: string
+          insight_type: string
+          patterns: Json
+          recommendations: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json
+          association_id: string
+          created_at?: string
+          id?: string
+          insight_type: string
+          patterns?: Json
+          recommendations?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json
+          association_id?: string
+          created_at?: string
+          id?: string
+          insight_type?: string
+          patterns?: Json
+          recommendations?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_settings: {
         Row: {
           created_at: string | null
@@ -574,6 +799,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_vision_analysis_results: {
+        Row: {
+          analysis_type: string
+          association_id: string
+          created_at: string
+          estimated_cost: number | null
+          findings: Json
+          id: string
+          overall_score: number | null
+          property_id: string | null
+          recommendations: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          analysis_type: string
+          association_id: string
+          created_at?: string
+          estimated_cost?: number | null
+          findings?: Json
+          id?: string
+          overall_score?: number | null
+          property_id?: string | null
+          recommendations?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          analysis_type?: string
+          association_id?: string
+          created_at?: string
+          estimated_cost?: number | null
+          findings?: Json
+          id?: string
+          overall_score?: number | null
+          property_id?: string | null
+          recommendations?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       amenities: {
         Row: {
