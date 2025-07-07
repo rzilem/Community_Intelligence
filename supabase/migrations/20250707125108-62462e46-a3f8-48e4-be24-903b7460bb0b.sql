@@ -134,7 +134,41 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timesta
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_tenant_users_tenant_id ON public.tenant_users(tenant_id);
 
+-- Additional Tables for Multi-Tenant Support
+CREATE TABLE IF NOT EXISTS public.tenant_roles (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  permissions TEXT[] DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS public.tenant_settings (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  settings JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(tenant_id)
+);
+
+-- Enable RLS for new tables
+ALTER TABLE public.tenant_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenant_settings ENABLE ROW LEVEL SECURITY;
+
+-- Add basic policies for new tables
+CREATE POLICY "Admin access to tenant_roles" ON public.tenant_roles FOR ALL USING (true);
+CREATE POLICY "Admin access to tenant_settings" ON public.tenant_settings FOR ALL USING (true);
+
+-- Additional indexes
+CREATE INDEX IF NOT EXISTS idx_tenant_roles_tenant_id ON public.tenant_roles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_settings_tenant_id ON public.tenant_settings(tenant_id);
+
 -- Triggers for updated_at
 CREATE TRIGGER update_api_keys_updated_at BEFORE UPDATE ON public.api_keys FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON public.tenants FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_security_policies_updated_at BEFORE UPDATE ON public.security_policies FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_tenant_roles_updated_at BEFORE UPDATE ON public.tenant_roles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_tenant_settings_updated_at BEFORE UPDATE ON public.tenant_settings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

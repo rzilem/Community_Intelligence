@@ -78,8 +78,8 @@ export class SecurityService {
       return data ? data.map(policy => ({
         id: policy.id,
         name: policy.name,
-        type: policy.type,
-        rules: policy.rules || [],
+        type: policy.type as 'password' | 'session' | 'access' | 'audit',
+        rules: (policy.rules as unknown as SecurityRule[]) || [],
         isActive: policy.is_active,
         appliesTo: policy.applies_to || [],
         createdAt: new Date(policy.created_at),
@@ -208,13 +208,13 @@ export class SecurityService {
         user_id: log.user_id,
         action: log.action,
         resource_type: log.resource_type,
-        resource_id: log.resource_id,
-        details: log.details || {},
-        ip_address: log.ip_address,
-        user_agent: log.user_agent,
-        session_id: log.session_id,
+        resource_id: log.resource_id || undefined,
+        details: (log.details as Record<string, any>) || {},
+        ip_address: log.ip_address || undefined,
+        user_agent: log.user_agent || undefined,
+        session_id: log.session_id || undefined,
         timestamp: new Date(log.timestamp),
-        risk_level: log.risk_level
+        risk_level: log.risk_level as 'low' | 'medium' | 'high' | 'critical'
       })) : [];
     } catch (error) {
       console.error('Error getting audit logs:', error);
@@ -251,12 +251,12 @@ export class SecurityService {
 
       return data ? data.map(alert => ({
         id: alert.id,
-        type: alert.type,
-        severity: alert.severity,
+        type: alert.type as 'failed_login' | 'suspicious_activity' | 'policy_violation' | 'data_breach',
+        severity: alert.severity as 'low' | 'medium' | 'high' | 'critical',
         message: alert.message,
-        details: alert.details || {},
+        details: (alert.details as Record<string, any>) || {},
         resolved: alert.resolved,
-        assignedTo: alert.assigned_to,
+        assignedTo: alert.assigned_to || undefined,
         createdAt: new Date(alert.created_at),
         resolvedAt: alert.resolved_at ? new Date(alert.resolved_at) : undefined
       })) : [];
