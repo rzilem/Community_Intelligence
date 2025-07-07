@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, FileText, TrendingUp, DollarSign, Calendar, Filter } from 'lucide-react';
 import { AdvancedGLService } from '@/services/accounting/advanced-gl-service';
+import ExportUtilities from './ExportUtilities';
 
 interface FinancialReportData {
   reportType: string;
@@ -445,10 +446,11 @@ const AdvancedFinancialReports: React.FC<AdvancedFinancialReportsProps> = ({
           </p>
         </div>
         {reportData && (
-          <Button onClick={exportReport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <ExportUtilities 
+            data={reportData.data} 
+            filename={`${reportData.reportType.replace(/\s+/g, '_')}_${periodEnd.toISOString().split('T')[0]}`}
+            reportType={reportData.reportType}
+          />
         )}
       </div>
 

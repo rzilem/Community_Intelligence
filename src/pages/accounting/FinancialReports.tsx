@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Download, Calendar, TrendingUp } from 'lucide-react';
 import { AdvancedGLService } from '@/services/accounting/advanced-gl-service';
 import { useToast } from '@/hooks/use-toast';
+import AdvancedFinancialReports from '@/components/accounting/AdvancedFinancialReports';
 
 const FinancialReports: React.FC = () => {
   const [reportType, setReportType] = useState('trial_balance');
@@ -72,7 +74,18 @@ const FinancialReports: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Tabs defaultValue="advanced" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="advanced">Advanced Reports</TabsTrigger>
+          <TabsTrigger value="simple">Quick Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="advanced">
+          <AdvancedFinancialReports associationId={associationId} />
+        </TabsContent>
+
+        <TabsContent value="simple" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
@@ -158,8 +171,10 @@ const FinancialReports: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+          </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

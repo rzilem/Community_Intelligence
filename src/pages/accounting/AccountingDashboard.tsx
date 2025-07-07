@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TreasurerDashboard from '@/components/accounting/TreasurerDashboard';
+import FinancialAnalyticsDashboard from '@/components/accounting/FinancialAnalyticsDashboard';
 
 // Mock data for charts
 const monthlyFinancialsData = [
@@ -37,12 +39,22 @@ const recentTransactions = [
 ];
 
 const AccountingDashboard = () => {
+  const associationId = 'demo-association-id'; // Replace with actual association ID from context
+
   return (
     <PageTemplate
       title="Accounting Dashboard"
       icon={<BarChart className="h-8 w-8" />}
       description="Financial overview and insights for your community associations."
     >
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="treasurer">Treasurer View</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="shadow-sm card-hover">
           <CardHeader className="pb-2">
@@ -245,6 +257,16 @@ const AccountingDashboard = () => {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="treasurer">
+          <TreasurerDashboard associationId={associationId} />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <FinancialAnalyticsDashboard associationId={associationId} />
+        </TabsContent>
+      </Tabs>
     </PageTemplate>
   );
 };

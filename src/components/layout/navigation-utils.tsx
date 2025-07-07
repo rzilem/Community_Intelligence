@@ -99,6 +99,9 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         
         // System Integration
         { name: 'Financial Report Mapping', path: '/accounting/financial-report-mapping', icon: FileBarChart },
+        
+        // Automation
+        { name: 'Automation Workflows', path: '/accounting/automation', icon: Settings },
       ]
     });
   }

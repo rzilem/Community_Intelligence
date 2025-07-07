@@ -19,6 +19,7 @@ import PaymentBatchManagement from "@/pages/accounting/PaymentBatchManagement";
 import TaxReporting1099 from "@/pages/accounting/TaxReporting1099";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
 import ResidentPaymentPortal from "@/pages/accounting/ResidentPaymentPortal";
+import AutomationWorkflows from "@/pages/accounting/AutomationWorkflows";
 
 // Accounting Routes
 export const accountingRoutes: RouteObject[] = [
@@ -93,5 +94,9 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/resident-portal",
     element: <RequireAuth><ResidentPaymentPortal /></RequireAuth>
+  },
+  {
+    path: "/accounting/automation",
+    element: <RequireAuth><AutomationWorkflows /></RequireAuth>
   }
 ];
