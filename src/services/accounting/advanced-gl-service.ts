@@ -126,7 +126,7 @@ export class AdvancedGLService {
     }));
 
     const { error: linesError } = await supabase
-      .from('journal_entry_lines')
+      .from('journal_entry_line_items')
       .insert(lineItems);
 
     if (linesError) throw linesError;
@@ -182,21 +182,21 @@ export class AdvancedGLService {
     total_debits: number;
     total_credits: number;
   }> {
+    // Since gl_account_balances table doesn't exist yet, calculate from gl_accounts
     const { data, error } = await supabase
-      .from('gl_account_balances')
-      .select('*')
-      .eq('gl_account_id', accountId)
-      .order('period_end', { ascending: false })
-      .limit(1)
+      .from('gl_accounts')
+      .select('balance')
+      .eq('id', accountId)
       .maybeSingle();
 
     if (error) throw error;
 
+    const balance = data?.balance || 0;
     return {
-      closing_balance: data?.closing_balance || 0,
-      ytd_balance: data?.ytd_balance || 0,
-      total_debits: data?.total_debits || 0,
-      total_credits: data?.total_credits || 0,
+      closing_balance: balance,
+      ytd_balance: balance,
+      total_debits: balance > 0 ? balance : 0,
+      total_credits: balance < 0 ? Math.abs(balance) : 0,
     };
   }
 

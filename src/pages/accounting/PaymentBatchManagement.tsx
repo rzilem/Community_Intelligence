@@ -76,7 +76,7 @@ const PaymentBatchManagement = () => {
         batch_date: newBatch.scheduled_date || new Date().toISOString().split('T')[0],
       });
 
-      setBatches(prev => [batch as any, ...prev]);
+      setBatches(prev => [batch as unknown as PaymentBatch, ...prev]);
       setIsCreateDialogOpen(false);
       setNewBatch({ payment_method: '', scheduled_date: '', description: '', filter_criteria: {} });
       
@@ -272,7 +272,7 @@ const PaymentBatchManagement = () => {
                             <TableCell className="capitalize">{batch.payment_method}</TableCell>
                             <TableCell>{getStatusBadge(batch.status)}</TableCell>
                             <TableCell>${batch.total_amount.toLocaleString()}</TableCell>
-                           <TableCell>{batch.total_count}</TableCell>
+                           <TableCell>{batch.total_count || 0}</TableCell>
                             <TableCell>
                               {new Date(batch.created_at).toLocaleDateString()}
                             </TableCell>
@@ -335,7 +335,7 @@ const PaymentBatchManagement = () => {
                           <TableCell className="font-medium">{batch.batch_number}</TableCell>
                           <TableCell className="capitalize">{batch.payment_method}</TableCell>
                           <TableCell>${batch.total_amount.toLocaleString()}</TableCell>
-                          <TableCell>{batch.total_count}</TableCell>
+                          <TableCell>{batch.total_count || 0}</TableCell>
                           <TableCell>
                             {batch.processed_at ? new Date(batch.processed_at).toLocaleDateString() : '-'}
                           </TableCell>

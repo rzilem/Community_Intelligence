@@ -20,6 +20,11 @@ interface AssociationSelectorProps {
   initialAssociationId?: string;
   
   /**
+   * Current selected value (controlled component)
+   */
+  value?: string;
+  
+  /**
    * Optional CSS class name for custom styling
    */
   className?: string;
@@ -34,17 +39,32 @@ interface AssociationSelectorProps {
    * Whether to show "All Associations" option
    */
   showAllOption?: boolean;
+  
+  /**
+   * Placeholder text when no association is selected
+   */
+  placeholder?: string;
+  
+  /**
+   * Whether the selector is disabled
+   */
+  disabled?: boolean;
 }
 
 const AssociationSelector: React.FC<AssociationSelectorProps> = ({ 
   onAssociationChange,
   initialAssociationId,
+  value,
   className,
   label = "Select Association", // Default label that can be overridden
-  showAllOption = false
+  showAllOption = false,
+  placeholder = "Select an association",
+  disabled = false
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>(initialAssociationId);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>(
+    value || initialAssociationId
+  );
 
   const { data: associations = [], isLoading, error } = useSupabaseQuery(
     'associations',
@@ -66,11 +86,12 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
     }
   }, [error]);
 
-  // Update selected association when initialAssociationId changes
+  // Update selected association when value or initialAssociationId changes
   useEffect(() => {
-    console.log('initialAssociationId changed:', initialAssociationId);
-    setSelectedAssociationId(initialAssociationId);
-  }, [initialAssociationId]);
+    const newValue = value || initialAssociationId;
+    console.log('Association value changed:', newValue);
+    setSelectedAssociationId(newValue);
+  }, [value, initialAssociationId]);
 
   // Find selected association name
   const selectedAssociation = associations.find(assoc => assoc.id === selectedAssociationId);
@@ -84,7 +105,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
     if (selectedAssociation) {
       return selectedAssociation.name;
     }
-    return 'Select an association';
+    return placeholder;
   };
 
   const handleSelect = (associationId: string) => {
@@ -111,7 +132,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
-            disabled={isLoading}
+            disabled={isLoading || disabled}
           >
             {isLoading 
               ? "Loading associations..." 

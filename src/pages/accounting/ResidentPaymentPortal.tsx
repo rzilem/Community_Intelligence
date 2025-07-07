@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Database } from '@/integrations/supabase/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,37 +14,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { PaymentService } from '@/services/accounting/payment-service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
-
-interface PaymentMethod {
-  id: string;
-  payment_type: string;
-  account_number_last_four: string;
-  routing_number?: string;
-  bank_name?: string;
-  card_type?: string;
-  expiry_date?: string;
-  is_primary: boolean;
-  is_active: boolean;
-}
-
-interface PaymentHistory {
-  id: string;
-  amount: number;
-  payment_date: string;
-  payment_method: string;
-  reference_number: string;
-  status: string;
-  description?: string;
-}
-
-interface AutoPaySetting {
-  id: string;
-  is_enabled: boolean;
-  payment_method_id: string;
-  payment_day: number;
-  payment_amount_type: string;
-  fixed_amount?: number;
-}
+import { PaymentMethod, PaymentHistory, AutoPaySetting } from '@/types/payment-types';
 
 const ResidentPaymentPortal = () => {
   const { user } = useAuth();
@@ -85,9 +54,9 @@ const ResidentPaymentPortal = () => {
         PaymentService.getAutoPaySettings(user.id)
       ]);
       
-      setPaymentMethods(methods as any);
-      setPaymentHistory(history as any);
-      setAutoPaySettings(autopay as any);
+      setPaymentMethods(methods);
+      setPaymentHistory(history);
+      setAutoPaySettings(autopay);
     } catch (error) {
       console.error('Error loading payment data:', error);
       toast({
@@ -124,7 +93,7 @@ const ResidentPaymentPortal = () => {
         is_primary: newPaymentMethod.is_primary
       });
 
-      setPaymentMethods(prev => [...prev, method as any]);
+      setPaymentMethods(prev => [...prev, method]);
       setIsAddPaymentMethodOpen(false);
       setNewPaymentMethod({
         payment_type: '',
@@ -174,12 +143,15 @@ const ResidentPaymentPortal = () => {
     if (!user?.id) return;
 
     try {
-      const updatedSettings = await PaymentService.updateAutoPaySettings(user.id, {
+      await PaymentService.updateAutoPaySettings(user.id, {
         is_enabled: enabled,
         ...settings
       });
       
-      setAutoPaySettings(updatedSettings as any);
+      // Reload the settings after update
+      const updatedSettings = await PaymentService.getAutoPaySettings(user.id);
+      setAutoPaySettings(updatedSettings);
+      
       toast({
         title: "Success",
         description: `Auto-pay ${enabled ? 'enabled' : 'disabled'} successfully`
@@ -398,7 +370,7 @@ const ResidentPaymentPortal = () => {
                                   )}
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                  {method.payment_type === 'bank' 
+                                  {method.payment_type === 'ach' 
                                     ? `${method.bank_name} - ****${method.account_number_last_four}`
                                     : `${method.card_type} - ****${method.account_number_last_four}`
                                   }
@@ -507,7 +479,7 @@ const ResidentPaymentPortal = () => {
                         <SelectContent>
                           {paymentMethods.map((method) => (
                             <SelectItem key={method.id} value={method.id}>
-                              {method.payment_type === 'bank' 
+                              {method.payment_type === 'ach' 
                                 ? `${method.bank_name} - ****${method.account_number_last_four}`
                                 : `${method.card_type} - ****${method.account_number_last_four}`
                               }
@@ -519,7 +491,7 @@ const ResidentPaymentPortal = () => {
 
                     <div>
                       <Label htmlFor="payment_day">Payment Day</Label>
-                      <Select value={autoPaySettings.payment_day?.toString() || ''}>
+                      <Select value={autoPaySettings.process_day?.toString() || ''}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select payment day" />
                         </SelectTrigger>
@@ -535,7 +507,7 @@ const ResidentPaymentPortal = () => {
 
                     <div>
                       <Label htmlFor="amount_type">Payment Amount</Label>
-                      <Select value={autoPaySettings.payment_amount_type || ''}>
+                      <Select value={autoPaySettings.amount_type || ''}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select amount type" />
                         </SelectTrigger>
@@ -547,7 +519,7 @@ const ResidentPaymentPortal = () => {
                       </Select>
                     </div>
 
-                    {autoPaySettings.payment_amount_type === 'fixed_amount' && (
+                    {autoPaySettings.amount_type === 'fixed_amount' && (
                       <div>
                         <Label htmlFor="fixed_amount">Fixed Amount</Label>
                         <Input

@@ -79,7 +79,7 @@ export class CollectionService {
       outcome: data.outcome,
       scheduled_date: new Date().toISOString().split('T')[0],
       status: 'completed',
-      created_by: user.id
+      performed_by: user.id
     };
 
     const { data: newAction, error } = await supabase
