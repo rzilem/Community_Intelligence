@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { AdvancedGLService } from '@/services/accounting/advanced-gl-service';
+import { useToast } from '@/hooks/use-toast';
 
 interface GLAccountDialogProps {
   open: boolean;
@@ -22,6 +24,8 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   associationId,
   onSave
 }) => {
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     account_code: account?.account_code || '',
     account_name: account?.account_name || '',
@@ -34,11 +38,48 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
     normal_balance: account?.normal_balance || 'debit'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to save/update account
-    console.log('Saving account:', formData);
-    onOpenChange(false);
+    
+    try {
+      setLoading(true);
+      const accountData = {
+        association_id: associationId,
+        code: formData.account_code,
+        name: formData.account_name,
+        type: formData.account_type,
+        category: formData.account_subtype,
+        description: formData.description,
+        is_active: formData.is_active
+      };
+
+      if (account) {
+        // Update existing account
+        await AdvancedGLService.updateGLAccount(account.id, accountData);
+        toast({
+          title: "Success",
+          description: "Account updated successfully"
+        });
+      } else {
+        // Create new account
+        await AdvancedGLService.createGLAccount(accountData);
+        toast({
+          title: "Success", 
+          description: "Account created successfully"
+        });
+      }
+      
+      onSave(); // Refresh parent component
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save account",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const subtypeOptions = {
@@ -184,8 +225,8 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              {account ? 'Update' : 'Create'} Account
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : (account ? 'Update' : 'Create')} Account
             </Button>
           </div>
         </form>

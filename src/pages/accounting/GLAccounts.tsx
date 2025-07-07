@@ -1,145 +1,111 @@
-import { useState } from "react";
-import { Plus, Settings, Download, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import GLAccountsTable from "@/components/accounting/GLAccountsTable";
-import GLAccountDialog from "@/components/accounting/GLAccountDialog";
-import ChartOfAccountsTree from "@/components/accounting/ChartOfAccountsTree";
-import type { Database } from "@/integrations/supabase/types";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Search } from 'lucide-react';
+import GLAccountsTable from '@/components/accounting/GLAccountsTable';
+import GLAccountDialog from '@/components/accounting/GLAccountDialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/useAuth';
 
-type GLAccount = Database['public']['Tables']['gl_accounts_enhanced']['Row'];
+const GLAccounts: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [accountType, setAccountType] = useState('all');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { user } = useAuth();
 
-const GLAccounts = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [accountType, setAccountType] = useState("all");
-  const [showDialog, setShowDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("table");
-  const [editingAccount, setEditingAccount] = useState<GLAccount | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { toast } = useToast();
+  // For demo purposes, using first association
+  const associationId = 'demo-association-id';
 
-  // TODO: Get from user's association - for now using placeholder
-  const associationId = "placeholder-association-id";
-
-  const handleEditAccount = (account: GLAccount) => {
-    setEditingAccount(account);
-    setShowDialog(true);
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  const handleCreateAccount = () => {
-    setEditingAccount(undefined);
-    setShowDialog(true);
+  const handleEditAccount = (account: any) => {
+    setEditingAccount(account);
+    setShowCreateDialog(true);
   };
 
   const handleDialogClose = () => {
-    setShowDialog(false);
-    setEditingAccount(undefined);
+    setShowCreateDialog(false);
+    setEditingAccount(null);
   };
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+  const handleSave = () => {
+    handleRefresh();
+    handleDialogClose();
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Chart of Accounts</h1>
+          <h1 className="text-3xl font-bold">Chart of Accounts</h1>
           <p className="text-muted-foreground">
-            Manage your general ledger accounts and chart of accounts structure
+            Manage your general ledger account structure
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        <Button onClick={handleCreateAccount}>
+        <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Account
         </Button>
-        </div>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <Input
-          placeholder="Search accounts..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Select value={accountType} onValueChange={setAccountType}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Account Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="asset">Assets</SelectItem>
-            <SelectItem value="liability">Liabilities</SelectItem>
-            <SelectItem value="equity">Equity</SelectItem>
-            <SelectItem value="revenue">Revenue</SelectItem>
-            <SelectItem value="expense">Expenses</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search accounts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={accountType} onValueChange={setAccountType}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="asset">Assets</SelectItem>
+                <SelectItem value="liability">Liabilities</SelectItem>
+                <SelectItem value="equity">Equity</SelectItem>
+                <SelectItem value="revenue">Revenue</SelectItem>
+                <SelectItem value="expense">Expenses</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="table">Account List</TabsTrigger>
-          <TabsTrigger value="tree">Chart Structure</TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardContent className="p-0">
+          <GLAccountsTable
+            searchTerm={searchTerm}
+            accountType={accountType}
+            associationId={associationId}
+            onEditAccount={handleEditAccount}
+            onRefresh={handleRefresh}
+            key={refreshTrigger}
+          />
+        </CardContent>
+      </Card>
 
-        <TabsContent value="table" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>General Ledger Accounts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <GLAccountsTable 
-                key={refreshKey}
-                searchTerm={searchTerm}
-                accountType={accountType}
-                associationId={associationId}
-                onEditAccount={handleEditAccount}
-                onRefresh={handleRefresh}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="tree" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Chart of Accounts Structure</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartOfAccountsTree 
-                associationId={associationId}
-                refreshKey={refreshKey}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <GLAccountDialog 
-        open={showDialog}
+      <GLAccountDialog
+        open={showCreateDialog}
         onOpenChange={handleDialogClose}
         account={editingAccount}
         associationId={associationId}
-        onSave={handleRefresh}
+        onSave={handleSave}
       />
     </div>
   );

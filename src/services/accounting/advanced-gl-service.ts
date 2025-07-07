@@ -34,23 +34,23 @@ export class AdvancedGLService {
   
   static async getChartOfAccounts(associationId: string): Promise<GLAccountExtended[]> {
     const { data, error } = await supabase
-      .from('gl_accounts')
+      .from('gl_accounts_enhanced')
       .select('*')
       .eq('association_id', associationId)
-      .order('code');
+      .order('account_code');
 
     if (error) throw error;
 
     return (data || []).map(account => ({
       id: account.id,
-      code: account.code,
-      name: account.name,
-      type: account.type,
-      category: account.category,
+      code: account.account_code,
+      name: account.account_name,
+      type: account.account_type,
+      category: account.account_subtype,
       description: account.description,
       is_active: account.is_active,
-      balance: account.balance || 0,
-      ytd_balance: account.balance || 0,
+      balance: account.current_balance || 0,
+      ytd_balance: account.current_balance || 0,
       budget_amount: 0,
       variance_amount: 0,
       variance_percentage: 0
@@ -67,16 +67,41 @@ export class AdvancedGLService {
     is_active?: boolean;
   }): Promise<void> {
     const { error } = await supabase
-      .from('gl_accounts')
+      .from('gl_accounts_enhanced')
       .insert({
         association_id: data.association_id,
-        code: data.code,
-        name: data.name,
-        type: data.type,
-        category: data.category,
+        account_code: data.code,
+        account_name: data.name,
+        account_type: data.type,
+        account_subtype: data.category || 'general',
         description: data.description,
-        is_active: data.is_active !== false
+        is_active: data.is_active !== false,
+        normal_balance: data.type === 'asset' || data.type === 'expense' ? 'debit' : 'credit',
+        current_balance: 0
       });
+
+    if (error) throw error;
+  }
+
+  static async updateGLAccount(id: string, data: {
+    code?: string;
+    name?: string;
+    type?: string;
+    category?: string;
+    description?: string;
+    is_active?: boolean;
+  }): Promise<void> {
+    const { error } = await supabase
+      .from('gl_accounts_enhanced')
+      .update({
+        account_code: data.code,
+        account_name: data.name,
+        account_type: data.type,
+        account_subtype: data.category,
+        description: data.description,
+        is_active: data.is_active
+      })
+      .eq('id', id);
 
     if (error) throw error;
   }
@@ -131,6 +156,9 @@ export class AdvancedGLService {
 
     if (linesError) throw linesError;
 
+    // Update account balances
+    await this.updateAccountBalances(data.line_items);
+
     return journalEntry.id;
   }
 
@@ -158,21 +186,21 @@ export class AdvancedGLService {
 
   static async generateTrialBalance(associationId: string, asOfDate: string): Promise<any[]> {
     const { data, error } = await supabase
-      .from('gl_accounts')
+      .from('gl_accounts_enhanced')
       .select('*')
       .eq('association_id', associationId)
       .eq('is_active', true)
-      .order('code');
+      .order('account_code');
 
     if (error) throw error;
 
     return (data || []).map(account => ({
-      account_code: account.code,
-      account_name: account.name,
-      account_type: account.type,
-      current_balance: account.balance || 0,
-      debit_balance: account.balance > 0 ? account.balance : 0,
-      credit_balance: account.balance < 0 ? Math.abs(account.balance) : 0
+      account_code: account.account_code,
+      account_name: account.account_name,
+      account_type: account.account_type,
+      current_balance: account.current_balance || 0,
+      debit_balance: account.current_balance > 0 ? account.current_balance : 0,
+      credit_balance: account.current_balance < 0 ? Math.abs(account.current_balance) : 0
     }));
   }
 
@@ -182,16 +210,16 @@ export class AdvancedGLService {
     total_debits: number;
     total_credits: number;
   }> {
-    // Since gl_account_balances table doesn't exist yet, calculate from gl_accounts
+    // Since gl_account_balances table doesn't exist yet, calculate from gl_accounts_enhanced
     const { data, error } = await supabase
-      .from('gl_accounts')
-      .select('balance')
+      .from('gl_accounts_enhanced')
+      .select('current_balance')
       .eq('id', accountId)
       .maybeSingle();
 
     if (error) throw error;
 
-    const balance = data?.balance || 0;
+    const balance = data?.current_balance || 0;
     return {
       closing_balance: balance,
       ytd_balance: balance,
@@ -221,5 +249,41 @@ export class AdvancedGLService {
     }
 
     return `JE-${year}${month}-${String(sequenceNumber).padStart(4, '0')}`;
+  }
+
+  private static async updateAccountBalances(lineItems: JournalEntryData['line_items']): Promise<void> {
+    for (const line of lineItems) {
+      const { data: account, error: accountError } = await supabase
+        .from('gl_accounts_enhanced')
+        .select('current_balance, normal_balance')
+        .eq('id', line.gl_account_id)
+        .single();
+
+      if (accountError) {
+        console.error('Error fetching account for balance update:', accountError);
+        continue;
+      }
+
+      const currentBalance = account.current_balance || 0;
+      const normalBalance = account.normal_balance || 'debit';
+      const debitAmount = line.debit_amount || 0;
+      const creditAmount = line.credit_amount || 0;
+
+      let newBalance = currentBalance;
+      if (normalBalance === 'debit') {
+        newBalance = currentBalance + debitAmount - creditAmount;
+      } else {
+        newBalance = currentBalance + creditAmount - debitAmount;
+      }
+
+      const { error: updateError } = await supabase
+        .from('gl_accounts_enhanced')
+        .update({ current_balance: newBalance })
+        .eq('id', line.gl_account_id);
+
+      if (updateError) {
+        console.error('Error updating account balance:', updateError);
+      }
+    }
   }
 }
