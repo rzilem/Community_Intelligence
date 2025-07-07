@@ -12,23 +12,25 @@ const FinancialReports = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Financial Reports" 
-      description="Generate comprehensive financial statements and management reports for HOA operations"
-      icon={BarChart2}
-    >
-      <div className="space-y-6">
-        <AssociationSelector
-          value={selectedAssociationId}
-          onValueChange={handleAssociationChange}
-          placeholder="Select association to generate reports"
-        />
-
-        {selectedAssociationId && (
-          <AdvancedFinancialReports associationId={selectedAssociationId} />
-        )}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
+          <p className="text-muted-foreground">
+            Generate comprehensive financial statements and management reports for HOA operations
+          </p>
+        </div>
       </div>
-    </PageTemplate>
+      
+      <AssociationSelector
+        onAssociationChange={handleAssociationChange}
+        placeholder="Select association to generate reports"
+      />
+
+      {selectedAssociationId && (
+        <AdvancedFinancialReports associationId={selectedAssociationId} />
+      )}
+    </div>
   );
 };
 
