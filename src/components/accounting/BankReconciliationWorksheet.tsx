@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 interface BankReconciliationWorksheetProps {
   selectedAccount: string;
@@ -25,65 +26,54 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
   selectedAccount,
   reconciliation
 }) => {
+  const { toast } = useToast();
   const [balances, setBalances] = useState({
     statementBalance: reconciliation?.statement_balance || 0,
     bookBalance: reconciliation?.reconciled_balance || 0
   });
 
-  // Mock transaction data
-  const bankTransactions = [
-    {
-      id: '1',
-      date: '2024-12-30',
-      description: 'Assessment Payment - Unit 101',
-      amount: 1250.00,
-      cleared: false,
-      matched: false
-    },
-    {
-      id: '2',
-      date: '2024-12-29',
-      description: 'Landscaping Service',
-      amount: -850.00,
-      cleared: true,
-      matched: true
-    },
-    {
-      id: '3',
-      date: '2024-12-28',
-      description: 'Bank Fee',
-      amount: -25.00,
-      cleared: true,
-      matched: false
-    }
-  ];
+  const [bankTransactions, setBankTransactions] = useState<any[]>([]);
+  const [bookTransactions, setBookTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const bookTransactions = [
-    {
-      id: '1',
-      date: '2024-12-30',
-      description: 'Monthly Assessment Receivable',
-      amount: 15000.00,
-      cleared: false,
-      matched: false
-    },
-    {
-      id: '2',
-      date: '2024-12-29',
-      description: 'Landscaping Vendor Payment',
-      amount: -850.00,
-      cleared: true,
-      matched: true
-    },
-    {
-      id: '3',
-      date: '2024-12-27',
-      description: 'Outstanding Check #1025',
-      amount: -420.00,
-      cleared: false,
-      matched: false
+  useEffect(() => {
+    if (selectedAccount && reconciliation?.id) {
+      fetchReconciliationData();
     }
-  ];
+  }, [selectedAccount, reconciliation?.id]);
+
+  const fetchReconciliationData = async () => {
+    try {
+      setLoading(true);
+      const items = await BankReconciliationService.getReconciliationItems(reconciliation.id);
+      
+      // Separate bank and book transactions
+      const bankTxns = items.filter(item => item.transaction_type === 'bank_statement');
+      const bookTxns = items.filter(item => item.transaction_type === 'book_entry');
+      
+      setBankTransactions(bankTxns.map(item => ({
+        id: item.id,
+        date: item.transaction_date,
+        description: item.description,
+        amount: item.amount,
+        cleared: item.status === 'cleared',
+        matched: item.status === 'matched'
+      })));
+
+      setBookTransactions(bookTxns.map(item => ({
+        id: item.id,
+        date: item.transaction_date,
+        description: item.description,
+        amount: item.amount,
+        cleared: item.status === 'cleared',
+        matched: item.status === 'matched'
+      })));
+    } catch (error) {
+      console.error('Error fetching reconciliation data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -111,8 +101,17 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
         reconciled_balance: balances.bookBalance,
         difference: calculateDifference()
       });
+      toast({
+        title: "Reconciliation Saved",
+        description: "Bank reconciliation has been saved successfully."
+      });
     } catch (error) {
       console.error('Error saving reconciliation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save reconciliation. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -123,8 +122,47 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
         status: 'completed',
         reconciled_at: new Date().toISOString()
       });
+      toast({
+        title: "Reconciliation Completed",
+        description: "Bank reconciliation has been completed and finalized."
+      });
     } catch (error) {
       console.error('Error completing reconciliation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete reconciliation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTransactionToggle = async (transactionId: string, isCleared: boolean, transactionType: 'bank' | 'book') => {
+    try {
+      await BankReconciliationService.updateReconciliationItem(transactionId, {
+        status: isCleared ? 'cleared' : 'outstanding'
+      });
+      
+      // Update local state
+      if (transactionType === 'bank') {
+        setBankTransactions(prev => 
+          prev.map(txn => 
+            txn.id === transactionId ? { ...txn, cleared: isCleared } : txn
+          )
+        );
+      } else {
+        setBookTransactions(prev => 
+          prev.map(txn => 
+            txn.id === transactionId ? { ...txn, matched: isCleared } : txn
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update transaction status.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,6 +170,14 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
     return (
       <div className="text-center py-8 text-muted-foreground">
         Please select a bank account to start reconciliation.
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Loading reconciliation data...
       </div>
     );
   }
@@ -224,7 +270,12 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
                 {bankTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell>
-                      <Checkbox checked={transaction.cleared} />
+                      <Checkbox 
+                        checked={transaction.cleared} 
+                        onCheckedChange={(checked) => 
+                          handleTransactionToggle(transaction.id, checked as boolean, 'bank')
+                        }
+                      />
                     </TableCell>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell className="max-w-48 truncate">
@@ -262,7 +313,12 @@ const BankReconciliationWorksheet: React.FC<BankReconciliationWorksheetProps> = 
                 {bookTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell>
-                      <Checkbox checked={transaction.matched} />
+                      <Checkbox 
+                        checked={transaction.matched} 
+                        onCheckedChange={(checked) => 
+                          handleTransactionToggle(transaction.id, checked as boolean, 'book')
+                        }
+                      />
                     </TableCell>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell className="max-w-48 truncate">
