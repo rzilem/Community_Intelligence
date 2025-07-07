@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  type: 'lead' | 'invoice' | 'request' | 'event' | 'general' | 'message';
+  severity: 'info' | 'warning' | 'error' | 'success';
+  read: boolean;
+  timestamp: string;
+  route?: string;
+}
+
 interface NotificationOptions {
   title: string;
   body: string;
