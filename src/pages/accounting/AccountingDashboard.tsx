@@ -11,6 +11,7 @@ import TooltipButton from '@/components/ui/tooltip-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TreasurerDashboard from '@/components/accounting/TreasurerDashboard';
 import FinancialAnalyticsDashboard from '@/components/accounting/FinancialAnalyticsDashboard';
+import AutomationDashboard from '@/components/accounting/AutomationDashboard';
 
 // Mock data for charts
 const monthlyFinancialsData = [
@@ -52,6 +53,7 @@ const AccountingDashboard = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="treasurer">Treasurer View</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="automation">Automation</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -265,6 +267,10 @@ const AccountingDashboard = () => {
 
         <TabsContent value="analytics">
           <FinancialAnalyticsDashboard associationId={associationId} />
+        </TabsContent>
+
+        <TabsContent value="automation">
+          <AutomationDashboard associationId={associationId} />
         </TabsContent>
       </Tabs>
     </PageTemplate>
