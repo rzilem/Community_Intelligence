@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
+import OneClickAIImport from '@/components/data-import/OneClickAIImport';
 import { useImportState } from '@/hooks/import-export/useImportState';
 import DataMigrationTools from '@/components/data-management/DataMigrationTools';
 import PropertiesTab from '@/components/data-management/PropertiesTab';
@@ -71,11 +72,15 @@ const DataManagement: React.FC = () => {
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="import" className="space-y-4">
+      <Tabs defaultValue="ai-import" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="import">
+          <TabsTrigger value="ai-import">
             <Upload className="h-4 w-4 mr-2" />
-            Import Data
+            AI Import (New)
+          </TabsTrigger>
+          <TabsTrigger value="legacy-import">
+            <Upload className="h-4 w-4 mr-2" />
+            Legacy Import
           </TabsTrigger>
           <TabsTrigger value="export">
             <Download className="h-4 w-4 mr-2" />
@@ -91,7 +96,17 @@ const DataManagement: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="import">
+        <TabsContent value="ai-import">
+          <OneClickAIImport 
+            associationId={selectedAssociationId || ''}
+            onImportComplete={(results) => {
+              console.log('AI Import completed:', results);
+              // Handle completion - could trigger refresh of data tables
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="legacy-import">
           <ImportTabContent
             associationId={selectedAssociationId}
             importFile={importFile}

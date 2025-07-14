@@ -8,6 +8,7 @@ import { Upload, Download } from 'lucide-react';
 import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
+import OneClickAIImport from '@/components/data-import/OneClickAIImport';
 import { useImportState } from '@/hooks/import-export/useImportState';
 
 const DataImportExport: React.FC = () => {
@@ -57,11 +58,15 @@ const DataImportExport: React.FC = () => {
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="import" className="space-y-4">
+      <Tabs defaultValue="ai-import" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="import">
+          <TabsTrigger value="ai-import">
             <Upload className="h-4 w-4 mr-2" />
-            Import Data
+            AI Import (New)
+          </TabsTrigger>
+          <TabsTrigger value="legacy-import">
+            <Upload className="h-4 w-4 mr-2" />
+            Legacy Import
           </TabsTrigger>
           <TabsTrigger value="export">
             <Download className="h-4 w-4 mr-2" />
@@ -69,7 +74,17 @@ const DataImportExport: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="import">
+        <TabsContent value="ai-import">
+          <OneClickAIImport 
+            associationId={selectedAssociationId || ''}
+            onImportComplete={(results) => {
+              console.log('AI Import completed:', results);
+              // Handle completion
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="legacy-import">
           <ImportTabContent
             associationId={selectedAssociationId}
             importFile={importFile}
