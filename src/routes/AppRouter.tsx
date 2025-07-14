@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
@@ -19,7 +19,7 @@ export const AppRouter = () => {
   const location = useLocation();
   
   // Log routing for debugging purposes
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('Route changed:', location.pathname);
   }, [location.pathname]);
 
