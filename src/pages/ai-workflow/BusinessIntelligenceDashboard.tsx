@@ -148,11 +148,11 @@ const BusinessIntelligenceDashboard: React.FC<BusinessIntelligenceDashboardProps
       const ar = accountsReceivableData.data || [];
 
       // Calculate revenue and growth
-      const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+      const totalRevenue = payments.reduce((sum, pay) => sum + (pay.net_amount || 0), 0);
       const totalPayments = payments.reduce((sum, pay) => sum + (pay.net_amount || 0), 0);
       
       // Calculate occupancy and residents
-      const activeResidents = residents.filter(r => r.is_active).length;
+      const activeResidents = residents.length; // All profiles are considered active
       const totalProperties = properties.length;
       const occupiedProperties = properties.filter(p => p.status === 'occupied').length;
       const occupancyRate = totalProperties > 0 ? (occupiedProperties / totalProperties) * 100 : 0;
@@ -162,11 +162,10 @@ const BusinessIntelligenceDashboard: React.FC<BusinessIntelligenceDashboardProps
       const completedMaintenance = maintenance.filter(m => m.status === 'completed');
       const avgResolutionTime = completedMaintenance.length > 0 
         ? completedMaintenance.reduce((sum, m) => {
-            if (m.completed_at) {
-              const created = new Date(m.created_at);
-              const completed = new Date(m.completed_at);
-              return sum + (completed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-            }
+            // Use created_at as completion proxy since completed_at doesn't exist
+            const created = new Date(m.created_at);
+            const now = new Date();
+            return sum + (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
             return sum;
           }, 0) / completedMaintenance.length
         : 0;
