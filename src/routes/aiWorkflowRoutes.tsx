@@ -7,6 +7,7 @@ import AIAnalytics from "@/pages/AIAnalytics";
 import RealTimeAnalyticsDashboard from "@/pages/ai-workflow/RealTimeAnalyticsDashboard";
 import MobilePWAManagement from "@/pages/ai-workflow/MobilePWAManagement";
 import BusinessIntelligenceDashboard from "@/pages/ai-workflow/BusinessIntelligenceDashboard";
+import IoTIntegrationDashboard from "@/pages/ai-workflow/IoTIntegrationDashboard";
 
 export const aiWorkflowRoutes: RouteObject[] = [
   {
@@ -37,10 +38,7 @@ export const aiWorkflowRoutes: RouteObject[] = [
     path: "/ai-workflow/iot",
     element: (
       <RequireAuth allowedRoles={['admin', 'manager']}>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">IoT Integration</h1>
-          <p>IoT device management - Coming soon</p>
-        </div>
+        <IoTIntegrationDashboard />
       </RequireAuth>
     )
   },
