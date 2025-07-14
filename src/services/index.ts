@@ -16,3 +16,9 @@ export { dataImportService, dataExportService, parseCSV } from './data-import-ex
 
 // User service exports (avoid duplicate exports)
 export { updateProfileImage } from './user-service';
+
+// AI/ML Platform services
+export { mlTrainingEngine } from './ml/training';
+export { iotIntegrationEngine } from './iot/integration';
+export { realtimeAnalyticsEngine } from './analytics/realtime';
+export { pwaEngine } from './mobile/pwa';

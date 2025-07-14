@@ -883,6 +883,97 @@ export type Database = {
           },
         ]
       }
+      analytics_dashboards: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          created_by: string | null
+          dashboard_config: Json
+          dashboard_name: string
+          id: string
+          is_active: boolean | null
+          refresh_interval: number | null
+          updated_at: string | null
+          widgets: Json | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          dashboard_config?: Json
+          dashboard_name: string
+          id?: string
+          is_active?: boolean | null
+          refresh_interval?: number | null
+          updated_at?: string | null
+          widgets?: Json | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          dashboard_config?: Json
+          dashboard_name?: string
+          id?: string
+          is_active?: boolean | null
+          refresh_interval?: number | null
+          updated_at?: string | null
+          widgets?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_dashboards_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_metrics: {
+        Row: {
+          aggregation_period: string | null
+          association_id: string | null
+          created_at: string | null
+          dimensions: Json | null
+          id: string
+          metric_name: string
+          metric_type: string
+          metric_value: number | null
+          recorded_at: string | null
+        }
+        Insert: {
+          aggregation_period?: string | null
+          association_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          id?: string
+          metric_name: string
+          metric_type: string
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Update: {
+          aggregation_period?: string | null
+          association_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          id?: string
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_metrics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           association_id: string
@@ -2236,6 +2327,62 @@ export type Database = {
             columns: ["statement_id"]
             isOneToOne: false
             referencedRelation: "bank_statements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bi_reports: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_automated: boolean | null
+          last_generated: string | null
+          query_definition: Json
+          recipients: Json | null
+          report_name: string
+          report_type: string
+          schedule_config: Json | null
+          updated_at: string | null
+          visualization_config: Json | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_automated?: boolean | null
+          last_generated?: string | null
+          query_definition: Json
+          recipients?: Json | null
+          report_name: string
+          report_type: string
+          schedule_config?: Json | null
+          updated_at?: string | null
+          visualization_config?: Json | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_automated?: boolean | null
+          last_generated?: string | null
+          query_definition?: Json
+          recipients?: Json | null
+          report_name?: string
+          report_type?: string
+          schedule_config?: Json | null
+          updated_at?: string | null
+          visualization_config?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bi_reports_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]
@@ -6388,6 +6535,115 @@ export type Database = {
         }
         Relationships: []
       }
+      iot_devices: {
+        Row: {
+          association_id: string | null
+          configuration: Json | null
+          created_at: string | null
+          device_id: string
+          device_name: string
+          device_type: string
+          firmware_version: string | null
+          id: string
+          installed_at: string | null
+          last_seen: string | null
+          location_description: string | null
+          manufacturer: string | null
+          model: string | null
+          property_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          configuration?: Json | null
+          created_at?: string | null
+          device_id: string
+          device_name: string
+          device_type: string
+          firmware_version?: string | null
+          id?: string
+          installed_at?: string | null
+          last_seen?: string | null
+          location_description?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          configuration?: Json | null
+          created_at?: string | null
+          device_id?: string
+          device_name?: string
+          device_type?: string
+          firmware_version?: string | null
+          id?: string
+          installed_at?: string | null
+          last_seen?: string | null
+          location_description?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iot_devices_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iot_sensor_data: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          id: string
+          metadata: Json | null
+          quality_score: number | null
+          recorded_at: string | null
+          sensor_type: string
+          unit: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          metadata?: Json | null
+          quality_score?: number | null
+          recorded_at?: string | null
+          sensor_type: string
+          unit?: string | null
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          metadata?: Json | null
+          quality_score?: number | null
+          recorded_at?: string | null
+          sensor_type?: string
+          unit?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iot_sensor_data_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "iot_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_whitelist: {
         Row: {
           created_at: string | null
@@ -7171,6 +7427,115 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ml_training_pipelines: {
+        Row: {
+          accuracy_score: number | null
+          association_id: string | null
+          created_at: string | null
+          dataset_size: number | null
+          deployed_at: string | null
+          hyperparameters: Json | null
+          id: string
+          model_type: string
+          model_version: string | null
+          pipeline_name: string
+          training_metrics: Json | null
+          training_status: string
+          updated_at: string | null
+        }
+        Insert: {
+          accuracy_score?: number | null
+          association_id?: string | null
+          created_at?: string | null
+          dataset_size?: number | null
+          deployed_at?: string | null
+          hyperparameters?: Json | null
+          id?: string
+          model_type: string
+          model_version?: string | null
+          pipeline_name: string
+          training_metrics?: Json | null
+          training_status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          accuracy_score?: number | null
+          association_id?: string | null
+          created_at?: string | null
+          dataset_size?: number | null
+          deployed_at?: string | null
+          hyperparameters?: Json | null
+          id?: string
+          model_type?: string
+          model_version?: string | null
+          pipeline_name?: string
+          training_metrics?: Json | null
+          training_status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_training_pipelines_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_app_configs: {
+        Row: {
+          app_name: string
+          app_version: string | null
+          association_id: string | null
+          created_at: string | null
+          feature_flags: Json | null
+          id: string
+          is_published: boolean | null
+          offline_capabilities: Json | null
+          push_notification_config: Json | null
+          pwa_config: Json | null
+          theme_config: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          app_name: string
+          app_version?: string | null
+          association_id?: string | null
+          created_at?: string | null
+          feature_flags?: Json | null
+          id?: string
+          is_published?: boolean | null
+          offline_capabilities?: Json | null
+          push_notification_config?: Json | null
+          pwa_config?: Json | null
+          theme_config?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          app_name?: string
+          app_version?: string | null
+          association_id?: string | null
+          created_at?: string | null
+          feature_flags?: Json | null
+          id?: string
+          is_published?: boolean | null
+          offline_capabilities?: Json | null
+          push_notification_config?: Json | null
+          pwa_config?: Json | null
+          theme_config?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_app_configs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_queue: {
         Row: {
@@ -12028,6 +12393,62 @@ export type Database = {
             columns: ["workflow_template_id"]
             isOneToOne: false
             referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_schedules: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          created_by: string | null
+          cron_expression: string
+          id: string
+          is_active: boolean | null
+          last_run: string | null
+          next_run: string | null
+          parameters: Json | null
+          run_count: number | null
+          schedule_name: string
+          updated_at: string | null
+          workflow_template_id: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          cron_expression: string
+          id?: string
+          is_active?: boolean | null
+          last_run?: string | null
+          next_run?: string | null
+          parameters?: Json | null
+          run_count?: number | null
+          schedule_name: string
+          updated_at?: string | null
+          workflow_template_id?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          cron_expression?: string
+          id?: string
+          is_active?: boolean | null
+          last_run?: string | null
+          next_run?: string | null
+          parameters?: Json | null
+          run_count?: number | null
+          schedule_name?: string
+          updated_at?: string | null
+          workflow_template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_schedules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]
