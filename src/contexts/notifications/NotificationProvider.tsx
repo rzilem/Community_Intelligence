@@ -6,7 +6,7 @@ import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
 import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/utils/client-logger';
 
 interface NotificationProviderProps {

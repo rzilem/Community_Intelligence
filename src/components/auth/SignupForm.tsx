@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { validatePassword, validateEmail, sanitizeInput } from '@/utils/security-validation';
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 import { toast } from 'sonner';

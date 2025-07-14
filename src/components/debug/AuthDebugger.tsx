@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
 import { AppearanceSettings } from '@/types/settings-types';
 

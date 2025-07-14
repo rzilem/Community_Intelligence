@@ -3,7 +3,7 @@ import React, { useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { useAdminAccess } from '@/hooks/dashboard/useAdminAccess';
 import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleContent';
