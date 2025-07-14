@@ -191,7 +191,178 @@ export const DEVICE_TEMPLATES = {
   }
 };
 
+// Dashboard-compatible interface
+export interface SimplifiedIoTDevice {
+  id: string;
+  name: string;
+  type: 'sensor' | 'camera' | 'controller' | 'monitor';
+  category: 'environmental' | 'security' | 'utility' | 'maintenance';
+  status: 'online' | 'offline' | 'error' | 'maintenance';
+  location: string;
+  lastSeen: Date;
+  batteryLevel?: number;
+  signalStrength: number;
+  data?: any;
+}
+
+export interface SimplifiedIoTMetrics {
+  totalDevices: number;
+  onlineDevices: number;
+  offlineDevices: number;
+  errorDevices: number;
+  averageSignalStrength: number;
+  totalDataPoints: number;
+  averageResponseTime: number;
+}
+
 export class IoTIntegrationEngine {
+  private devices: Map<string, SimplifiedIoTDevice> = new Map();
+  private metrics: SimplifiedIoTMetrics = {
+    totalDevices: 0,
+    onlineDevices: 0,
+    offlineDevices: 0,
+    errorDevices: 0,
+    averageSignalStrength: 0,
+    totalDataPoints: 0,
+    averageResponseTime: 0
+  };
+
+  async initialize() {
+    devLog.info('Initializing IoT Integration Engine...');
+    
+    // Initialize with mock devices
+    this.initializeMockDevices();
+    
+    // Start monitoring
+    this.startMonitoring();
+    
+    devLog.info('IoT Integration Engine initialized successfully');
+  }
+
+  private initializeMockDevices() {
+    const mockDevices: SimplifiedIoTDevice[] = [
+      {
+        id: '1',
+        name: 'Temperature Sensor A1',
+        type: 'sensor',
+        category: 'environmental',
+        status: 'online',
+        location: 'Building A - Lobby',
+        lastSeen: new Date(),
+        batteryLevel: 85,
+        signalStrength: 92,
+        data: { temperature: 22.5, humidity: 45, airQuality: 'Good' }
+      },
+      {
+        id: '2',
+        name: 'Security Camera B1',
+        type: 'camera',
+        category: 'security',
+        status: 'online',
+        location: 'Building B - Parking',
+        lastSeen: new Date(Date.now() - 5000),
+        signalStrength: 88,
+        data: { motion: false, recording: true }
+      },
+      {
+        id: '3',
+        name: 'Water Leak Detector',
+        type: 'sensor',
+        category: 'maintenance',
+        status: 'offline',
+        location: 'Building C - Basement',
+        lastSeen: new Date(Date.now() - 300000),
+        batteryLevel: 15,
+        signalStrength: 0,
+        data: { leak: false }
+      },
+      {
+        id: '4',
+        name: 'HVAC Controller',
+        type: 'controller',
+        category: 'utility',
+        status: 'error',
+        location: 'Building A - Roof',
+        lastSeen: new Date(Date.now() - 60000),
+        signalStrength: 72,
+        data: { temperature: 18.2, setpoint: 21.0, mode: 'cooling' }
+      }
+    ];
+
+    mockDevices.forEach(device => {
+      this.devices.set(device.id, device);
+    });
+  }
+
+  private startMonitoring() {
+    setInterval(() => {
+      this.updateMetrics();
+    }, 5000);
+  }
+
+  private updateMetrics() {
+    const devices = Array.from(this.devices.values());
+    const totalDevices = devices.length;
+    const onlineDevices = devices.filter(d => d.status === 'online').length;
+    const offlineDevices = devices.filter(d => d.status === 'offline').length;
+    const errorDevices = devices.filter(d => d.status === 'error').length;
+    const averageSignalStrength = devices.reduce((sum, d) => sum + d.signalStrength, 0) / totalDevices;
+    
+    this.metrics = {
+      totalDevices,
+      onlineDevices,
+      offlineDevices,
+      errorDevices,
+      averageSignalStrength: Math.round(averageSignalStrength),
+      totalDataPoints: totalDevices * 100 + Math.floor(Math.random() * 50),
+      averageResponseTime: 50 + Math.random() * 20
+    };
+  }
+
+  async getDevices(associationId?: string): Promise<SimplifiedIoTDevice[]> {
+    return Array.from(this.devices.values());
+  }
+
+  async getMetrics(associationId?: string): Promise<SimplifiedIoTMetrics> {
+    return this.metrics;
+  }
+
+  async controlDevice(deviceId: string, action: string) {
+    const device = this.devices.get(deviceId);
+    if (!device) {
+      throw new Error(`Device ${deviceId} not found`);
+    }
+
+    // Simulate device control actions
+    switch (action) {
+      case 'restart':
+        device.status = 'maintenance';
+        setTimeout(() => {
+          device.status = 'online';
+          device.lastSeen = new Date();
+        }, 5000);
+        break;
+      case 'calibrate':
+        device.status = 'maintenance';
+        setTimeout(() => {
+          device.status = 'online';
+          device.lastSeen = new Date();
+        }, 3000);
+        break;
+      case 'update':
+        device.status = 'maintenance';
+        setTimeout(() => {
+          device.status = 'online';
+          device.lastSeen = new Date();
+        }, 10000);
+        break;
+    }
+
+    this.devices.set(deviceId, device);
+    return device;
+  }
+
+  // Legacy methods for backward compatibility
   async registerDevice(deviceData: Omit<IoTDevice, 'id' | 'created_at' | 'updated_at'>): Promise<IoTDevice> {
     try {
       // Mock implementation for now since iot_devices table doesn't exist
@@ -210,7 +381,7 @@ export class IoTIntegrationEngine {
     }
   }
 
-  async getDevices(associationId: string, propertyId?: string): Promise<IoTDevice[]> {
+  async getDevicesLegacy(associationId: string, propertyId?: string): Promise<IoTDevice[]> {
     try {
       // Mock implementation for now
       const mockDevices: IoTDevice[] = [

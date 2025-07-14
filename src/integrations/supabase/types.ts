@@ -7640,6 +7640,51 @@ export type Database = {
           },
         ]
       }
+      offline_sync_queue: {
+        Row: {
+          association_id: string
+          created_at: string
+          data: Json
+          id: string
+          last_attempt_at: string | null
+          operation_type: string
+          record_id: string | null
+          retry_count: number | null
+          sync_status: string | null
+          table_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          data: Json
+          id?: string
+          last_attempt_at?: string | null
+          operation_type: string
+          record_id?: string | null
+          retry_count?: number | null
+          sync_status?: string | null
+          table_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          last_attempt_at?: string | null
+          operation_type?: string
+          record_id?: string | null
+          retry_count?: number | null
+          sync_status?: string | null
+          table_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       onboarding_documents: {
         Row: {
           created_at: string
@@ -9208,6 +9253,102 @@ export type Database = {
           updated_at?: string | null
           vendor_id?: string | null
           vendor_name?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          association_id: string
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          p256dh_key: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          p256dh_key: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          p256dh_key?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pwa_configurations: {
+        Row: {
+          app_description: string | null
+          app_name: string
+          association_id: string
+          background_color: string | null
+          created_at: string
+          created_by: string | null
+          display_mode: string | null
+          icon_url: string | null
+          id: string
+          install_prompt_enabled: boolean | null
+          offline_enabled: boolean | null
+          orientation: string | null
+          push_enabled: boolean | null
+          start_url: string | null
+          theme_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_description?: string | null
+          app_name: string
+          association_id: string
+          background_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_mode?: string | null
+          icon_url?: string | null
+          id?: string
+          install_prompt_enabled?: boolean | null
+          offline_enabled?: boolean | null
+          orientation?: string | null
+          push_enabled?: boolean | null
+          start_url?: string | null
+          theme_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_description?: string | null
+          app_name?: string
+          association_id?: string
+          background_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_mode?: string | null
+          icon_url?: string | null
+          id?: string
+          install_prompt_enabled?: boolean | null
+          offline_enabled?: boolean | null
+          orientation?: string | null
+          push_enabled?: boolean | null
+          start_url?: string | null
+          theme_color?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
