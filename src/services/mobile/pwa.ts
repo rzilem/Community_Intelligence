@@ -8,20 +8,16 @@ export interface PWAConfig {
   app_description: string;
   theme_color: string;
   background_color: string;
+  icon_url: string;
   start_url: string;
-  display: 'fullscreen' | 'standalone' | 'minimal-ui' | 'browser';
-  orientation: 'any' | 'natural' | 'landscape' | 'portrait';
-  icons: PWAIcon[];
-  features: PWAFeature[];
-  offline_pages: string[];
-  push_notifications: {
-    enabled: boolean;
-    vapid_key?: string;
-    default_title: string;
-    default_icon: string;
-  };
+  display_mode: string;
+  orientation: string;
+  offline_enabled: boolean;
+  push_enabled: boolean;
+  install_prompt_enabled: boolean;
   created_at: string;
   updated_at: string;
+  created_by: string;
 }
 
 export interface PWAIcon {
@@ -42,15 +38,9 @@ export interface PushSubscription {
   user_id: string;
   association_id: string;
   endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-  device_info: {
-    user_agent: string;
-    platform: string;
-    is_mobile: boolean;
-  };
+  p256dh_key: string;
+  auth_key: string;
+  user_agent: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -59,13 +49,16 @@ export interface PushSubscription {
 export interface OfflineSyncItem {
   id: string;
   user_id: string;
-  action_type: 'create' | 'update' | 'delete';
+  association_id: string;
+  operation_type: string;
   table_name: string;
-  data: Record<string, any>;
-  timestamp: string;
-  sync_status: 'pending' | 'synced' | 'failed';
-  error_message?: string;
+  record_id: string;
+  data: any;
+  sync_status: string;
   retry_count: number;
+  last_attempt_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PWAAnalytics {
@@ -155,11 +148,22 @@ export class PWAEngine {
         short_name: config.app_name,
         description: config.app_description,
         start_url: config.start_url,
-        display: config.display,
+        display: config.display_mode,
         orientation: config.orientation,
         theme_color: config.theme_color,
         background_color: config.background_color,
-        icons: config.icons,
+        icons: [
+          {
+            src: config.icon_url,
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: config.icon_url,
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ],
         categories: ['business', 'productivity', 'utilities'],
         lang: 'en',
         dir: 'ltr',
@@ -254,7 +258,7 @@ export class PWAEngine {
         .select('*')
         .eq('user_id', userId)
         .eq('sync_status', 'pending')
-        .order('timestamp', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
@@ -341,7 +345,7 @@ export class PWAEngine {
     try {
       // Check if running in standalone mode (installed PWA)
       return window.matchMedia('(display-mode: standalone)').matches ||
-             window.navigator.standalone === true ||
+             (window.navigator as any).standalone === true ||
              document.referrer.includes('android-app://');
     } catch (error) {
       devLog.error('Failed to check PWA installation status', error);
@@ -359,29 +363,29 @@ export class PWAEngine {
 
   private async processOfflineSync(item: OfflineSyncItem): Promise<void> {
     try {
-      switch (item.action_type) {
+      switch (item.operation_type) {
         case 'create':
-          await supabase.from(item.table_name).insert(item.data);
+          await supabase.from(item.table_name as any).insert(item.data);
           break;
         case 'update':
-          await supabase.from(item.table_name).update(item.data).eq('id', item.data.id);
+          await supabase.from(item.table_name as any).update(item.data).eq('id', item.record_id);
           break;
         case 'delete':
-          await supabase.from(item.table_name).delete().eq('id', item.data.id);
+          await supabase.from(item.table_name as any).delete().eq('id', item.record_id);
           break;
       }
     } catch (error) {
-      throw new Error(`Failed to sync ${item.action_type} operation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to sync ${item.operation_type} operation: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private async updateSyncStatus(itemId: string, status: OfflineSyncItem['sync_status'], errorMessage?: string): Promise<void> {
+  private async updateSyncStatus(itemId: string, status: string, errorMessage?: string): Promise<void> {
     await supabase
       .from('offline_sync_queue')
       .update({
         sync_status: status,
-        error_message: errorMessage,
-        retry_count: status === 'failed' ? 1 : 0
+        retry_count: status === 'failed' ? 1 : 0,
+        last_attempt_at: new Date().toISOString()
       })
       .eq('id', itemId);
   }
