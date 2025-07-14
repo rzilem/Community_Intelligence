@@ -24,8 +24,8 @@ export const mainNavItems: NavItemProps[] = [
     path: '/dashboard',
     icon: LayoutDashboard,
     submenu: [
-      { name: 'Overview', path: '/dashboard' },
-      { name: 'All Actions', path: '/dashboard/actions' }
+      { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+      { name: 'All Actions', path: '/dashboard/actions', icon: LayoutDashboard }
     ]
   },
   {
@@ -33,12 +33,12 @@ export const mainNavItems: NavItemProps[] = [
     path: '/ai-workflow',
     icon: Brain,
     submenu: [
-      { name: 'Workflow Designer', path: '/ai-workflow' },
-      { name: 'ML Training', path: '/ai-workflow/ml-training' },
-      { name: 'Real-time Analytics', path: '/ai-workflow/analytics' },
-      { name: 'IoT Integration', path: '/ai-workflow/iot' },
-      { name: 'Mobile Management', path: '/ai-workflow/mobile' },
-      { name: 'Business Intelligence', path: '/ai-workflow/bi' }
+      { name: 'Workflow Designer', path: '/ai-workflow', icon: Brain },
+      { name: 'ML Training', path: '/ai-workflow/ml-training', icon: Brain },
+      { name: 'Real-time Analytics', path: '/ai-workflow/analytics', icon: TrendingUp },
+      { name: 'IoT Integration', path: '/ai-workflow/iot', icon: Database },
+      { name: 'Mobile Management', path: '/ai-workflow/mobile', icon: Settings },
+      { name: 'Business Intelligence', path: '/ai-workflow/bi', icon: BarChart3 }
     ]
   },
   {
@@ -46,13 +46,13 @@ export const mainNavItems: NavItemProps[] = [
     path: '/community-management',
     icon: Building2,
     submenu: [
-      { name: 'Associations', path: '/associations' },
-      { name: 'Homeowners', path: '/homeowners' },
-      { name: 'Properties', path: '/properties' },
-      { name: 'Maintenance Requests', path: '/maintenance-requests' },
-      { name: 'Compliance', path: '/compliance' },
-      { name: 'Amenities', path: '/amenities' },
-      { name: 'Events', path: '/events' }
+      { name: 'Associations', path: '/associations', icon: Building2 },
+      { name: 'Homeowners', path: '/homeowners', icon: Users },
+      { name: 'Properties', path: '/properties', icon: Home },
+      { name: 'Maintenance Requests', path: '/maintenance-requests', icon: Wrench },
+      { name: 'Compliance', path: '/compliance', icon: FileText },
+      { name: 'Amenities', path: '/amenities', icon: Building2 },
+      { name: 'Events', path: '/events', icon: Building2 }
     ]
   },
   {
@@ -60,13 +60,13 @@ export const mainNavItems: NavItemProps[] = [
     path: '/accounting',
     icon: CreditCard,
     submenu: [
-      { name: 'Invoices', path: '/invoices' },
-      { name: 'Accounts Receivable', path: '/accounts-receivable' },
-      { name: 'Accounts Payable', path: '/accounts-payable' },
-      { name: 'General Ledger', path: '/general-ledger' },
-      { name: 'Chart of Accounts', path: '/chart-of-accounts' },
-      { name: 'Financial Reports', path: '/financial-reports' },
-      { name: 'Assessment Schedules', path: '/assessment-schedules' }
+      { name: 'Invoices', path: '/invoices', icon: CreditCard },
+      { name: 'Accounts Receivable', path: '/accounts-receivable', icon: CreditCard },
+      { name: 'Accounts Payable', path: '/accounts-payable', icon: CreditCard },
+      { name: 'General Ledger', path: '/general-ledger', icon: CreditCard },
+      { name: 'Chart of Accounts', path: '/chart-of-accounts', icon: CreditCard },
+      { name: 'Financial Reports', path: '/financial-reports', icon: CreditCard },
+      { name: 'Assessment Schedules', path: '/assessment-schedules', icon: CreditCard }
     ]
   },
   {
@@ -74,12 +74,12 @@ export const mainNavItems: NavItemProps[] = [
     path: '/communications',
     icon: MessageSquare,
     submenu: [
-      { name: 'Messages', path: '/communications/messages' },
-      { name: 'Email Campaigns', path: '/communications/campaigns' },
-      { name: 'Announcements', path: '/communications/announcements' },
-      { name: 'Notifications', path: '/communications/notifications' },
-      { name: 'Templates', path: '/communications/templates' },
-      { name: 'Tracking', path: '/communications/tracking' }
+      { name: 'Messages', path: '/communications/messages', icon: MessageSquare },
+      { name: 'Email Campaigns', path: '/communications/campaigns', icon: Mail },
+      { name: 'Announcements', path: '/communications/announcements', icon: MessageSquare },
+      { name: 'Notifications', path: '/communications/notifications', icon: MessageSquare },
+      { name: 'Templates', path: '/communications/templates', icon: MessageSquare },
+      { name: 'Tracking', path: '/communications/tracking', icon: MessageSquare }
     ]
   },
   {
@@ -87,10 +87,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/lead-management',
     icon: UserPlus,
     submenu: [
-      { name: 'Leads', path: '/leads' },
-      { name: 'Proposals', path: '/proposals' },
-      { name: 'Bid Requests', path: '/bid-requests' },
-      { name: 'Follow-ups', path: '/lead-follow-ups' }
+      { name: 'Leads', path: '/leads', icon: UserPlus },
+      { name: 'Proposals', path: '/proposals', icon: UserPlus },
+      { name: 'Bid Requests', path: '/bid-requests', icon: UserPlus },
+      { name: 'Follow-ups', path: '/lead-follow-ups', icon: UserPlus }
     ]
   },
   {
@@ -98,10 +98,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/operations',
     icon: Wrench,
     submenu: [
-      { name: 'Workflows', path: '/workflows' },
-      { name: 'Vendors', path: '/vendors' },
-      { name: 'Work Orders', path: '/work-orders' },
-      { name: 'Inspections', path: '/inspections' }
+      { name: 'Workflows', path: '/workflows', icon: Wrench },
+      { name: 'Vendors', path: '/vendors', icon: Wrench },
+      { name: 'Work Orders', path: '/work-orders', icon: Wrench },
+      { name: 'Inspections', path: '/inspections', icon: Wrench }
     ]
   },
   {
@@ -109,10 +109,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/records-reports',
     icon: FileText,
     submenu: [
-      { name: 'Documents', path: '/documents' },
-      { name: 'Reports', path: '/reports' },
-      { name: 'Data Import/Export', path: '/data-import-export' },
-      { name: 'Backup & Archive', path: '/backup-archive' }
+      { name: 'Documents', path: '/documents', icon: FileText },
+      { name: 'Reports', path: '/reports', icon: FileText },
+      { name: 'Data Import/Export', path: '/data-import-export', icon: FileText },
+      { name: 'Backup & Archive', path: '/backup-archive', icon: FileText }
     ]
   },
   {
@@ -120,9 +120,9 @@ export const mainNavItems: NavItemProps[] = [
     path: '/resale-management',
     icon: Home,
     submenu: [
-      { name: 'Resale Certificates', path: '/resale-certificates' },
-      { name: 'Transfer Requirements', path: '/transfer-requirements' },
-      { name: 'Document Templates', path: '/document-templates' }
+      { name: 'Resale Certificates', path: '/resale-certificates', icon: Home },
+      { name: 'Transfer Requirements', path: '/transfer-requirements', icon: Home },
+      { name: 'Document Templates', path: '/document-templates', icon: Home }
     ]
   },
   {
@@ -130,11 +130,11 @@ export const mainNavItems: NavItemProps[] = [
     path: '/system',
     icon: Settings,
     submenu: [
-      { name: 'Settings', path: '/system/settings' },
-      { name: 'User Management', path: '/system/users' },
-      { name: 'Permissions', path: '/system/permissions' },
-      { name: 'Audit Logs', path: '/system/audit-logs' },
-      { name: 'API Keys', path: '/system/api-keys' }
+      { name: 'Settings', path: '/system/settings', icon: Settings },
+      { name: 'User Management', path: '/system/users', icon: Settings },
+      { name: 'Permissions', path: '/system/permissions', icon: Settings },
+      { name: 'Audit Logs', path: '/system/audit-logs', icon: Settings },
+      { name: 'API Keys', path: '/system/api-keys', icon: Settings }
     ]
   }
 ];

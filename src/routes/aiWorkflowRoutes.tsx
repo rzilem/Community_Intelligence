@@ -2,6 +2,7 @@
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import AIWorkflowDashboard from "@/pages/ai-workflow/AIWorkflowDashboard";
+import MLTrainingDashboard from "@/pages/ai-workflow/MLTrainingDashboard";
 import AIAnalytics from "@/pages/AIAnalytics";
 
 export const aiWorkflowRoutes: RouteObject[] = [
@@ -17,10 +18,7 @@ export const aiWorkflowRoutes: RouteObject[] = [
     path: "/ai-workflow/ml-training",
     element: (
       <RequireAuth allowedRoles={['admin', 'manager']}>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">ML Training Dashboard</h1>
-          <p>Advanced machine learning training interface - Coming soon</p>
-        </div>
+        <MLTrainingDashboard associationId="default-association-id" />
       </RequireAuth>
     )
   },

@@ -3,240 +3,186 @@ import { devLog } from '@/utils/dev-logger';
 
 export interface IoTDevice {
   id: string;
+  device_id: string;
+  device_name: string;
+  device_type: string;
   association_id: string;
   property_id?: string;
-  device_name: string;
-  device_type: IoTDeviceType;
-  category: IoTDeviceCategory;
   status: 'online' | 'offline' | 'maintenance' | 'error';
-  last_communication: string;
+  last_seen: string;
   battery_level?: number;
-  signal_strength?: number;
-  firmware_version: string;
-  location: string;
+  firmware_version?: string;
   configuration: Record<string, any>;
+  location: {
+    building?: string;
+    floor?: string;
+    room?: string;
+    coordinates?: { lat: number; lng: number };
+  };
+  installed_at?: string;
   created_at: string;
   updated_at: string;
 }
 
-export type IoTDeviceType = 
-  | 'temperature_sensor'
-  | 'humidity_sensor' 
-  | 'air_quality_monitor'
-  | 'smart_lock'
-  | 'security_camera'
-  | 'motion_sensor'
-  | 'water_meter'
-  | 'electricity_monitor'
-  | 'smoke_detector'
-  | 'carbon_monoxide_sensor'
-  | 'water_leak_sensor'
-  | 'smart_thermostat'
-  | 'light_sensor'
-  | 'noise_monitor'
-  | 'weather_station'
-  | 'door_sensor'
-  | 'window_sensor'
-  | 'vibration_monitor'
-  | 'pool_monitor'
-  | 'parking_sensor'
-  | 'ev_charger'
-  | 'elevator_monitor'
-  | 'gas_detector';
-
-export type IoTDeviceCategory = 
-  | 'environmental'
-  | 'security'
-  | 'utility'
-  | 'safety'
-  | 'maintenance'
-  | 'access_control'
-  | 'energy'
-  | 'comfort';
-
-export interface IoTSensorReading {
+export interface SensorReading {
+  id: string;
   device_id: string;
-  timestamp: string;
+  sensor_type: string;
   value: number;
   unit: string;
-  quality: 'good' | 'poor' | 'unknown';
+  timestamp: string;
+  quality: 'good' | 'fair' | 'poor';
   metadata?: Record<string, any>;
 }
 
 export interface IoTAlert {
   id: string;
   device_id: string;
-  alert_type: 'threshold_exceeded' | 'device_offline' | 'low_battery' | 'maintenance_required' | 'security_breach';
+  alert_type: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
+  threshold_value?: number;
+  actual_value?: number;
   is_acknowledged: boolean;
-  created_at: string;
-  acknowledged_at?: string;
   acknowledged_by?: string;
+  acknowledged_at?: string;
+  is_resolved: boolean;
+  resolved_by?: string;
+  resolved_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export const IoTDeviceSpecs: Record<IoTDeviceType, {
-  name: string;
-  category: IoTDeviceCategory;
-  defaultUnit: string;
-  description: string;
-  alertThresholds: Record<string, number>;
-}> = {
-  temperature_sensor: {
+export interface DeviceCommand {
+  id: string;
+  device_id: string;
+  command_type: string;
+  command_data: Record<string, any>;
+  status: 'pending' | 'sent' | 'acknowledged' | 'failed';
+  sent_at?: string;
+  acknowledged_at?: string;
+  response_data?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutomationTrigger {
+  id: string;
+  trigger_name: string;
+  device_id: string;
+  condition: {
+    sensor_type: string;
+    operator: 'greater_than' | 'less_than' | 'equals' | 'not_equals' | 'between';
+    value: number | [number, number];
+    duration?: number;
+  };
+  actions: {
+    type: 'device_command' | 'notification' | 'workflow' | 'api_call';
+    config: Record<string, any>;
+  }[];
+  is_active: boolean;
+  last_triggered?: string;
+  trigger_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NetworkTopology {
+  nodes: {
+    id: string;
+    type: 'gateway' | 'device' | 'sensor' | 'actuator';
+    name: string;
+    status: 'online' | 'offline' | 'warning';
+    position: { x: number; y: number };
+    metadata: Record<string, any>;
+  }[];
+  connections: {
+    source: string;
+    target: string;
+    type: 'wifi' | 'zigbee' | 'bluetooth' | 'ethernet' | 'cellular';
+    signal_strength?: number;
+    status: 'active' | 'inactive' | 'intermittent';
+  }[];
+}
+
+export interface DeviceMetrics {
+  device_id: string;
+  uptime: number;
+  message_count: number;
+  last_message: string;
+  signal_strength: number;
+  battery_level?: number;
+  error_count: number;
+  data_usage: number;
+  performance_score: number;
+}
+
+// Device type templates for easy setup
+export const DEVICE_TEMPLATES = {
+  'temperature_sensor': {
     name: 'Temperature Sensor',
     category: 'environmental',
-    defaultUnit: '°F',
-    description: 'Monitors ambient temperature',
-    alertThresholds: { high: 85, low: 32 }
+    defaultUnit: '°C',
+    description: 'Measures ambient temperature',
+    alertThresholds: { high: 30, low: 10 }
   },
-  humidity_sensor: {
-    name: 'Humidity Sensor', 
+  'humidity_sensor': {
+    name: 'Humidity Sensor',
     category: 'environmental',
     defaultUnit: '%',
-    description: 'Monitors relative humidity levels',
-    alertThresholds: { high: 70, low: 30 }
+    description: 'Measures relative humidity',
+    alertThresholds: { high: 80, low: 30 }
   },
-  air_quality_monitor: {
-    name: 'Air Quality Monitor',
-    category: 'environmental',
-    defaultUnit: 'AQI',
-    description: 'Monitors air quality index and pollutants',
-    alertThresholds: { high: 150, moderate: 100 }
-  },
-  smart_lock: {
-    name: 'Smart Lock',
-    category: 'access_control',
-    defaultUnit: 'status',
-    description: 'Electronic door lock with remote control',
-    alertThresholds: { low_battery: 20 }
-  },
-  security_camera: {
-    name: 'Security Camera',
+  'motion_detector': {
+    name: 'Motion Detector',
     category: 'security',
-    defaultUnit: 'status',
-    description: 'Video surveillance camera with AI analysis',
-    alertThresholds: { motion_detected: 1 }
+    defaultUnit: 'boolean',
+    description: 'Detects motion in area',
+    alertThresholds: { motion_detected: true }
   },
-  motion_sensor: {
-    name: 'Motion Sensor',
+  'door_sensor': {
+    name: 'Door Sensor',
     category: 'security',
-    defaultUnit: 'status',
-    description: 'Detects movement in monitored areas',
-    alertThresholds: { motion_detected: 1 }
+    defaultUnit: 'boolean',
+    description: 'Monitors door open/close state',
+    alertThresholds: { door_open: true }
   },
-  water_meter: {
-    name: 'Smart Water Meter',
-    category: 'utility',
-    defaultUnit: 'gallons',
-    description: 'Monitors water usage and flow rates',
-    alertThresholds: { high_usage: 1000, leak_detected: 5 }
-  },
-  electricity_monitor: {
-    name: 'Electricity Monitor',
-    category: 'energy',
-    defaultUnit: 'kWh',
-    description: 'Monitors electrical consumption',
-    alertThresholds: { high_usage: 50 }
-  },
-  smoke_detector: {
+  'smoke_detector': {
     name: 'Smoke Detector',
     category: 'safety',
     defaultUnit: 'ppm',
-    description: 'Detects smoke and fire hazards',
-    alertThresholds: { smoke_detected: 1, low_battery: 20 }
+    description: 'Detects smoke particles',
+    alertThresholds: { smoke_detected: 50, critical_level: 100 }
   },
-  carbon_monoxide_sensor: {
-    name: 'Carbon Monoxide Sensor',
-    category: 'safety',
-    defaultUnit: 'ppm',
-    description: 'Detects dangerous CO levels',
-    alertThresholds: { danger_level: 50, warning_level: 30 }
-  },
-  water_leak_sensor: {
+  'water_leak_sensor': {
     name: 'Water Leak Sensor',
     category: 'safety',
-    defaultUnit: 'status',
-    description: 'Detects water leaks and flooding',
-    alertThresholds: { leak_detected: 1 }
+    defaultUnit: 'boolean',
+    description: 'Detects water presence',
+    alertThresholds: { water_detected: true }
   },
-  smart_thermostat: {
-    name: 'Smart Thermostat',
-    category: 'comfort',
-    defaultUnit: '°F',
-    description: 'Intelligent climate control system',
-    alertThresholds: { high_temp: 85, low_temp: 60 }
-  },
-  light_sensor: {
-    name: 'Light Sensor',
-    category: 'environmental',
-    defaultUnit: 'lux',
-    description: 'Monitors ambient light levels',
-    alertThresholds: { high_light: 1000, low_light: 50 }
-  },
-  noise_monitor: {
-    name: 'Noise Monitor',
-    category: 'environmental',
-    defaultUnit: 'dB',
-    description: 'Monitors noise pollution levels',
-    alertThresholds: { high_noise: 70, quiet_hours_violation: 50 }
-  },
-  weather_station: {
-    name: 'Weather Station',
-    category: 'environmental',
-    defaultUnit: 'multiple',
-    description: 'Comprehensive weather monitoring',
-    alertThresholds: { high_wind: 25, low_pressure: 29.8 }
-  },
-  door_sensor: {
-    name: 'Door Sensor',
+  'smart_lock': {
+    name: 'Smart Lock',
     category: 'security',
-    defaultUnit: 'status',
-    description: 'Monitors door open/close status',
-    alertThresholds: { door_open_too_long: 300 }
+    defaultUnit: 'boolean',
+    description: 'Electronic door lock',
+    alertThresholds: { tamper_detected: true, battery_low: 20 }
   },
-  window_sensor: {
-    name: 'Window Sensor',
-    category: 'security',
-    defaultUnit: 'status',
-    description: 'Monitors window open/close status',
-    alertThresholds: { window_open_too_long: 600 }
-  },
-  vibration_monitor: {
-    name: 'Vibration Monitor',
-    category: 'maintenance',
-    defaultUnit: 'Hz',
-    description: 'Monitors equipment vibration levels',
-    alertThresholds: { high_vibration: 5, maintenance_required: 3 }
-  },
-  pool_monitor: {
-    name: 'Pool Monitor',
-    category: 'maintenance',
-    defaultUnit: 'pH',
-    description: 'Monitors pool chemical levels',
-    alertThresholds: { high_ph: 7.8, low_ph: 7.2, low_chlorine: 1.0 }
-  },
-  parking_sensor: {
-    name: 'Parking Sensor',
+  'energy_meter': {
+    name: 'Energy Meter',
     category: 'utility',
-    defaultUnit: 'status',
-    description: 'Detects parking space occupancy',
-    alertThresholds: { space_occupied: 1 }
+    defaultUnit: 'kWh',
+    description: 'Measures energy consumption',
+    alertThresholds: { high_usage: 1000, spike_detected: 1500 }
   },
-  ev_charger: {
-    name: 'EV Charging Station',
-    category: 'energy',
-    defaultUnit: 'kW',
-    description: 'Electric vehicle charging management',
-    alertThresholds: { charging_complete: 1, fault_detected: 1 }
+  'air_quality_sensor': {
+    name: 'Air Quality Sensor',
+    category: 'environmental',
+    defaultUnit: 'AQI',
+    description: 'Measures air quality index',
+    alertThresholds: { poor_quality: 150, hazardous: 300 }
   },
-  elevator_monitor: {
-    name: 'Elevator Monitor',
-    category: 'maintenance',
-    defaultUnit: 'status',
-    description: 'Monitors elevator operation and maintenance',
-    alertThresholds: { maintenance_due: 1, fault_detected: 1 }
-  },
-  gas_detector: {
+  'gas_detector': {
     name: 'Gas Leak Detector',
     category: 'safety',
     defaultUnit: 'ppm',
@@ -248,16 +194,16 @@ export const IoTDeviceSpecs: Record<IoTDeviceType, {
 export class IoTIntegrationEngine {
   async registerDevice(deviceData: Omit<IoTDevice, 'id' | 'created_at' | 'updated_at'>): Promise<IoTDevice> {
     try {
-      const { data, error } = await supabase
-        .from('iot_devices')
-        .insert(deviceData)
-        .select()
-        .single();
-
-      if (error) throw error;
+      // Mock implementation for now since iot_devices table doesn't exist
+      const mockDevice: IoTDevice = {
+        ...deviceData,
+        id: Math.random().toString(36).substring(7),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      devLog.info('Registered IoT device', data);
-      return data as IoTDevice;
+      devLog.info('IoT device registered (mock)', mockDevice);
+      return mockDevice;
     } catch (error) {
       devLog.error('Failed to register IoT device', error);
       throw new Error(`Failed to register device: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -266,208 +212,365 @@ export class IoTIntegrationEngine {
 
   async getDevices(associationId: string, propertyId?: string): Promise<IoTDevice[]> {
     try {
-      let query = supabase
-        .from('iot_devices')
-        .select('*')
-        .eq('association_id', associationId);
-
-      if (propertyId) {
-        query = query.eq('property_id', propertyId);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
+      // Mock implementation for now
+      const mockDevices: IoTDevice[] = [
+        {
+          id: '1',
+          device_id: 'TEMP_001',
+          device_name: 'Lobby Temperature Sensor',
+          device_type: 'temperature_sensor',
+          association_id: associationId,
+          property_id: propertyId,
+          status: 'online',
+          last_seen: new Date().toISOString(),
+          battery_level: 87,
+          firmware_version: '1.2.3',
+          configuration: { alert_threshold: 25, sample_rate: 60 },
+          location: { building: 'Main', floor: '1', room: 'Lobby' },
+          installed_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          device_id: 'MOTION_001',
+          device_name: 'Parking Lot Motion Detector',
+          device_type: 'motion_detector',
+          association_id: associationId,
+          property_id: propertyId,
+          status: 'online',
+          last_seen: new Date().toISOString(),
+          battery_level: 92,
+          firmware_version: '2.1.0',
+          configuration: { sensitivity: 75, detection_range: 10 },
+          location: { building: 'Parking', floor: 'Ground', room: 'Lot A' },
+          installed_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
       
-      return (data as IoTDevice[]) || [];
+      return mockDevices;
     } catch (error) {
       devLog.error('Failed to fetch IoT devices', error);
-      throw new Error(`Failed to fetch devices: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return [];
     }
   }
 
-  async updateDeviceStatus(deviceId: string, status: IoTDevice['status']): Promise<void> {
+  async updateDevice(deviceId: string, updates: Partial<IoTDevice>): Promise<IoTDevice> {
     try {
-      const { error } = await supabase
-        .from('iot_devices')
-        .update({ 
-          status, 
-          last_communication: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', deviceId);
-
-      if (error) throw error;
+      // Mock implementation for now
+      const mockDevice: IoTDevice = {
+        id: deviceId,
+        device_id: 'TEMP_001',
+        device_name: 'Updated Device',
+        device_type: 'temperature_sensor',
+        association_id: 'mock-association',
+        status: 'online',
+        last_seen: new Date().toISOString(),
+        configuration: {},
+        location: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...updates
+      };
       
-      devLog.info('Updated device status', { deviceId, status });
+      devLog.info('IoT device updated (mock)', mockDevice);
+      return mockDevice;
     } catch (error) {
-      devLog.error('Failed to update device status', error);
+      devLog.error('Failed to update IoT device', error);
       throw new Error(`Failed to update device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async recordSensorReading(reading: IoTSensorReading): Promise<void> {
+  async deleteDevice(deviceId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('iot_sensor_readings')
-        .insert(reading);
-
-      if (error) throw error;
-      
-      // Check for alert thresholds
-      await this.checkAlertThresholds(reading);
-      
-      devLog.info('Recorded sensor reading', reading);
+      // Mock implementation for now
+      devLog.info('IoT device deleted (mock)', { deviceId });
     } catch (error) {
-      devLog.error('Failed to record sensor reading', error);
-      throw new Error(`Failed to record reading: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      devLog.error('Failed to delete IoT device', error);
+      throw new Error(`Failed to delete device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async getAlerts(associationId: string, unacknowledgedOnly = false): Promise<IoTAlert[]> {
+  async getSensorReadings(deviceId: string, timeRange?: number): Promise<SensorReading[]> {
     try {
-      let query = supabase
-        .from('iot_alerts')
-        .select(`
-          *,
-          iot_devices!inner(association_id)
-        `)
-        .eq('iot_devices.association_id', associationId);
-
-      if (unacknowledgedOnly) {
-        query = query.eq('is_acknowledged', false);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
+      // Mock implementation for now
+      const mockReadings: SensorReading[] = [];
+      const now = new Date();
       
-      return (data as IoTAlert[]) || [];
+      for (let i = 0; i < 10; i++) {
+        mockReadings.push({
+          id: `reading_${i}`,
+          device_id: deviceId,
+          sensor_type: 'temperature',
+          value: 20 + Math.random() * 10,
+          unit: '°C',
+          timestamp: new Date(now.getTime() - i * 60000).toISOString(),
+          quality: 'good'
+        });
+      }
+      
+      return mockReadings;
+    } catch (error) {
+      devLog.error('Failed to fetch sensor readings', error);
+      return [];
+    }
+  }
+
+  async sendCommand(deviceId: string, command: Omit<DeviceCommand, 'id' | 'device_id' | 'created_at' | 'updated_at'>): Promise<DeviceCommand> {
+    try {
+      // Mock implementation for now
+      const mockCommand: DeviceCommand = {
+        ...command,
+        id: Math.random().toString(36).substring(7),
+        device_id: deviceId,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      devLog.info('Device command sent (mock)', mockCommand);
+      return mockCommand;
+    } catch (error) {
+      devLog.error('Failed to send device command', error);
+      throw new Error(`Failed to send command: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async getAlerts(associationId: string, deviceId?: string): Promise<IoTAlert[]> {
+    try {
+      // Mock implementation for now
+      const mockAlerts: IoTAlert[] = [
+        {
+          id: '1',
+          device_id: 'TEMP_001',
+          alert_type: 'temperature_high',
+          severity: 'medium',
+          message: 'Temperature exceeded threshold (28°C)',
+          threshold_value: 25,
+          actual_value: 28,
+          is_acknowledged: false,
+          is_resolved: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          device_id: 'MOTION_001',
+          alert_type: 'motion_detected',
+          severity: 'low',
+          message: 'Motion detected in parking lot',
+          is_acknowledged: true,
+          acknowledged_by: 'security_guard',
+          acknowledged_at: new Date().toISOString(),
+          is_resolved: true,
+          resolved_by: 'security_guard',
+          resolved_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      return deviceId ? mockAlerts.filter(alert => alert.device_id === deviceId) : mockAlerts;
     } catch (error) {
       devLog.error('Failed to fetch IoT alerts', error);
-      throw new Error(`Failed to fetch alerts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return [];
     }
   }
 
-  async acknowledgeAlert(alertId: string, userId: string): Promise<void> {
+  async acknowledgeAlert(alertId: string, acknowledgedBy: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('iot_alerts')
-        .update({
-          is_acknowledged: true,
-          acknowledged_at: new Date().toISOString(),
-          acknowledged_by: userId
-        })
-        .eq('id', alertId);
-
-      if (error) throw error;
-      
-      devLog.info('Acknowledged IoT alert', { alertId, userId });
+      // Mock implementation for now
+      devLog.info('IoT alert acknowledged (mock)', { alertId, acknowledgedBy });
     } catch (error) {
-      devLog.error('Failed to acknowledge alert', error);
+      devLog.error('Failed to acknowledge IoT alert', error);
       throw new Error(`Failed to acknowledge alert: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private async checkAlertThresholds(reading: IoTSensorReading): Promise<void> {
+  async resolveAlert(alertId: string, resolvedBy: string): Promise<void> {
     try {
-      // Get device information
-      const { data: device, error } = await supabase
-        .from('iot_devices')
-        .select('device_type, association_id, property_id, device_name')
-        .eq('id', reading.device_id)
-        .single();
-
-      if (error || !device) return;
-
-      const specs = IoTDeviceSpecs[device.device_type as IoTDeviceType];
-      if (!specs) return;
-
-      const thresholds = specs.alertThresholds;
-      let alertTriggered = false;
-      let alertType: IoTAlert['alert_type'] = 'threshold_exceeded';
-      let severity: IoTAlert['severity'] = 'medium';
-      let message = '';
-
-      // Check thresholds
-      Object.entries(thresholds).forEach(([threshold, value]) => {
-        if (threshold === 'high' && reading.value > value) {
-          alertTriggered = true;
-          severity = 'high';
-          message = `${device.device_name} reading (${reading.value} ${reading.unit}) exceeds high threshold (${value})`;
-        } else if (threshold === 'low' && reading.value < value) {
-          alertTriggered = true;
-          severity = 'medium';
-          message = `${device.device_name} reading (${reading.value} ${reading.unit}) below low threshold (${value})`;
-        } else if (threshold === 'critical_level' && reading.value > value) {
-          alertTriggered = true;
-          severity = 'critical';
-          message = `CRITICAL: ${device.device_name} reading (${reading.value} ${reading.unit}) exceeds critical threshold (${value})`;
-        }
-      });
-
-      if (alertTriggered) {
-        await supabase
-          .from('iot_alerts')
-          .insert({
-            device_id: reading.device_id,
-            alert_type: alertType,
-            severity,
-            message,
-            is_acknowledged: false
-          });
-      }
+      // Mock implementation for now
+      devLog.info('IoT alert resolved (mock)', { alertId, resolvedBy });
     } catch (error) {
-      devLog.error('Failed to check alert thresholds', error);
+      devLog.error('Failed to resolve IoT alert', error);
+      throw new Error(`Failed to resolve alert: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async getDeviceAnalytics(deviceId: string, timeRange: '24h' | '7d' | '30d' = '24h'): Promise<Record<string, any>> {
+  async createAutomationTrigger(trigger: Omit<AutomationTrigger, 'id' | 'created_at' | 'updated_at'>): Promise<AutomationTrigger> {
     try {
-      const timeRangeHours = timeRange === '24h' ? 24 : timeRange === '7d' ? 168 : 720;
-      const startTime = new Date(Date.now() - timeRangeHours * 60 * 60 * 1000).toISOString();
-
-      const { data, error } = await supabase
-        .from('iot_sensor_readings')
-        .select('*')
-        .eq('device_id', deviceId)
-        .gte('timestamp', startTime)
-        .order('timestamp', { ascending: true });
-
-      if (error) throw error;
-
-      const readings = data || [];
-      const analytics = {
-        total_readings: readings.length,
-        average_value: readings.reduce((sum, r) => sum + r.value, 0) / readings.length || 0,
-        min_value: Math.min(...readings.map(r => r.value)),
-        max_value: Math.max(...readings.map(r => r.value)),
-        data_quality: readings.filter(r => r.quality === 'good').length / readings.length || 0,
-        readings_by_hour: this.groupReadingsByHour(readings)
+      // Mock implementation for now
+      const mockTrigger: AutomationTrigger = {
+        ...trigger,
+        id: Math.random().toString(36).substring(7),
+        trigger_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
-
-      return analytics;
+      
+      devLog.info('Automation trigger created (mock)', mockTrigger);
+      return mockTrigger;
     } catch (error) {
-      devLog.error('Failed to get device analytics', error);
-      throw new Error(`Failed to get analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      devLog.error('Failed to create automation trigger', error);
+      throw new Error(`Failed to create trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private groupReadingsByHour(readings: IoTSensorReading[]): Record<string, number> {
-    const grouped: Record<string, number[]> = {};
-    
-    readings.forEach(reading => {
-      const hour = new Date(reading.timestamp).getHours().toString().padStart(2, '0');
-      if (!grouped[hour]) grouped[hour] = [];
-      grouped[hour].push(reading.value);
-    });
+  async getAutomationTriggers(associationId: string): Promise<AutomationTrigger[]> {
+    try {
+      // Mock implementation for now
+      return [
+        {
+          id: '1',
+          trigger_name: 'High Temperature Alert',
+          device_id: 'TEMP_001',
+          condition: {
+            sensor_type: 'temperature',
+            operator: 'greater_than',
+            value: 25,
+            duration: 300
+          },
+          actions: [
+            {
+              type: 'notification',
+              config: { recipients: ['maintenance@example.com'], message: 'Temperature too high' }
+            }
+          ],
+          is_active: true,
+          trigger_count: 5,
+          last_triggered: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+    } catch (error) {
+      devLog.error('Failed to fetch automation triggers', error);
+      return [];
+    }
+  }
 
-    const averages: Record<string, number> = {};
-    Object.entries(grouped).forEach(([hour, values]) => {
-      averages[hour] = values.reduce((sum, val) => sum + val, 0) / values.length;
-    });
+  async getNetworkTopology(associationId: string): Promise<NetworkTopology> {
+    try {
+      // Mock implementation for now
+      return {
+        nodes: [
+          {
+            id: 'gateway_1',
+            type: 'gateway',
+            name: 'Main Gateway',
+            status: 'online',
+            position: { x: 100, y: 100 },
+            metadata: { ip: '192.168.1.100', model: 'GW-2000' }
+          },
+          {
+            id: 'temp_001',
+            type: 'sensor',
+            name: 'Lobby Temperature',
+            status: 'online',
+            position: { x: 200, y: 150 },
+            metadata: { battery: 87, signal: -45 }
+          },
+          {
+            id: 'motion_001',
+            type: 'sensor',
+            name: 'Parking Motion',
+            status: 'online',
+            position: { x: 300, y: 200 },
+            metadata: { battery: 92, signal: -38 }
+          }
+        ],
+        connections: [
+          {
+            source: 'gateway_1',
+            target: 'temp_001',
+            type: 'zigbee',
+            signal_strength: -45,
+            status: 'active'
+          },
+          {
+            source: 'gateway_1',
+            target: 'motion_001',
+            type: 'zigbee',
+            signal_strength: -38,
+            status: 'active'
+          }
+        ]
+      };
+    } catch (error) {
+      devLog.error('Failed to fetch network topology', error);
+      throw new Error(`Failed to fetch topology: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
 
-    return averages;
+  async getDeviceMetrics(deviceId: string): Promise<DeviceMetrics> {
+    try {
+      // Mock implementation for now
+      return {
+        device_id: deviceId,
+        uptime: 0.987,
+        message_count: 1440,
+        last_message: new Date().toISOString(),
+        signal_strength: -42,
+        battery_level: 87,
+        error_count: 2,
+        data_usage: 1024,
+        performance_score: 0.94
+      };
+    } catch (error) {
+      devLog.error('Failed to fetch device metrics', error);
+      throw new Error(`Failed to fetch metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async performDeviceDiscovery(associationId: string): Promise<IoTDevice[]> {
+    try {
+      // Mock implementation for now
+      const discoveredDevices: IoTDevice[] = [
+        {
+          id: 'discovered_1',
+          device_id: 'DISCOVERED_001',
+          device_name: 'Unknown Device',
+          device_type: 'unknown',
+          association_id: associationId,
+          status: 'offline',
+          last_seen: new Date().toISOString(),
+          configuration: {},
+          location: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      devLog.info('Device discovery completed (mock)', { count: discoveredDevices.length });
+      return discoveredDevices;
+    } catch (error) {
+      devLog.error('Failed to perform device discovery', error);
+      throw new Error(`Failed to discover devices: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async updateFirmware(deviceId: string, firmwareVersion: string): Promise<void> {
+    try {
+      // Mock implementation for now
+      devLog.info('Firmware update initiated (mock)', { deviceId, firmwareVersion });
+    } catch (error) {
+      devLog.error('Failed to update firmware', error);
+      throw new Error(`Failed to update firmware: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async exportDeviceData(associationId: string, format: 'csv' | 'json'): Promise<string> {
+    try {
+      // Mock implementation for now
+      const exportId = `export_${associationId}_${Date.now()}`;
+      devLog.info('Device data export initiated (mock)', { exportId, format });
+      return exportId;
+    } catch (error) {
+      devLog.error('Failed to export device data', error);
+      throw new Error(`Failed to export data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }
 

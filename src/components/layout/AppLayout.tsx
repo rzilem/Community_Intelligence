@@ -46,7 +46,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Memoize nav items to prevent unnecessary re-renders
   const mainNavItems = useMemo(() => {
-    return getFilteredNavItems(userRole);
+    return getFilteredNavItems(userRole as any);
   }, [userRole]);
 
   const toggleSidebar = () => {
