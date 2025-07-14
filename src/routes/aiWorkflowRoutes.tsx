@@ -4,6 +4,9 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import AIWorkflowDashboard from "@/pages/ai-workflow/AIWorkflowDashboard";
 import MLTrainingDashboard from "@/pages/ai-workflow/MLTrainingDashboard";
 import AIAnalytics from "@/pages/AIAnalytics";
+import RealTimeAnalyticsDashboard from "@/pages/ai-workflow/RealTimeAnalyticsDashboard";
+import MobilePWAManagement from "@/pages/ai-workflow/MobilePWAManagement";
+import BusinessIntelligenceDashboard from "@/pages/ai-workflow/BusinessIntelligenceDashboard";
 
 export const aiWorkflowRoutes: RouteObject[] = [
   {
@@ -26,10 +29,7 @@ export const aiWorkflowRoutes: RouteObject[] = [
     path: "/ai-workflow/analytics",
     element: (
       <RequireAuth allowedRoles={['admin', 'manager']}>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Real-time Analytics</h1>
-          <p>Real-time analytics dashboard - Coming soon</p>
-        </div>
+        <RealTimeAnalyticsDashboard />
       </RequireAuth>
     )
   },
@@ -48,10 +48,7 @@ export const aiWorkflowRoutes: RouteObject[] = [
     path: "/ai-workflow/mobile",
     element: (
       <RequireAuth allowedRoles={['admin', 'manager']}>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Mobile PWA Management</h1>
-          <p>Progressive Web App configuration - Coming soon</p>
-        </div>
+        <MobilePWAManagement associationId="default-association-id" />
       </RequireAuth>
     )
   },
@@ -59,10 +56,7 @@ export const aiWorkflowRoutes: RouteObject[] = [
     path: "/ai-workflow/bi",
     element: (
       <RequireAuth allowedRoles={['admin', 'manager']}>
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Business Intelligence</h1>
-          <p>Advanced BI dashboard - Coming soon</p>
-        </div>
+        <BusinessIntelligenceDashboard associationId="default-association-id" />
       </RequireAuth>
     )
   },
