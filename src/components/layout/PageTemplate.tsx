@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
 
 interface PageTemplateProps {
   title: string;
   icon: React.ReactNode;
   description?: string;
   children?: React.ReactNode;
-  actions?: React.ReactNode; // Add support for actions prop
+  actions?: React.ReactNode;
 }
 
 const PageTemplate: React.FC<PageTemplateProps> = ({ 
@@ -15,38 +14,36 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
   icon, 
   description = "This page is currently under development.",
   children,
-  actions // Include actions in the destructuring
+  actions
 }) => {
   return (
-    <AppLayout>
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {icon}
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          </div>
-          {actions && (
-            <div className="flex items-center">
-              {actions}
-            </div>
-          )}
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {icon}
+          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         </div>
-        
-        {description && (
-          <p className="text-muted-foreground">{description}</p>
-        )}
-
-        {!children ? (
-          <div className="card">
-            <div className="card-content">
-              <p>{description}</p>
-            </div>
+        {actions && (
+          <div className="flex items-center">
+            {actions}
           </div>
-        ) : (
-          children
         )}
       </div>
-    </AppLayout>
+      
+      {description && (
+        <p className="text-muted-foreground">{description}</p>
+      )}
+
+      {!children ? (
+        <div className="card">
+          <div className="card-content">
+            <p>{description}</p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
+    </div>
   );
 };
 

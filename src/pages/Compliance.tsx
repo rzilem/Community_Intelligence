@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, Filter, Search, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,11 +70,12 @@ const CompliancePage = () => {
   };
 
   return (
-    <PageTemplate
-      title="Compliance"
-      icon={<Shield className="h-8 w-8" />}
-      description="Track and manage community compliance issues and violations."
-    >
+    <AppLayout>
+      <PageTemplate
+        title="Compliance"
+        icon={<Shield className="h-8 w-8" />}
+        description="Track and manage community compliance issues and violations."
+      >
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
@@ -178,7 +180,8 @@ const CompliancePage = () => {
         onOpenChange={setIsDialogOpen}
         issue={selectedCompliance}
       />
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

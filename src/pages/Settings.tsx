@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Settings, User, Bell, Shield, Palette, Smartphone, Globe, Mail } from 'lucide-react';
 import AppearanceTab from '@/components/settings/AppearanceTab';
@@ -49,11 +50,12 @@ const SettingsPage = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Settings" 
-      icon={<Settings className="h-8 w-8" />}
-      description="Configure your account settings and preferences."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Settings" 
+        icon={<Settings className="h-8 w-8" />}
+        description="Configure your account settings and preferences."
+      >
       <Tabs 
         value={activeTab} 
         onValueChange={setActiveTab} 
@@ -291,7 +293,8 @@ const SettingsPage = () => {
           <AppearanceTab />
         </TabsContent>
       </Tabs>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
