@@ -19,6 +19,10 @@ export const recordsReportsRoutes = [
     element: <ReportsPage />
   },
   {
+    path: '/records-reports/data-import-export',
+    element: <DataImportExport />
+  },
+  {
     path: '/data-import-export',
     element: <DataImportExport />
   }

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileSpreadsheet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,11 +42,12 @@ const DataImportExport: React.FC = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Data Import & Export" 
-      icon={<FileSpreadsheet className="h-8 w-8" />}
-      description="Import and export data to and from the system."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Data Import & Export" 
+        icon={<FileSpreadsheet className="h-8 w-8" />}
+        description="Import and export data to and from the system."
+      >
       <Card className="mb-6">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -119,7 +121,8 @@ const DataImportExport: React.FC = () => {
           isImporting={isImporting}
         />
       )}
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
