@@ -46,189 +46,53 @@ serve(async (req) => {
       }
     };
 
-    // Step 2: Analyze file content with AI
+    // Step 2: Analyze file content with AI (with retry logic)
     console.log('Step 2: Analyzing file content with AI...');
-    const analysisPrompt = `
-      You are an AI data analyst for a property management system. Analyze this data and provide a comprehensive import plan.
-
-      CRITICAL: Return ONLY valid JSON without any markdown formatting, code blocks, or explanatory text.
-      
-      File: ${fileName} (${fileType})
-      User Description: ${userDescription || 'No description provided'}
-      
-      Data Preview (first 1000 characters):
-      ${typeof fileContent === 'string' ? fileContent.substring(0, 1000) : JSON.stringify(fileContent).substring(0, 1000)}
-
-      AVAILABLE DATABASE SCHEMA:
-      ${JSON.stringify(schemaInfo.availableTables, null, 2)}
-
-      CRITICAL FIELD ASSIGNMENT RULES:
-      1. HOMEOWNER FIELDS go to 'homeowners' table:
-         - Email, All Emails → 'email' or 'all_emails'
-         - Phone, All Phones → 'phone' or 'all_phones'
-         - Homeowner Name, Full Name → 'full_homeowner_name'
-         - First Name, Last Name → 'first_name', 'last_name'
-         - Mailing Address → 'mailing_address'
-         - ACH Start Date → 'ach_start_date'
-         - Last Payment Date → 'last_payment_date'
-         - Last Payment Amount → 'last_payment_amount'
-         - Collection Status → 'collection_status'
-         - Tags → 'tags'
-         - Current Balance (homeowner) → 'current_balance'
-
-      2. PROPERTY FIELDS go to 'properties' table:
-         - Property Address, Address → 'address'
-         - Account Number, Account # → 'account_number'
-         - Unit Number → 'unit_number'
-         - Square Footage → 'square_footage'
-         - Property Type → 'property_type'
-         - Current Balance (property) → 'current_balance'
-
-      3. RESIDENT FIELDS go to 'residents' table:
-         - Emergency Contact → 'emergency_contact'
-         - Move In Date → 'move_in_date'
-         - Move Out Date → 'move_out_date'
-
-       4. GENERAL REQUIREMENTS:
-          - Use "current_balance" not "account_balance" for balance fields
-          - Only suggest target tables that exist: properties, homeowners, residents, assessments
-          - Map account numbers to "account_number" field
-          - Include association_id only for tables that need it (properties, residents, assessments)
-          - homeowners table does NOT have association_id field
-
-      5. MULTI-TABLE DATA HANDLING:
-         - If data contains both homeowner and property info, use BOTH tables
-         - Create relationships between tables using account_number
-         - Distribute fields logically based on their semantic meaning
-
-      RESPONSE FORMAT: Return ONLY the JSON object below with actual analysis results. NO markdown, NO code blocks, NO explanatory text:
-
-      {
-        "dataType": "properties|residents|financial|maintenance|compliance|mixed",
-        "confidence": 95,
-        "targetTables": ["properties", "homeowners"],
-        "fieldMappings": {
-          "Email": "email",
-          "Property Address": "address",
-          "Homeowner": "full_homeowner_name",
-          "Balance": "current_balance",
-          "ACH Start Date": "ach_start_date"
-        },
-        "tableAssignments": {
-          "properties": ["Property Address", "Account #", "Balance"],
-          "homeowners": ["Email", "Homeowner", "ACH Start Date", "Last Payment Date"]
-        },
-        "dataQuality": {
-          "issues": ["Missing phone numbers in 3 rows"],
-          "warnings": ["Inconsistent date formats"],
-          "suggestions": ["Standardize phone format"]
-        },
-        "transformations": [
-          {
-            "field": "phone",
-            "action": "format_phone",
-            "description": "Standardize phone numbers"
-          }
-        ],
-        "requiredFields": ["address"],
-        "missingFields": [],
-        "suggestedDefaults": {
-          "property_type": "residential",
-          "status": "active"
-        },
-        "relationships": [
-          {
-            "type": "property_to_homeowner",
-            "description": "Link homeowners to properties via account_number"
-          }
-        ],
-        "summary": "High-quality property data with minor formatting issues"
-      }
-    `;
-
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are an expert data analyst for HOA management systems. CRITICAL: Always respond with ONLY valid JSON matching the exact structure requested. Never include markdown formatting, code blocks, or explanatory text. Return only the JSON object.' },
-          { role: 'user', content: analysisPrompt }
-        ],
-        temperature: 0.1,
-        max_tokens: 3000,
-      }),
-    });
-
-    const aiData = await aiResponse.json();
-    let analysisResult;
     
-    try {
-      let responseContent = aiData.choices[0].message.content;
-      console.log('Raw AI response:', responseContent);
+    // Preprocess data for better AI analysis
+    const preprocessedData = await preprocessDataForAI(fileContent, fileName, fileType);
+    
+    let analysisResult;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      console.log(`AI Analysis attempt ${attempts}/${maxAttempts}`);
       
-      // Strip markdown formatting if present
-      responseContent = responseContent.replace(/```json\s*|\s*```/g, '').trim();
-      
-      // Remove any leading/trailing non-JSON content
-      const jsonStart = responseContent.indexOf('{');
-      const jsonEnd = responseContent.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        responseContent = responseContent.substring(jsonStart, jsonEnd + 1);
+      try {
+        const analysisPrompt = createAnalysisPrompt(fileName, fileType, userDescription, preprocessedData, schemaInfo, attempts);
+        const aiResponse = await callOpenAIWithRetry(analysisPrompt, attempts);
+        
+        const extractedResult = extractAndValidateJSON(aiResponse);
+        if (extractedResult.success) {
+          analysisResult = extractedResult.data;
+          console.log('AI Analysis successful on attempt', attempts);
+          break;
+        } else {
+          console.log(`AI Analysis failed on attempt ${attempts}:`, extractedResult.error);
+          if (attempts === maxAttempts) {
+            throw new Error(extractedResult.error);
+          }
+        }
+      } catch (error) {
+        console.log(`AI Analysis error on attempt ${attempts}:`, error);
+        if (attempts === maxAttempts) {
+          // Use intelligent fallback system
+          analysisResult = await createIntelligentFallback(fileContent, fileName, fileType, schemaInfo, error.message);
+          break;
+        }
       }
-      
-      console.log('Cleaned AI response:', responseContent);
-      analysisResult = JSON.parse(responseContent);
-      
-      // Validate required fields
-      if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables)) {
-        throw new Error('Missing or invalid targetTables field');
-      }
-      
-      if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object') {
-        throw new Error('Missing or invalid fieldMappings field');
-      }
-      
-      // Ensure all required fields have defaults
-      analysisResult.dataType = analysisResult.dataType || 'unknown';
-      analysisResult.confidence = analysisResult.confidence || 50;
-      analysisResult.dataQuality = analysisResult.dataQuality || { issues: [], warnings: [], suggestions: [] };
-      analysisResult.transformations = analysisResult.transformations || [];
-      analysisResult.requiredFields = analysisResult.requiredFields || [];
-      analysisResult.missingFields = analysisResult.missingFields || [];
-      analysisResult.suggestedDefaults = analysisResult.suggestedDefaults || {};
-      analysisResult.relationships = analysisResult.relationships || [];
-      analysisResult.summary = analysisResult.summary || 'AI analysis completed';
-      
-    } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      console.error('Original response:', aiData.choices[0].message.content);
-      
-      // Enhanced fallback with better error details
-      analysisResult = {
-        dataType: 'unknown',
-        confidence: 30,
-        targetTables: [],
-        fieldMappings: {},
-        tableAssignments: {},
-        dataQuality: { 
-          issues: [`AI analysis failed: ${parseError.message}`, 'Unable to analyze data structure'], 
-          warnings: ['Manual review required'], 
-          suggestions: ['Try uploading a different file format or provide more sample data'] 
-        },
-        transformations: [],
-        requiredFields: [],
-        missingFields: [],
-        suggestedDefaults: {},
-        relationships: [],
-        summary: 'AI analysis failed, manual review required'
-      };
     }
 
     console.log('AI Analysis Result:', analysisResult);
+    
+    // Validate the analysis result structure
+    const validationErrors = validateAnalysisResult(analysisResult);
+    if (validationErrors.length > 0) {
+      console.log('Analysis validation errors:', validationErrors);
+      analysisResult.dataQuality.issues.push(...validationErrors);
+    }
 
     // Step 3: Validate field mappings against database schema with intelligent table assignment
     console.log('Step 3: Validating field mappings against database schema...');
@@ -413,3 +277,335 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper functions for robust AI analysis
+
+async function preprocessDataForAI(fileContent: any, fileName: string, fileType: string): Promise<string> {
+  try {
+    let preview = '';
+    
+    if (typeof fileContent === 'string') {
+      // For CSV/text files, take first 5 lines + sample from middle
+      const lines = fileContent.split('\n');
+      const headerLines = lines.slice(0, 3);
+      const sampleLines = lines.slice(Math.floor(lines.length / 2), Math.floor(lines.length / 2) + 2);
+      preview = [...headerLines, '...', ...sampleLines].join('\n');
+    } else if (Array.isArray(fileContent)) {
+      // For array data, take first 3 items with full structure
+      const sampleItems = fileContent.slice(0, 3);
+      preview = JSON.stringify(sampleItems, null, 2);
+    } else {
+      preview = JSON.stringify(fileContent, null, 2);
+    }
+    
+    // Limit preview size to avoid token limits
+    return preview.substring(0, 2000);
+  } catch (error) {
+    console.error('Error preprocessing data:', error);
+    return 'Error preprocessing data for AI analysis';
+  }
+}
+
+function createAnalysisPrompt(fileName: string, fileType: string, userDescription: string, preprocessedData: string, schemaInfo: any, attempt: number): string {
+  // Simplify prompt based on attempt number
+  const basePrompt = `CRITICAL: Return ONLY valid JSON. NO markdown, NO explanations, NO code blocks.
+
+File: ${fileName} (${fileType})
+${userDescription ? `Description: ${userDescription}` : ''}
+
+Data Sample:
+${preprocessedData}
+
+Available Tables:
+- properties: ${schemaInfo.availableTables.properties.columns.slice(0, 10).join(', ')}...
+- homeowners: ${schemaInfo.availableTables.homeowners.columns.slice(0, 10).join(', ')}...
+- residents: ${schemaInfo.availableTables.residents.columns.slice(0, 10).join(', ')}...
+- assessments: ${schemaInfo.availableTables.assessments.columns.slice(0, 10).join(', ')}...
+
+Required JSON Response:
+{
+  "dataType": "properties|residents|financial|mixed",
+  "confidence": 85,
+  "targetTables": ["properties"],
+  "fieldMappings": {"sourceField": "targetField"},
+  "tableAssignments": {"properties": ["sourceField1"]},
+  "dataQuality": {"issues": [], "warnings": [], "suggestions": []},
+  "transformations": [],
+  "requiredFields": [],
+  "missingFields": [],
+  "suggestedDefaults": {},
+  "relationships": [],
+  "summary": "Analysis complete"
+}`;
+  
+  if (attempt === 1) {
+    return basePrompt;
+  } else if (attempt === 2) {
+    return `${basePrompt}\n\nSIMPLIFIED: Focus on basic field mapping. Return minimal valid JSON.`;
+  } else {
+    return `Return ONLY this JSON structure with your analysis:
+{"dataType":"mixed","confidence":60,"targetTables":["properties"],"fieldMappings":{},"tableAssignments":{},"dataQuality":{"issues":[],"warnings":[],"suggestions":[]},"transformations":[],"requiredFields":[],"missingFields":[],"suggestedDefaults":{},"relationships":[],"summary":"Basic analysis"}`;
+  }
+}
+
+async function callOpenAIWithRetry(prompt: string, attempt: number): Promise<any> {
+  const temperature = attempt === 1 ? 0.1 : attempt === 2 ? 0.05 : 0.01;
+  const maxTokens = attempt === 1 ? 3000 : attempt === 2 ? 2000 : 1000;
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are a data analyst. CRITICAL: Respond with ONLY valid JSON. No markdown, no explanations, no code blocks. Just the JSON object.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+  }
+  
+  return await response.json();
+}
+
+function extractAndValidateJSON(aiResponse: any): { success: boolean; data?: any; error?: string } {
+  try {
+    if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+      return { success: false, error: 'Invalid OpenAI response structure' };
+    }
+    
+    let content = aiResponse.choices[0].message.content;
+    console.log('Raw AI response:', content);
+    
+    // Multiple strategies for JSON extraction
+    const strategies = [
+      // Strategy 1: Remove markdown code blocks
+      (text: string) => text.replace(/```json\s*|\s*```/g, '').trim(),
+      
+      // Strategy 2: Extract content between first { and last }
+      (text: string) => {
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        return start !== -1 && end !== -1 ? text.substring(start, end + 1) : text;
+      },
+      
+      // Strategy 3: Remove all non-JSON content before/after
+      (text: string) => {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        return jsonMatch ? jsonMatch[0] : text;
+      },
+      
+      // Strategy 4: Clean common formatting issues
+      (text: string) => text
+        .replace(/^\s*```[\w]*\s*|\s*```\s*$/g, '')
+        .replace(/^[^{]*(\{)/g, '$1')
+        .replace(/(\})[^}]*$/g, '$1')
+        .trim()
+    ];
+    
+    for (const strategy of strategies) {
+      try {
+        const cleaned = strategy(content);
+        console.log('Trying strategy, cleaned:', cleaned.substring(0, 200));
+        
+        const parsed = JSON.parse(cleaned);
+        
+        // Validate required fields
+        if (!parsed.targetTables || !Array.isArray(parsed.targetTables)) {
+          continue;
+        }
+        
+        if (!parsed.fieldMappings || typeof parsed.fieldMappings !== 'object') {
+          continue;
+        }
+        
+        // Success! Apply defaults
+        parsed.dataType = parsed.dataType || 'unknown';
+        parsed.confidence = parsed.confidence || 50;
+        parsed.dataQuality = parsed.dataQuality || { issues: [], warnings: [], suggestions: [] };
+        parsed.transformations = parsed.transformations || [];
+        parsed.requiredFields = parsed.requiredFields || [];
+        parsed.missingFields = parsed.missingFields || [];
+        parsed.suggestedDefaults = parsed.suggestedDefaults || {};
+        parsed.relationships = parsed.relationships || [];
+        parsed.summary = parsed.summary || 'AI analysis completed';
+        parsed.tableAssignments = parsed.tableAssignments || {};
+        
+        return { success: true, data: parsed };
+      } catch (error) {
+        console.log('Strategy failed:', error.message);
+        continue;
+      }
+    }
+    
+    return { success: false, error: 'Failed to extract valid JSON from AI response' };
+  } catch (error) {
+    return { success: false, error: `JSON extraction failed: ${error.message}` };
+  }
+}
+
+async function createIntelligentFallback(fileContent: any, fileName: string, fileType: string, schemaInfo: any, originalError: string): Promise<any> {
+  console.log('Creating intelligent fallback analysis...');
+  
+  const fallbackResult = {
+    dataType: 'mixed',
+    confidence: 40,
+    targetTables: [] as string[],
+    fieldMappings: {} as Record<string, string>,
+    tableAssignments: {} as Record<string, string[]>,
+    dataQuality: {
+      issues: [`AI analysis failed: ${originalError}`, 'Using fallback pattern matching'],
+      warnings: ['Manual review recommended'],
+      suggestions: ['Verify field mappings before import']
+    },
+    transformations: [],
+    requiredFields: [],
+    missingFields: [],
+    suggestedDefaults: {},
+    relationships: [],
+    summary: 'Fallback analysis - manual review required'
+  };
+  
+  try {
+    // Extract column names from data
+    let columns: string[] = [];
+    
+    if (Array.isArray(fileContent) && fileContent.length > 0) {
+      columns = Object.keys(fileContent[0] || {});
+    } else if (typeof fileContent === 'string') {
+      const lines = fileContent.split('\n');
+      if (lines.length > 0) {
+        columns = lines[0].split(',').map(col => col.trim().replace(/"/g, ''));
+      }
+    }
+    
+    // Intelligent pattern matching
+    const patterns = {
+      properties: ['address', 'property', 'unit', 'account', 'balance', 'square'],
+      homeowners: ['homeowner', 'owner', 'name', 'email', 'phone', 'mailing'],
+      residents: ['resident', 'tenant', 'move', 'emergency', 'contact'],
+      assessments: ['assessment', 'amount', 'due', 'payment', 'fee']
+    };
+    
+    // Determine likely target tables
+    const tableScores = {} as Record<string, number>;
+    
+    for (const [table, keywords] of Object.entries(patterns)) {
+      tableScores[table] = 0;
+      for (const column of columns) {
+        const columnLower = column.toLowerCase();
+        for (const keyword of keywords) {
+          if (columnLower.includes(keyword)) {
+            tableScores[table] += 1;
+          }
+        }
+      }
+    }
+    
+    // Select tables with highest scores
+    const sortedTables = Object.entries(tableScores)
+      .filter(([_, score]) => score > 0)
+      .sort(([_, a], [__, b]) => b - a)
+      .map(([table, _]) => table);
+    
+    fallbackResult.targetTables = sortedTables.slice(0, 2);
+    
+    // Create basic field mappings
+    const availableFields = Object.values(schemaInfo.availableTables).flatMap((table: any) => table.columns);
+    
+    for (const column of columns) {
+      const columnLower = column.toLowerCase().replace(/\s+/g, '_');
+      
+      // Direct match
+      const exactMatch = availableFields.find((field: string) => field.toLowerCase() === columnLower);
+      if (exactMatch) {
+        fallbackResult.fieldMappings[column] = exactMatch;
+        continue;
+      }
+      
+      // Partial match
+      const partialMatch = availableFields.find((field: string) => 
+        field.toLowerCase().includes(columnLower) || columnLower.includes(field.toLowerCase())
+      );
+      if (partialMatch) {
+        fallbackResult.fieldMappings[column] = partialMatch;
+        continue;
+      }
+      
+      // Common mappings
+      const commonMappings = {
+        'email': 'email',
+        'phone': 'phone',
+        'address': 'address',
+        'name': 'full_homeowner_name',
+        'balance': 'current_balance',
+        'account': 'account_number',
+        'unit': 'unit_number',
+        'amount': 'amount'
+      };
+      
+      for (const [pattern, target] of Object.entries(commonMappings)) {
+        if (columnLower.includes(pattern) && availableFields.includes(target)) {
+          fallbackResult.fieldMappings[column] = target;
+          break;
+        }
+      }
+    }
+    
+    // Create table assignments
+    for (const table of fallbackResult.targetTables) {
+      fallbackResult.tableAssignments[table] = [];
+      const tableColumns = schemaInfo.availableTables[table]?.columns || [];
+      
+      for (const [sourceField, targetField] of Object.entries(fallbackResult.fieldMappings)) {
+        if (tableColumns.includes(targetField)) {
+          fallbackResult.tableAssignments[table].push(sourceField);
+        }
+      }
+    }
+    
+    // Improve confidence based on matches
+    const mappingCount = Object.keys(fallbackResult.fieldMappings).length;
+    if (mappingCount > 0) {
+      fallbackResult.confidence = Math.min(70, 40 + (mappingCount * 5));
+    }
+    
+  } catch (error) {
+    console.error('Fallback analysis error:', error);
+    fallbackResult.dataQuality.issues.push(`Fallback analysis error: ${error.message}`);
+  }
+  
+  return fallbackResult;
+}
+
+function validateAnalysisResult(result: any): string[] {
+  const errors: string[] = [];
+  
+  if (!result.targetTables || !Array.isArray(result.targetTables) || result.targetTables.length === 0) {
+    errors.push('No target tables specified');
+  }
+  
+  if (!result.fieldMappings || typeof result.fieldMappings !== 'object' || Object.keys(result.fieldMappings).length === 0) {
+    errors.push('No field mappings specified');
+  }
+  
+  if (result.confidence < 30) {
+    errors.push('Analysis confidence too low');
+  }
+  
+  const validTables = ['properties', 'homeowners', 'residents', 'assessments'];
+  const invalidTables = result.targetTables?.filter((table: string) => !validTables.includes(table)) || [];
+  if (invalidTables.length > 0) {
+    errors.push(`Invalid target tables: ${invalidTables.join(', ')}`);
+  }
+  
+  return errors;
+}

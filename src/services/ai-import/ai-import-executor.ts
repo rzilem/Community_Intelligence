@@ -403,19 +403,36 @@ export class AIImportExecutor {
   }
 
   /**
-   * Validate analysis result before processing
+   * Enhanced validation for analysis result before processing
    */
   private validateAnalysisResult(analysisResult: AIAnalysisResult): string[] {
     const errors: string[] = [];
     
-    // Check if we have valid target tables
-    if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables) || analysisResult.targetTables.length === 0) {
-      errors.push('No target tables specified in analysis result. Expected at least one table from: properties, homeowners, residents, assessments');
+    // Basic structure validation
+    if (!analysisResult) {
+      errors.push('Analysis result is null or undefined');
+      return errors;
     }
     
-    // Check if we have field mappings
-    if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object' || Object.keys(analysisResult.fieldMappings).length === 0) {
-      errors.push('No field mappings specified in analysis result. Expected object with source->target field mappings');
+    // Target tables validation
+    if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables)) {
+      errors.push('Missing or invalid targetTables array in analysis result');
+    } else if (analysisResult.targetTables.length === 0) {
+      errors.push('No target tables specified. Expected at least one table from: properties, homeowners, residents, assessments');
+    }
+    
+    // Field mappings validation
+    if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object') {
+      errors.push('Missing or invalid fieldMappings object in analysis result');
+    } else if (Object.keys(analysisResult.fieldMappings).length === 0) {
+      errors.push('No field mappings specified. Expected object with source->target field mappings');
+    }
+    
+    // Confidence validation
+    if (typeof analysisResult.confidence !== 'number' || analysisResult.confidence < 0 || analysisResult.confidence > 100) {
+      errors.push('Invalid confidence score - expected number between 0 and 100');
+    } else if (analysisResult.confidence < 30) {
+      errors.push('Analysis confidence too low (< 30%). Data may be incompatible with system schema');
     }
     
     // Validate that all target tables are supported
@@ -426,16 +443,11 @@ export class AIImportExecutor {
     }
     
     // Check for validation errors in the analysis result
-    if (analysisResult.validation && Object.keys(analysisResult.validation.invalidMappings).length > 0) {
+    if (analysisResult.validation && analysisResult.validation.invalidMappings && Object.keys(analysisResult.validation.invalidMappings).length > 0) {
       const invalidMappings = Object.entries(analysisResult.validation.invalidMappings)
         .map(([field, error]) => `${field}: ${error.reason}`)
         .join(', ');
       errors.push(`Invalid field mappings detected: ${invalidMappings}`);
-    }
-    
-    // Additional validation for required analysis fields
-    if (analysisResult.confidence < 30) {
-      errors.push('Analysis confidence too low (< 30%). Data may be incompatible with system schema');
     }
     
     // Validate table assignments if present
@@ -444,6 +456,22 @@ export class AIImportExecutor {
         .filter(([table, fields]) => !supportedTables.includes(table));
       if (invalidAssignments.length > 0) {
         errors.push(`Invalid table assignments: ${invalidAssignments.map(([table]) => table).join(', ')}`);
+      }
+    }
+    
+    // Data quality validation
+    if (analysisResult.dataQuality && analysisResult.dataQuality.issues && analysisResult.dataQuality.issues.length > 0) {
+      // Don't add as errors, but log them
+      console.log('Data quality issues found:', analysisResult.dataQuality.issues);
+    }
+    
+    // Field mappings cross-validation
+    if (analysisResult.fieldMappings && analysisResult.targetTables) {
+      const mappingCount = Object.keys(analysisResult.fieldMappings).length;
+      const minExpectedMappings = 1;
+      
+      if (mappingCount < minExpectedMappings) {
+        errors.push(`Insufficient field mappings: found ${mappingCount}, expected at least ${minExpectedMappings}`);
       }
     }
     
