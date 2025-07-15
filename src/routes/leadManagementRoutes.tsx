@@ -23,6 +23,10 @@ export const leadManagementRoutes: RouteObject[] = [
     element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadManagement /></RequireAuth>
   },
   {
+    path: "/lead-management/leads",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadsDashboard /></RequireAuth>
+  },
+  {
     path: "/lead-management/dashboard",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadsDashboard /></RequireAuth>
   },
