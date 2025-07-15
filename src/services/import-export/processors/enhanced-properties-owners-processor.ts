@@ -3,6 +3,7 @@ import { TransactionManager, TransactionContext } from '../transaction-manager';
 import { EnhancedErrorHandler, ImportError } from '../enhanced-error-handler';
 import { jobService } from '../job-service';
 import { devLog } from '@/utils/dev-logger';
+import { supabase } from '@/integrations/supabase/client';
 
 export const enhancedPropertiesOwnersProcessor = {
   process: async (jobId: string, associationId: string, processedData: Record<string, any>[]) => {
@@ -30,7 +31,18 @@ export const enhancedPropertiesOwnersProcessor = {
                 throw new Error('Property address is required');
               }
 
-              // Create property with enhanced error handling
+              // Generate account number if not provided
+              let accountNumber = record.account_number || record.account || null;
+              if (!accountNumber) {
+                // Generate a unique account number based on address
+                const addressPart = (record.address || record.property_address || record.street_address)
+                  .replace(/[^\w]/g, '')
+                  .substring(0, 6)
+                  .toUpperCase();
+                accountNumber = `${addressPart}${Date.now().toString().slice(-4)}`;
+              }
+
+              // Create property with enhanced error handling and account number
               const propertyData = {
                 association_id: associationId,
                 address: record.address || record.property_address || record.street_address,
@@ -40,11 +52,12 @@ export const enhancedPropertiesOwnersProcessor = {
                 bedrooms: record.bedrooms ? parseInt(record.bedrooms) : null,
                 bathrooms: record.bathrooms ? parseFloat(record.bathrooms) : null,
                 year_built: record.year_built ? parseInt(record.year_built) : null,
-                lot_size: record.lot_size ? parseFloat(record.lot_size) : null
+                lot_size: record.lot_size ? parseFloat(record.lot_size) : null,
+                account_number: accountNumber
               };
 
               const property = await transactionManager.trackedInsert(context, 'properties', propertyData);
-              devLog.info(`Created property: ${property.id} - ${propertyData.address}`);
+              devLog.info(`Created property: ${property.id} - ${propertyData.address} (Account: ${accountNumber})`);
 
               // Create owner/resident if owner data exists
               if (record.first_name || record.last_name || record.owner_name) {
@@ -75,14 +88,25 @@ export const enhancedPropertiesOwnersProcessor = {
 
               successfulImports++;
               
+              details.push({
+                status: 'success',
+                message: `Created property: ${property.address} (Account: ${accountNumber})`
+              });
+              
             } catch (recordError) {
               const error = EnhancedErrorHandler.handleError(recordError, `Record processing`);
               errors.push(error);
               failedImports++;
               
+              // Enhanced error message for duplicate key violations
+              let errorMessage = error.message;
+              if (error.message.includes('properties_account_number_key')) {
+                errorMessage = `Property with account number "${record.account_number || record.account || 'auto-generated'}" already exists. Please use unique account numbers or remove duplicates.`;
+              }
+              
               details.push({
                 status: 'error',
-                message: `Failed to import record (${record.address || 'Unknown address'}): ${error.message}`
+                message: `Failed to import record (${record.address || record.property_address || record.street_address || 'Unknown address'}): ${errorMessage}`
               });
             }
           }
