@@ -11,6 +11,7 @@ import PrintQueue from '@/pages/operations/PrintQueue';
 import OperationsReports from '@/pages/operations/OperationsReports';
 import VendorsAdvanced from '@/pages/operations/VendorsAdvanced';
 import MaintenanceRequests from '@/pages/operations/MaintenanceRequests';
+import WorkOrders from '@/pages/operations/WorkOrders';
 
 export const operationsRoutes = [
   {
@@ -44,6 +45,10 @@ export const operationsRoutes = [
   {
     path: '/operations/workflows',
     element: <Workflows />
+  },
+  {
+    path: '/operations/work-orders',
+    element: <WorkOrders />
   },
   {
     path: '/operations/workflows/:id',
