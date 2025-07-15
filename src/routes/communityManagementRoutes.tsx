@@ -11,6 +11,11 @@ import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 
 // Community Management Routes
 export const communityManagementRoutes: RouteObject[] = [
+  // Redirect routes for legacy paths
+  {
+    path: "/bid-requests",
+    element: <RequireAuth><BidRequests /></RequireAuth>
+  },
   {
     path: "/associations",
     element: <RequireAuth><Associations /></RequireAuth>
