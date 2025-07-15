@@ -12810,6 +12810,10 @@ export type Database = {
           bounce_rate: number
         }[]
       }
+      check_association_admin: {
+        Args: { association_uuid: string }
+        Returns: boolean
+      }
       check_totp_status: {
         Args: { p_user_id: string }
         Returns: Json
