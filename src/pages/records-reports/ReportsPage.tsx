@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileBarChart, RefreshCw, CalendarIcon, Building, ChevronDown, ArrowRight, Clock, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,11 +73,12 @@ const ReportsPage = () => {
   const [showReportMenu, setShowReportMenu] = useState(false);
   
   return (
-    <PageTemplate 
-      title="Reports" 
-      icon={<FileBarChart className="h-8 w-8" />}
-      description="Generate, view, and manage association reports"
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Reports" 
+        icon={<FileBarChart className="h-8 w-8" />}
+        description="Generate, view, and manage association reports"
+      >
       <div className="flex flex-col space-y-6">
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -299,7 +301,8 @@ const ReportsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
