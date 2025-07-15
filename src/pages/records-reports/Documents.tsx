@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus } from 'lucide-react';
 import { useResponsive } from '@/hooks/use-responsive';
@@ -131,11 +132,12 @@ const Documents = () => {
     : documents || [];
   
   return (
-    <PageTemplate 
-      title="Documents" 
-      icon={<FileText className="h-8 w-8" />}
-      description="Access and manage community documents and files."
-      actions={
+    <AppLayout>
+      <PageTemplate 
+        title="Documents" 
+        icon={<FileText className="h-8 w-8" />}
+        description="Access and manage community documents and files."
+        actions={
         <Button 
           size="sm"
           onClick={() => setIsUploadDialogOpen(true)}
@@ -201,7 +203,8 @@ const Documents = () => {
           />
         </div>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
