@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { mlTrainingEngine, MLTrainingJob, MLModelPerformance, TrainingDataset } from '@/services/ml/training';
 import { useToast } from '@/hooks/use-toast';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface MLTrainingDashboardProps {
   associationId: string;
@@ -122,22 +124,19 @@ const MLTrainingDashboard: React.FC<MLTrainingDashboardProps> = ({ associationId
   const failedJobs = trainingJobs.filter(job => job.job_status === 'failed');
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-8 w-8 text-purple-500" />
-            ML Training Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor and manage machine learning model training jobs
-          </p>
-        </div>
-        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-          <Activity className="h-3 w-3 mr-1" />
-          {runningJobs.length} Active
-        </Badge>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="ML Training Dashboard"
+        icon={<Brain className="h-8 w-8 text-purple-500" />}
+        description="Monitor and manage machine learning model training jobs"
+        actions={
+          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+            <Activity className="h-3 w-3 mr-1" />
+            {runningJobs.length} Active
+          </Badge>
+        }
+      >
+        <div className="space-y-6">
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -484,7 +483,9 @@ const MLTrainingDashboard: React.FC<MLTrainingDashboardProps> = ({ associationId
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

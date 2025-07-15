@@ -25,6 +25,8 @@ import {
 import { usePWA } from '@/hooks/usePWA';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/use-toast';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface MobilePWAManagementProps {
   associationId: string;
@@ -149,29 +151,34 @@ const MobilePWAManagement: React.FC<MobilePWAManagementProps> = ({ associationId
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Mobile PWA Management</h1>
-        <div className="flex items-center gap-2">
-          {isOnline ? (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <Wifi className="h-4 w-4 mr-1" />
-              Online
-            </Badge>
-          ) : (
-            <Badge variant="destructive">
-              <WifiOff className="h-4 w-4 mr-1" />
-              Offline
-            </Badge>
-          )}
-          {isInstalled && (
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Installed
-            </Badge>
-          )}
-        </div>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="Mobile PWA Management"
+        icon={<Smartphone className="h-8 w-8 text-blue-500" />}
+        description="Manage Progressive Web App features and settings"
+        actions={
+          <div className="flex items-center gap-2">
+            {isOnline ? (
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Wifi className="h-4 w-4 mr-1" />
+                Online
+              </Badge>
+            ) : (
+              <Badge variant="destructive">
+                <WifiOff className="h-4 w-4 mr-1" />
+                Offline
+              </Badge>
+            )}
+            {isInstalled && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Installed
+              </Badge>
+            )}
+          </div>
+        }
+      >
+        <div className="space-y-6">
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -532,7 +539,9 @@ const MobilePWAManagement: React.FC<MobilePWAManagementProps> = ({ associationId
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

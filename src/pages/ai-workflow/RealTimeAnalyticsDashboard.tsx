@@ -26,6 +26,8 @@ import {
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell } from 'recharts';
 import { analyticsEngine } from '@/services/analytics/realtime';
 import { devLog } from '@/utils/dev-logger';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface RealTimeMetric {
   id: string;
@@ -269,19 +271,12 @@ const RealTimeAnalyticsDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Real-Time Analytics
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Live monitoring and performance insights
-            </p>
-          </div>
-          
+    <AppLayout>
+      <PageTemplate
+        title="Real-Time Analytics"
+        icon={<Activity className="h-8 w-8 text-blue-500" />}
+        description="Live monitoring and performance insights"
+        actions={
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {connectionStatus === 'connected' && <Wifi className="h-4 w-4 text-green-500" />}
@@ -303,7 +298,9 @@ const RealTimeAnalyticsDashboard: React.FC = () => {
               {isStreaming ? 'Stop' : 'Start'} Streaming
             </Button>
           </div>
-        </div>
+        }
+      >
+        <div className="space-y-6">
 
         {/* Connection Status */}
         <Card className="border-l-4 border-l-blue-500">
@@ -481,8 +478,9 @@ const RealTimeAnalyticsDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

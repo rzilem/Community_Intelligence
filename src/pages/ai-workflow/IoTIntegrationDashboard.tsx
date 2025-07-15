@@ -21,6 +21,8 @@ import {
   Gauge
 } from 'lucide-react';
 import { iotIntegrationEngine } from '@/services/iot/integration';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface IoTDevice {
   id: string;
@@ -163,14 +165,19 @@ const IoTIntegrationDashboard: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">IoT Integration Dashboard</h1>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Device
-        </Button>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="IoT Integration Dashboard"
+        icon={<Wifi className="h-8 w-8 text-blue-500" />}
+        description="Manage and monitor IoT devices and sensors"
+        actions={
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Device
+          </Button>
+        }
+      >
+        <div className="space-y-6">
 
       {/* Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -520,7 +527,9 @@ const IoTIntegrationDashboard: React.FC = () => {
           </Card>
         </div>
       )}
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

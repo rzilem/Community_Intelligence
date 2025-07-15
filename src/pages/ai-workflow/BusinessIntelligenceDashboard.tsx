@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Cell, Pie } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface BusinessIntelligenceDashboardProps {
   associationId: string;
@@ -290,30 +292,32 @@ const BusinessIntelligenceDashboard: React.FC<BusinessIntelligenceDashboardProps
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Business Intelligence</h1>
-          <p className="text-muted-foreground">Executive dashboard with key performance indicators</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last7days">Last 7 days</SelectItem>
-              <SelectItem value="last30days">Last 30 days</SelectItem>
-              <SelectItem value="last90days">Last 90 days</SelectItem>
-              <SelectItem value="last12months">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={exportReport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-        </div>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="Business Intelligence"
+        icon={<BarChart3 className="h-8 w-8 text-purple-500" />}
+        description="Executive dashboard with key performance indicators"
+        actions={
+          <div className="flex items-center gap-4">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="last7days">Last 7 days</SelectItem>
+                <SelectItem value="last30days">Last 30 days</SelectItem>
+                <SelectItem value="last90days">Last 90 days</SelectItem>
+                <SelectItem value="last12months">Last 12 months</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={exportReport} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -665,7 +669,9 @@ const BusinessIntelligenceDashboard: React.FC<BusinessIntelligenceDashboardProps
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

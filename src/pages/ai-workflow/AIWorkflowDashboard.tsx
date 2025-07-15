@@ -16,6 +16,8 @@ import {
 import IntelligentWorkflowDesigner from '@/components/ai-workflow/IntelligentWorkflowDesigner';
 import PredictiveAnalyticsDashboard from '@/components/ai-workflow/PredictiveAnalyticsDashboard';
 import DuplicateDetectionDashboard from '@/components/data-import/DuplicateDetectionDashboard';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 
 interface AIWorkflowDashboardProps {
   associationId: string;
@@ -25,22 +27,19 @@ const AIWorkflowDashboard: React.FC<AIWorkflowDashboardProps> = ({ associationId
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-8 w-8 text-purple-500" />
-            AI Workflow Automation & Intelligence
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Harness the power of AI to automate workflows, predict outcomes, and optimize operations
-          </p>
-        </div>
-        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-          <Zap className="h-3 w-3 mr-1" />
-          AI-Powered
-        </Badge>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="AI Workflow Automation & Intelligence"
+        icon={<Brain className="h-8 w-8 text-purple-500" />}
+        description="Harness the power of AI to automate workflows, predict outcomes, and optimize operations"
+        actions={
+          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+            <Zap className="h-3 w-3 mr-1" />
+            AI-Powered
+          </Badge>
+        }
+      >
+        <div className="space-y-6">
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
@@ -455,7 +454,9 @@ const AIWorkflowDashboard: React.FC<AIWorkflowDashboardProps> = ({ associationId
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
