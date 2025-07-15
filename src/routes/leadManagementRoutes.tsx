@@ -15,6 +15,10 @@ import ClientPortal from "@/pages/ClientPortal";
 // Lead Management Routes
 export const leadManagementRoutes: RouteObject[] = [
   {
+    path: "/leads",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadsDashboard /></RequireAuth>
+  },
+  {
     path: "/lead-management",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadManagement /></RequireAuth>
   },
