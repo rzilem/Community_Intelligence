@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { Receipt } from 'lucide-react';
 import { useInvoiceDetail } from '@/hooks/invoices/useInvoiceDetail';
 import { InvoiceErrorAlert } from '@/components/invoices/detail/InvoiceErrorAlert';
@@ -75,36 +76,38 @@ const InvoiceDetail = () => {
   };
 
   return (
-    <PageTemplate 
-      title={isNewInvoice ? 'New Invoice' : `Invoice #${id}`}
-      icon={<Receipt className="h-8 w-8" />}
-      description="Process and code invoice for payment."
-    >
-      <div className="mt-6 space-y-4">
-        <InvoiceErrorAlert error={previewError} />
-        
-        <InvoiceNavigationManager 
-          isNewInvoice={isNewInvoice}
-          allInvoices={allInvoices}
-          isLoadingAllInvoices={isLoadingAllInvoices}
-          currentId={id || ''}
-          onNavigate={handleNavigate}
-        />
+    <AppLayout>
+      <PageTemplate 
+        title={isNewInvoice ? 'New Invoice' : `Invoice #${id}`}
+        icon={<Receipt className="h-8 w-8" />}
+        description="Process and code invoice for payment."
+      >
+        <div className="mt-6 space-y-4">
+          <InvoiceErrorAlert error={previewError} />
+          
+          <InvoiceNavigationManager 
+            isNewInvoice={isNewInvoice}
+            allInvoices={allInvoices}
+            isLoadingAllInvoices={isLoadingAllInvoices}
+            currentId={id || ''}
+            onNavigate={handleNavigate}
+          />
 
-        <InvoiceDetailContent 
-          invoice={invoice}
-          lines={lines}
-          setLines={setLines}
-          handleInvoiceChange={handleInvoiceChange}
-          lineTotal={lineTotal}
-          isBalanced={isBalanced}
-          showPreview={true}
-          handleSave={handleSave}
-          handleApprove={handleApprove}
-          isSaving={isSaving}
-        />
-      </div>
-    </PageTemplate>
+          <InvoiceDetailContent 
+            invoice={invoice}
+            lines={lines}
+            setLines={setLines}
+            handleInvoiceChange={handleInvoiceChange}
+            lineTotal={lineTotal}
+            isBalanced={isBalanced}
+            showPreview={true}
+            handleSave={handleSave}
+            handleApprove={handleApprove}
+            isSaving={isSaving}
+          />
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

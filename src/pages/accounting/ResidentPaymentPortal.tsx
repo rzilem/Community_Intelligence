@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -213,11 +214,12 @@ const ResidentPaymentPortal = () => {
   };
 
   return (
-    <PageTemplate
-      title="Payment Portal"
-      description="Manage your payment methods, view payment history, and set up auto-pay"
-      icon={<Wallet className="h-8 w-8" />}
-    >
+    <AppLayout>
+      <PageTemplate
+        title="Payment Portal"
+        description="Manage your payment methods, view payment history, and set up auto-pay"
+        icon={<Wallet className="h-8 w-8" />}
+      >
       <div className="space-y-6">
         <Tabs defaultValue="methods" className="space-y-4">
           <TabsList>
@@ -539,6 +541,7 @@ const ResidentPaymentPortal = () => {
         </Tabs>
       </div>
     </PageTemplate>
+    </AppLayout>
   );
 };
 

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -194,11 +195,12 @@ const FinancialReportMapping = () => {
     ) : [];
 
   return (
-    <PageTemplate 
-      title="Financial Report Mapping" 
-      icon={<FileText className="h-8 w-8" />}
-      description="Map GL codes from financial reports during client transitions"
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Financial Report Mapping" 
+        icon={<FileText className="h-8 w-8" />}
+        description="Map GL codes from financial reports during client transitions"
+      >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
           <Card>
@@ -466,6 +468,7 @@ const FinancialReportMapping = () => {
         </div>
       </div>
     </PageTemplate>
+    </AppLayout>
   );
 };
 

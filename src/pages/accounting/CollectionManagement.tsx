@@ -36,60 +36,68 @@ const CollectionManagement: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Collection Management</h1>
-          <p className="text-muted-foreground">Manage delinquent accounts and collection processes</p>
-        </div>
-        <Button><Plus className="h-4 w-4 mr-2" />New Collection Case</Button>
-      </div>
+    <AppLayout>
+      <PageTemplate 
+        title="Collection Management" 
+        icon={<AlertTriangle className="h-8 w-8" />}
+        description="Manage delinquent accounts and collection processes"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Collection Management</h1>
+              <p className="text-muted-foreground">Manage delinquent accounts and collection processes</p>
+            </div>
+            <Button><Plus className="h-4 w-4 mr-2" />New Collection Case</Button>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-6"><div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-500" /><div><p className="text-sm text-muted-foreground">Open Cases</p><p className="text-2xl font-bold">{cases.filter(c => c.case_status === 'open').length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-green-500" /><div><p className="text-sm text-muted-foreground">Total Owed</p><p className="text-2xl font-bold">{formatCurrency(cases.reduce((sum, c) => sum + (c.current_balance || 0), 0))}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center gap-2"><Calendar className="h-5 w-5 text-blue-500" /><div><p className="text-sm text-muted-foreground">Legal Stage</p><p className="text-2xl font-bold">{cases.filter(c => c.collection_stage === 'legal').length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center gap-2"><FileText className="h-5 w-5 text-purple-500" /><div><p className="text-sm text-muted-foreground">Settled</p><p className="text-2xl font-bold">{cases.filter(c => c.case_status === 'settled').length}</p></div></div></CardContent></Card>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card><CardContent className="p-6"><div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-500" /><div><p className="text-sm text-muted-foreground">Open Cases</p><p className="text-2xl font-bold">{cases.filter(c => c.case_status === 'open').length}</p></div></div></CardContent></Card>
+            <Card><CardContent className="p-6"><div className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-green-500" /><div><p className="text-sm text-muted-foreground">Total Owed</p><p className="text-2xl font-bold">{formatCurrency(cases.reduce((sum, c) => sum + (c.current_balance || 0), 0))}</p></div></div></CardContent></Card>
+            <Card><CardContent className="p-6"><div className="flex items-center gap-2"><Calendar className="h-5 w-5 text-blue-500" /><div><p className="text-sm text-muted-foreground">Legal Stage</p><p className="text-2xl font-bold">{cases.filter(c => c.collection_stage === 'legal').length}</p></div></div></CardContent></Card>
+            <Card><CardContent className="p-6"><div className="flex items-center gap-2"><FileText className="h-5 w-5 text-purple-500" /><div><p className="text-sm text-muted-foreground">Settled</p><p className="text-2xl font-bold">{cases.filter(c => c.case_status === 'settled').length}</p></div></div></CardContent></Card>
+          </div>
 
-      <Card>
-        <CardHeader><CardTitle>Collection Cases</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">Loading collection cases...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Case Number</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Amount Owed</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Stage</TableHead>
-                  <TableHead>Opened Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cases.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No collection cases found.</TableCell></TableRow>
-                ) : (
-                  cases.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-mono">{c.case_number}</TableCell>
-                      <TableCell>Property #{c.property_id.slice(-8)}</TableCell>
-                      <TableCell>{formatCurrency(c.total_amount_owed || 0)}</TableCell>
-                      <TableCell><Badge>{c.case_status}</Badge></TableCell>
-                      <TableCell><Badge variant="outline">{c.collection_stage}</Badge></TableCell>
-                      <TableCell>{new Date(c.opened_date).toLocaleDateString()}</TableCell>
+          <Card>
+            <CardHeader><CardTitle>Collection Cases</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">Loading collection cases...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Case Number</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Amount Owed</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Opened Date</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </TableHeader>
+                  <TableBody>
+                    {cases.length === 0 ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No collection cases found.</TableCell></TableRow>
+                    ) : (
+                      cases.map((c) => (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-mono">{c.case_number}</TableCell>
+                          <TableCell>Property #{c.property_id.slice(-8)}</TableCell>
+                          <TableCell>{formatCurrency(c.total_amount_owed || 0)}</TableCell>
+                          <TableCell><Badge>{c.case_status}</Badge></TableCell>
+                          <TableCell><Badge variant="outline">{c.collection_stage}</Badge></TableCell>
+                          <TableCell>{new Date(c.opened_date).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
