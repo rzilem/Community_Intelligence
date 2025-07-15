@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
+import { aiImportExecutor } from '@/services/ai-import/ai-import-executor';
 
 interface OneClickAIImportProps {
   associationId: string;
@@ -177,25 +178,64 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     setCurrentStep('Starting import...');
 
     try {
-      // This would typically call your existing import service
-      // with the AI-generated mappings and transformations
+      // Parse file content again for import
+      const fileContents: any[] = [];
       
-      setProgress(50);
-      setCurrentStep('Processing data...');
-      
-      // Simulate import process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setProgress(100);
-      setCurrentStep('Import complete!');
-      
-      toast.success('Data imported successfully!');
-      onImportComplete?.(analysisResults);
+      for (const file of files) {
+        setCurrentStep(`Processing ${file.name}...`);
+        const content = await parseFileContent(file);
+        
+        if (Array.isArray(content)) {
+          fileContents.push(...content);
+        } else if (typeof content === 'string') {
+          // Convert CSV string to array
+          const lines = content.split('\n');
+          const headers = lines[0].split(',');
+          const data = lines.slice(1).map(line => {
+            const values = line.split(',');
+            const row: Record<string, string> = {};
+            headers.forEach((header, index) => {
+              row[header.trim()] = values[index]?.trim() || '';
+            });
+            return row;
+          });
+          fileContents.push(...data);
+        }
+      }
+
+      setProgress(30);
+      setCurrentStep('Executing AI-guided import...');
+
+      // Execute the actual import using AI analysis
+      const importResult = await aiImportExecutor.executeImport(
+        analysisResults,
+        fileContents,
+        associationId
+      );
+
+      setProgress(90);
+      setCurrentStep('Finalizing import...');
+
+      if (importResult.success) {
+        setProgress(100);
+        setCurrentStep('Import complete!');
+        
+        toast.success(`Successfully imported ${importResult.importedRecords} records!`);
+        
+        if (importResult.warnings.length > 0) {
+          toast.warning(`Import completed with ${importResult.warnings.length} warnings`);
+        }
+        
+        onImportComplete?.(importResult);
+      } else {
+        throw new Error(`Import failed: ${importResult.errors.join(', ')}`);
+      }
       
       // Reset state
       setFiles([]);
       setUserDescription('');
       setAnalysisResults(null);
+      
     } catch (error) {
       console.error('Import error:', error);
       toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

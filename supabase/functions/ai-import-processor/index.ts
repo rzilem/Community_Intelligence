@@ -89,12 +89,13 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
-          { role: 'system', content: 'You are an expert data analyst for property management systems. Always respond with valid JSON.' },
+          { role: 'system', content: 'You are an expert data analyst for HOA management systems. Always respond with valid JSON matching the exact structure requested.' },
           { role: 'user', content: analysisPrompt }
         ],
-        temperature: 0.1,
+        temperature: 0.2,
+        max_tokens: 2000,
       }),
     });
 

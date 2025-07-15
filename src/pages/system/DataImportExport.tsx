@@ -9,6 +9,7 @@ import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
 import OneClickAIImport from '@/components/data-import/OneClickAIImport';
+import AIImportHistory from '@/components/data-import/AIImportHistory';
 import { useImportState } from '@/hooks/import-export/useImportState';
 
 const DataImportExport: React.FC = () => {
@@ -75,13 +76,17 @@ const DataImportExport: React.FC = () => {
         </TabsList>
 
         <TabsContent value="ai-import">
-          <OneClickAIImport 
-            associationId={selectedAssociationId || ''}
-            onImportComplete={(results) => {
-              console.log('AI Import completed:', results);
-              // Handle completion
-            }}
-          />
+          <div className="space-y-6">
+            <OneClickAIImport 
+              associationId={selectedAssociationId || ''}
+              onImportComplete={(results) => {
+                console.log('AI Import completed:', results);
+                // Refresh history after successful import
+                window.location.reload();
+              }}
+            />
+            <AIImportHistory associationId={selectedAssociationId || ''} />
+          </div>
         </TabsContent>
 
         <TabsContent value="legacy-import">
