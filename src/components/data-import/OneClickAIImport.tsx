@@ -16,13 +16,17 @@ import {
   Sparkles,
   Database,
   FileSpreadsheet,
-  Archive
+  Archive,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
-import { aiImportExecutor } from '@/services/ai-import/ai-import-executor';
+import { aiImportExecutor, type ImportExecutionResult } from '@/services/ai-import/ai-import-executor';
+import { ImportErrorBoundary } from './ImportErrorBoundary';
+import ImportPreviewModal from './ImportPreviewModal';
 
 interface OneClickAIImportProps {
   associationId: string;
@@ -34,6 +38,7 @@ interface AIAnalysisResult {
   confidence: number;
   targetTables: string[];
   fieldMappings: Record<string, string>;
+  tableAssignments?: Record<string, string[]>;
   dataQuality: {
     issues: string[];
     warnings: string[];
@@ -65,6 +70,11 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [importResults, setImportResults] = useState<ImportExecutionResult | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -170,32 +180,29 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     }
   };
 
-  const confirmImport = async () => {
+  const showImportPreview = async () => {
     if (!analysisResults) return;
 
-    setIsImporting(true);
-    setProgress(0);
-    setCurrentStep('Starting import...');
-
     try {
-      // Parse file content again for import
+      setCurrentStep('Preparing preview...');
+      
+      // Parse file content for preview
       const fileContents: any[] = [];
       
       for (const file of files) {
-        setCurrentStep(`Processing ${file.name}...`);
         const content = await parseFileContent(file);
         
         if (Array.isArray(content)) {
           fileContents.push(...content);
         } else if (typeof content === 'string') {
           // Convert CSV string to array
-          const lines = content.split('\n');
-          const headers = lines[0].split(',');
+          const lines = content.split('\n').filter(line => line.trim());
+          const headers = lines[0].split(',').map(h => h.trim());
           const data = lines.slice(1).map(line => {
             const values = line.split(',');
             const row: Record<string, string> = {};
             headers.forEach((header, index) => {
-              row[header.trim()] = values[index]?.trim() || '';
+              row[header] = values[index]?.trim() || '';
             });
             return row;
           });
@@ -203,18 +210,47 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         }
       }
 
+      setPreviewData(fileContents);
+      
+      // Run validation to get errors and warnings
+      const validationResult = await aiImportExecutor.executeImport(
+        analysisResults,
+        fileContents,
+        associationId
+      );
+
+      setValidationErrors(validationResult.validationErrors || []);
+      setValidationWarnings(validationResult.warnings || []);
+      setShowPreviewModal(true);
+      
+    } catch (error) {
+      console.error('Preview error:', error);
+      toast.error(`Failed to prepare preview: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const confirmImport = async (userDefaults: Record<string, any>) => {
+    if (!analysisResults) return;
+
+    setShowPreviewModal(false);
+    setIsImporting(true);
+    setProgress(0);
+    setCurrentStep('Starting import...');
+
+    try {
       setProgress(30);
       setCurrentStep('Executing AI-guided import...');
 
       // Execute the actual import using AI analysis
       const importResult = await aiImportExecutor.executeImport(
         analysisResults,
-        fileContents,
+        previewData,
         associationId
       );
 
       setProgress(90);
       setCurrentStep('Finalizing import...');
+      setImportResults(importResult);
 
       if (importResult.success) {
         setProgress(100);
@@ -228,20 +264,51 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         
         onImportComplete?.(importResult);
       } else {
-        throw new Error(`Import failed: ${importResult.errors.join(', ')}`);
+        toast.error(`Import failed: ${importResult.errors.join(', ')}`);
       }
-      
-      // Reset state
-      setFiles([]);
-      setUserDescription('');
-      setAnalysisResults(null);
       
     } catch (error) {
       console.error('Import error:', error);
       toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Set error result
+      setImportResults({
+        success: false,
+        importedRecords: 0,
+        failedRecords: previewData.length,
+        totalRecords: previewData.length,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        warnings: [],
+        validationErrors: [],
+        requiredFieldsErrors: [],
+        details: []
+      });
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const handleRetry = () => {
+    setAnalysisResults(null);
+    setImportResults(null);
+    setValidationErrors([]);
+    setValidationWarnings([]);
+    setPreviewData([]);
+    setProgress(0);
+    setCurrentStep('');
+  };
+
+  const handleReset = () => {
+    setFiles([]);
+    setUserDescription('');
+    setAnalysisResults(null);
+    setImportResults(null);
+    setValidationErrors([]);
+    setValidationWarnings([]);
+    setPreviewData([]);
+    setProgress(0);
+    setCurrentStep('');
+    setShowPreviewModal(false);
   };
 
   const getFileIcon = (fileName: string) => {
@@ -258,20 +325,26 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            One-Click AI Import
-          </CardTitle>
-          <CardDescription>
-            Upload any file type and let AI automatically analyze, map, and import your data. 
-            Supports CSV, Excel, ZIP files up to 250MB each.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <ImportErrorBoundary 
+      fallbackTitle="Import System Error"
+      fallbackMessage="The import system encountered an error. Please try again or contact support if the problem persists."
+      onRetry={handleRetry}
+      onReset={handleReset}
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
+              One-Click AI Import
+            </CardTitle>
+            <CardDescription>
+              Upload any file type and let AI automatically analyze, map, and import your data. 
+              Supports CSV, Excel, ZIP files up to 250MB each.
+            </CardDescription>
+          </CardHeader>
+        </Card>
 
       {/* File Upload */}
       <Card>
@@ -466,18 +539,103 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
                 Analyze Again
               </Button>
               <Button 
-                onClick={confirmImport} 
+                onClick={showImportPreview} 
                 disabled={isImporting || analysisResults.confidence < 50}
                 className="gap-2"
               >
-                <CheckCircle className="h-4 w-4" />
-                {isImporting ? 'Importing...' : 'Confirm & Import'}
+                <Eye className="h-4 w-4" />
+                {isImporting ? 'Importing...' : 'Preview & Import'}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Import Results */}
+      {importResults && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {importResults.success ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              )}
+              Import Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {importResults.importedRecords}
+                </div>
+                <div className="text-sm text-muted-foreground">Imported</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {importResults.failedRecords}
+                </div>
+                <div className="text-sm text-muted-foreground">Failed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {importResults.totalRecords}
+                </div>
+                <div className="text-sm text-muted-foreground">Total</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {importResults.warnings.length}
+                </div>
+                <div className="text-sm text-muted-foreground">Warnings</div>
+              </div>
+            </div>
+
+            {importResults.errors.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2 text-red-600">Errors</h4>
+                <ul className="text-sm space-y-1">
+                  {importResults.errors.map((error, i) => (
+                    <li key={i} className="text-red-600">• {error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {importResults.warnings.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
+                <ul className="text-sm space-y-1">
+                  {importResults.warnings.map((warning, i) => (
+                    <li key={i} className="text-yellow-600">• {warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={handleReset} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Start New Import
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Import Preview Modal */}
+      <ImportPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        onConfirm={confirmImport}
+        analysisResult={analysisResults}
+        previewData={previewData}
+        requiredFieldsErrors={validationErrors}
+        warnings={validationWarnings}
+      />
     </div>
+    </ImportErrorBoundary>
   );
 };
 

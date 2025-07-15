@@ -1,7 +1,24 @@
 import { supabase } from '@/integrations/supabase/client';
-import { SmartImportResult } from '@/types/import-types';
+import { toast } from 'sonner';
 
-interface AIAnalysisResult {
+export interface ImportExecutionResult {
+  success: boolean;
+  importedRecords: number;
+  failedRecords: number;
+  totalRecords: number;
+  errors: string[];
+  warnings: string[];
+  validationErrors: string[];
+  requiredFieldsErrors: string[];
+  details: Array<{
+    table: string;
+    succeeded: number;
+    failed: number;
+    errors: string[];
+  }>;
+}
+
+export interface AIAnalysisResult {
   dataType: string;
   confidence: number;
   targetTables: string[];
@@ -25,457 +42,264 @@ interface AIAnalysisResult {
     description: string;
   }>;
   summary: string;
-  validation?: {
-    validMappings: Record<string, { targetField: string; table: string }>;
-    invalidMappings: Record<string, { targetField: string; reason: string; assignedTable?: string }>;
-    suggestions: Array<{ sourceField: string; invalidField: string; suggestedField: string; table: string }>;
-  };
 }
 
-interface ProcessedData {
-  mappedData: any[];
-  validationResults: {
-    validRows: number;
-    invalidRows: number;
-    totalRows: number;
-    errors: Array<{
-      row: number;
-      field: string;
-      error: string;
-    }>;
+class AIImportExecutor {
+  private readonly REQUIRED_FIELDS_BY_TABLE: Record<string, string[]> = {
+    properties: ['address', 'property_type'],
+    residents: ['first_name', 'last_name', 'email'],
+    assessments: ['property_id', 'amount', 'due_date'],
+    maintenance_requests: ['property_id', 'title', 'description'],
+    compliance_violations: ['property_id', 'violation_type'],
+    associations: ['name']
   };
-}
 
-export class AIImportExecutor {
-  
-  /**
-   * Execute the actual data import based on AI analysis
-   */
+  private readonly DEFAULT_VALUES: Record<string, any> = {
+    property_type: 'Residential',
+    status: 'active',
+    payment_status: 'unpaid',
+    priority: 'medium',
+    violation_status: 'open'
+  };
+
   async executeImport(
     analysisResult: AIAnalysisResult,
-    originalData: any[],
-    associationId: string,
-    userId?: string
-  ): Promise<SmartImportResult> {
-    const importResult: SmartImportResult = {
+    fileData: any[],
+    associationId: string
+  ): Promise<ImportExecutionResult> {
+    const result: ImportExecutionResult = {
       success: false,
-      totalProcessed: 0,
-      successfulImports: 0,
-      failedImports: 0,
-      totalFiles: 1,
-      processedFiles: 0,
-      skippedFiles: 0,
-      totalRecords: 0,
       importedRecords: 0,
-      details: [],
+      failedRecords: 0,
+      totalRecords: fileData.length,
       errors: [],
       warnings: [],
+      validationErrors: [],
+      requiredFieldsErrors: [],
+      details: []
     };
 
     try {
-      // Step 0: Validate analysis result
-      const validationErrors = this.validateAnalysisResult(analysisResult);
-      if (validationErrors.length > 0) {
-        importResult.errors.push(...validationErrors);
-        return importResult;
+      // Pre-import validation
+      const validationResult = await this.validateImportData(analysisResult, fileData, associationId);
+      if (!validationResult.valid) {
+        result.validationErrors = validationResult.errors;
+        result.requiredFieldsErrors = validationResult.requiredFieldsErrors;
+        result.errors.push(...validationResult.errors);
+        
+        toast.error(`Validation failed: ${validationResult.errors.join(', ')}`);
+        return result;
       }
 
-      // Step 1: Process and validate data
-      const processedData = await this.processDataWithTransformations(
-        originalData,
-        analysisResult
+      // Apply warnings from validation
+      result.warnings.push(...validationResult.warnings);
+
+      // Process data with intelligent defaults
+      const processedData = await this.processDataWithDefaults(
+        analysisResult,
+        fileData,
+        associationId
       );
 
-      importResult.totalRecords = processedData.validationResults.totalRows;
-      importResult.totalProcessed = processedData.validationResults.totalRows;
-
-      // Step 2: Import to target tables
-      for (const targetTable of analysisResult.targetTables) {
-        const tableData = await this.prepareDataForTable(
-          processedData.mappedData,
-          targetTable,
-          analysisResult,
-          associationId
-        );
-
-        if (tableData.length > 0) {
-          const tableResult = await this.importToTable(
-            targetTable,
-            tableData,
-            associationId
-          );
-
-          importResult.successfulImports += tableResult.success;
-          importResult.failedImports += tableResult.failed;
-          importResult.importedRecords += tableResult.success;
-
-          importResult.details.push({
-            filename: `${targetTable}_import`,
-            status: tableResult.success > 0 ? 'success' : 'error',
-            recordsProcessed: tableResult.success + tableResult.failed,
-            message: `Imported ${tableResult.success} records to ${targetTable}`,
-          });
-
-          if (tableResult.errors.length > 0) {
-            importResult.errors.push(...tableResult.errors);
-          }
+      // Execute import by table
+      for (const table of analysisResult.targetTables) {
+        const tableData = this.filterDataForTable(processedData, analysisResult, table);
+        
+        if (tableData.length === 0) {
+          result.warnings.push(`No data found for table: ${table}`);
+          continue;
         }
+
+        const tableResult = await this.importToTable(table, tableData, associationId);
+        result.details.push(tableResult);
+        result.importedRecords += tableResult.succeeded;
+        result.failedRecords += tableResult.failed;
+        result.errors.push(...tableResult.errors);
       }
 
-      // Step 3: Handle relationships
-      if (analysisResult.relationships.length > 0) {
-        await this.processRelationships(analysisResult.relationships, associationId);
+      result.success = result.importedRecords > 0;
+      
+      if (result.success) {
+        toast.success(`Successfully imported ${result.importedRecords} records`);
+      } else {
+        toast.error(`Import failed: ${result.errors.join(', ')}`);
       }
 
-      importResult.success = importResult.successfulImports > 0;
-      importResult.processedFiles = 1;
-
-      // Add warnings from data quality analysis
-      if (analysisResult.dataQuality.warnings.length > 0) {
-        importResult.warnings.push(...analysisResult.dataQuality.warnings);
-      }
-
-      return importResult;
+      return result;
 
     } catch (error) {
       console.error('Import execution error:', error);
-      importResult.errors.push(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      return importResult;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      result.errors.push(errorMessage);
+      toast.error(`Import failed: ${errorMessage}`);
+      return result;
     }
   }
 
-  /**
-   * Process data with AI-suggested transformations
-   */
-  private async processDataWithTransformations(
-    data: any[],
-    analysisResult: AIAnalysisResult
-  ): Promise<ProcessedData> {
-    const mappedData: any[] = [];
-    const errors: Array<{ row: number; field: string; error: string }> = [];
-    let validRows = 0;
+  private async validateImportData(
+    analysisResult: AIAnalysisResult,
+    fileData: any[],
+    associationId: string
+  ): Promise<{
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+    requiredFieldsErrors: string[];
+  }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const requiredFieldsErrors: string[] = [];
 
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      const mappedRow: any = {};
-      let rowValid = true;
+    // Check if we have any data
+    if (!fileData || fileData.length === 0) {
+      errors.push('No data provided for import');
+      return { valid: false, errors, warnings, requiredFieldsErrors };
+    }
 
-      // Apply field mappings
-      for (const [sourceField, targetField] of Object.entries(analysisResult.fieldMappings)) {
-        let value = row[sourceField];
+    // Check if we have target tables
+    if (!analysisResult.targetTables || analysisResult.targetTables.length === 0) {
+      errors.push('No target tables identified for import');
+      return { valid: false, errors, warnings, requiredFieldsErrors };
+    }
 
-        // Apply transformations
-        const transformation = analysisResult.transformations.find(t => t.field === sourceField);
-        if (transformation) {
-          value = this.applyTransformation(value, transformation);
-        }
+    // Check field mappings
+    if (!analysisResult.fieldMappings || Object.keys(analysisResult.fieldMappings).length === 0) {
+      errors.push('No field mappings provided');
+      return { valid: false, errors, warnings, requiredFieldsErrors };
+    }
 
-        // Apply defaults for missing values
-        if ((value === null || value === undefined || value === '') && 
-            analysisResult.suggestedDefaults[targetField]) {
-          value = analysisResult.suggestedDefaults[targetField];
-        }
+    // Validate required fields for each target table
+    for (const table of analysisResult.targetTables) {
+      const requiredFields = this.REQUIRED_FIELDS_BY_TABLE[table] || [];
+      const mappedFields = Object.values(analysisResult.fieldMappings);
+      
+      const missingFields = requiredFields.filter(field => 
+        !mappedFields.includes(field) && !this.DEFAULT_VALUES[field]
+      );
 
-        // Validate required fields
-        if (analysisResult.requiredFields.includes(targetField) && 
-            (value === null || value === undefined || value === '')) {
-          errors.push({
-            row: i + 1,
-            field: targetField,
-            error: `Required field ${targetField} is missing`
-          });
-          rowValid = false;
-        }
-
-        mappedRow[targetField] = value;
+      if (missingFields.length > 0) {
+        const errorMsg = `Missing required fields for ${table}: ${missingFields.join(', ')}`;
+        requiredFieldsErrors.push(errorMsg);
+        errors.push(errorMsg);
       }
+    }
 
-      if (rowValid) {
-        validRows++;
-        mappedData.push(mappedRow);
+    // Check data quality
+    const sampleSize = Math.min(fileData.length, 100);
+    const sampleData = fileData.slice(0, sampleSize);
+    
+    for (const row of sampleData) {
+      const mappedFields = Object.keys(analysisResult.fieldMappings);
+      const availableFields = Object.keys(row);
+      
+      const missingSourceFields = mappedFields.filter(field => !availableFields.includes(field));
+      if (missingSourceFields.length > 0) {
+        warnings.push(`Some rows may be missing source fields: ${missingSourceFields.join(', ')}`);
+        break;
       }
     }
 
     return {
-      mappedData,
-      validationResults: {
-        validRows,
-        invalidRows: data.length - validRows,
-        totalRows: data.length,
-        errors
-      }
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      requiredFieldsErrors
     };
   }
 
-  /**
-   * Apply data transformation based on AI analysis
-   */
-  private applyTransformation(value: any, transformation: any): any {
-    if (!value) return value;
-
-    switch (transformation.action) {
-      case 'format_phone':
-        return this.formatPhoneNumber(value);
-      case 'format_date':
-        return this.formatDate(value);
-      case 'normalize_text':
-        return this.normalizeText(value);
-      case 'parse_number':
-        return this.parseNumber(value);
-      case 'standardize_address':
-        return this.standardizeAddress(value);
-      default:
-        return value;
-    }
-  }
-
-  /**
-   * Prepare data for specific target table
-   */
-  private async prepareDataForTable(
-    mappedData: any[],
-    targetTable: string,
+  private async processDataWithDefaults(
     analysisResult: AIAnalysisResult,
+    fileData: any[],
     associationId: string
   ): Promise<any[]> {
-    const tableData = mappedData.map(row => {
-      const tableRow = { ...row };
+    return fileData.map(row => {
+      const processedRow = { ...row };
       
-      // Add association_id only to tables that have this field
-      const tablesWithAssociationId = ['properties', 'residents', 'assessments', 'maintenance_requests', 'vendors'];
-      if (tablesWithAssociationId.includes(targetTable)) {
-        tableRow.association_id = associationId;
-      }
-      
-      // Add table-specific fields based on target table
-      switch (targetTable) {
-        case 'properties':
-          if (!tableRow.account_number) {
-            tableRow.account_number = this.generateAccountNumber();
-          }
-          if (!tableRow.property_type) {
-            tableRow.property_type = 'residential';
-          }
-          if (!tableRow.status) {
-            tableRow.status = 'active';
-          }
-          break;
-        case 'homeowners':
-          // Homeowners table doesn't have association_id, but needs other defaults
-          if (!tableRow.account_number) {
-            tableRow.account_number = this.generateAccountNumber();
-          }
-          if (!tableRow.status) {
-            tableRow.status = 'active';
-          }
-          if (!tableRow.current_balance) {
-            tableRow.current_balance = 0;
-          }
-          break;
-        case 'residents':
-          if (!tableRow.move_in_date && tableRow.move_in) {
-            tableRow.move_in_date = this.formatDate(tableRow.move_in);
-          }
-          if (!tableRow.status) {
-            tableRow.status = 'active';
-          }
-          break;
-        case 'assessments':
-          if (!tableRow.due_date) {
-            tableRow.due_date = new Date().toISOString().split('T')[0];
-          }
-          if (!tableRow.payment_status) {
-            tableRow.payment_status = 'unpaid';
-          }
-          break;
+      // Apply field mappings
+      for (const [sourceField, targetField] of Object.entries(analysisResult.fieldMappings)) {
+        if (row[sourceField] !== undefined) {
+          processedRow[targetField] = row[sourceField];
+        }
       }
 
-      return tableRow;
+      // Apply default values for missing required fields
+      for (const [field, defaultValue] of Object.entries(this.DEFAULT_VALUES)) {
+        if (processedRow[field] === undefined || processedRow[field] === '') {
+          processedRow[field] = defaultValue;
+        }
+      }
+
+      // Add association_id
+      processedRow.association_id = associationId;
+
+      return processedRow;
     });
-
-    return tableData;
   }
 
-  /**
-   * Import data to specific table
-   */
-  private async importToTable(
-    tableName: string,
-    data: any[],
-    associationId: string
-  ): Promise<{ success: number; failed: number; errors: string[] }> {
-    const result = { success: 0, failed: 0, errors: [] as string[] };
-
-    try {
-      // Use specific table methods based on table name to maintain type safety
-      let insertResult;
+  private filterDataForTable(
+    processedData: any[],
+    analysisResult: AIAnalysisResult,
+    table: string
+  ): any[] {
+    const tableFields = this.REQUIRED_FIELDS_BY_TABLE[table] || [];
+    const tableAssignments = analysisResult.tableAssignments?.[table] || [];
+    
+    return processedData.filter(row => {
+      // Check if row has at least one required field for this table
+      return tableFields.some(field => row[field] !== undefined && row[field] !== '');
+    }).map(row => {
+      // Only include fields relevant to this table
+      const filteredRow: any = { association_id: row.association_id };
       
-      switch (tableName) {
-        case 'properties':
-          insertResult = await supabase.from('properties').insert(data).select();
-          break;
-        case 'homeowners':
-          insertResult = await supabase.from('homeowners').insert(data).select();
-          break;
-        case 'residents':
-          insertResult = await supabase.from('residents').insert(data).select();
-          break;
-        case 'assessments':
-          insertResult = await supabase.from('assessments').insert(data).select();
-          break;
-        case 'maintenance_requests':
-          insertResult = await supabase.from('maintenance_requests').insert(data).select();
-          break;
-        case 'vendors':
-          insertResult = await supabase.from('vendors').insert(data).select();
-          break;
-        default:
-          throw new Error(`Unsupported table: ${tableName}. Supported tables: properties, homeowners, residents, assessments, maintenance_requests, vendors`);
+      // Include mapped fields for this table
+      for (const [sourceField, targetField] of Object.entries(analysisResult.fieldMappings)) {
+        if (tableAssignments.includes(sourceField) || tableFields.includes(targetField)) {
+          filteredRow[targetField] = row[targetField] || row[sourceField];
+        }
       }
 
-      const { data: insertedData, error } = insertResult;
+      return filteredRow;
+    });
+  }
+
+  private async importToTable(
+    table: string,
+    data: any[],
+    associationId: string
+  ): Promise<{
+    table: string;
+    succeeded: number;
+    failed: number;
+    errors: string[];
+  }> {
+    const result = {
+      table,
+      succeeded: 0,
+      failed: 0,
+      errors: []
+    };
+
+    try {
+      const { data: insertedData, error } = await supabase
+        .from(table as any)
+        .insert(data)
+        .select();
 
       if (error) {
-        result.errors.push(`Table ${tableName}: ${error.message}`);
+        result.errors.push(`${table}: ${error.message}`);
         result.failed = data.length;
       } else {
-        result.success = insertedData?.length || 0;
+        result.succeeded = insertedData?.length || 0;
+        result.failed = data.length - result.succeeded;
       }
 
     } catch (error) {
-      result.errors.push(`Table ${tableName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error(`Error importing to ${table}:`, error);
+      result.errors.push(`${table}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       result.failed = data.length;
     }
 
     return result;
-  }
-
-  /**
-   * Process relationships between imported data
-   */
-  private async processRelationships(
-    relationships: Array<{ type: string; description: string }>,
-    associationId: string
-  ): Promise<void> {
-    // This would implement relationship processing
-    // For example, linking residents to properties
-    console.log('Processing relationships:', relationships);
-  }
-
-  // Utility methods for data transformation
-  private formatPhoneNumber(phone: string): string {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-    }
-    return phone;
-  }
-
-  private formatDate(date: string): string {
-    try {
-      const parsed = new Date(date);
-      return parsed.toISOString().split('T')[0];
-    } catch {
-      return date;
-    }
-  }
-
-  private normalizeText(text: string): string {
-    return text.trim().toLowerCase().replace(/\s+/g, ' ');
-  }
-
-  private parseNumber(value: string): number | null {
-    const parsed = parseFloat(value.replace(/[^0-9.-]/g, ''));
-    return isNaN(parsed) ? null : parsed;
-  }
-
-  private standardizeAddress(address: string): string {
-    return address
-      .replace(/\bSt\b/gi, 'Street')
-      .replace(/\bAve\b/gi, 'Avenue')
-      .replace(/\bDr\b/gi, 'Drive')
-      .replace(/\bRd\b/gi, 'Road')
-      .trim();
-  }
-
-  private generateAccountNumber(): string {
-    return 'ACC' + Math.random().toString().slice(2, 8);
-  }
-
-  /**
-   * Enhanced validation for analysis result before processing
-   */
-  private validateAnalysisResult(analysisResult: AIAnalysisResult): string[] {
-    const errors: string[] = [];
-    
-    // Basic structure validation
-    if (!analysisResult) {
-      errors.push('Analysis result is null or undefined');
-      return errors;
-    }
-    
-    // Target tables validation
-    if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables)) {
-      errors.push('Missing or invalid targetTables array in analysis result');
-    } else if (analysisResult.targetTables.length === 0) {
-      errors.push('No target tables specified. Expected at least one table from: properties, homeowners, residents, assessments');
-    }
-    
-    // Field mappings validation
-    if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object') {
-      errors.push('Missing or invalid fieldMappings object in analysis result');
-    } else if (Object.keys(analysisResult.fieldMappings).length === 0) {
-      errors.push('No field mappings specified. Expected object with source->target field mappings');
-    }
-    
-    // Confidence validation
-    if (typeof analysisResult.confidence !== 'number' || analysisResult.confidence < 0 || analysisResult.confidence > 100) {
-      errors.push('Invalid confidence score - expected number between 0 and 100');
-    } else if (analysisResult.confidence < 30) {
-      errors.push('Analysis confidence too low (< 30%). Data may be incompatible with system schema');
-    }
-    
-    // Validate that all target tables are supported
-    const supportedTables = ['properties', 'homeowners', 'residents', 'assessments', 'maintenance_requests', 'vendors'];
-    const unsupportedTables = analysisResult.targetTables?.filter(table => !supportedTables.includes(table));
-    if (unsupportedTables && unsupportedTables.length > 0) {
-      errors.push(`Unsupported tables detected: ${unsupportedTables.join(', ')}. Supported tables: ${supportedTables.join(', ')}`);
-    }
-    
-    // Check for validation errors in the analysis result
-    if (analysisResult.validation && analysisResult.validation.invalidMappings && Object.keys(analysisResult.validation.invalidMappings).length > 0) {
-      const invalidMappings = Object.entries(analysisResult.validation.invalidMappings)
-        .map(([field, error]) => `${field}: ${error.reason}`)
-        .join(', ');
-      errors.push(`Invalid field mappings detected: ${invalidMappings}`);
-    }
-    
-    // Validate table assignments if present
-    if (analysisResult.tableAssignments) {
-      const invalidAssignments = Object.entries(analysisResult.tableAssignments)
-        .filter(([table, fields]) => !supportedTables.includes(table));
-      if (invalidAssignments.length > 0) {
-        errors.push(`Invalid table assignments: ${invalidAssignments.map(([table]) => table).join(', ')}`);
-      }
-    }
-    
-    // Data quality validation
-    if (analysisResult.dataQuality && analysisResult.dataQuality.issues && analysisResult.dataQuality.issues.length > 0) {
-      // Don't add as errors, but log them
-      console.log('Data quality issues found:', analysisResult.dataQuality.issues);
-    }
-    
-    // Field mappings cross-validation
-    if (analysisResult.fieldMappings && analysisResult.targetTables) {
-      const mappingCount = Object.keys(analysisResult.fieldMappings).length;
-      const minExpectedMappings = 1;
-      
-      if (mappingCount < minExpectedMappings) {
-        errors.push(`Insufficient field mappings: found ${mappingCount}, expected at least ${minExpectedMappings}`);
-      }
-    }
-    
-    return errors;
   }
 }
 
