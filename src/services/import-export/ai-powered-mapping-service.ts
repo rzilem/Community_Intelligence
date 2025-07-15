@@ -10,6 +10,7 @@ export interface AIAnalysisResult {
     reasoning: string;
     dataQuality: 'good' | 'warning' | 'error';
     suggestions: string[];
+    table?: string;
   }>;
   overallAnalysis: {
     dataQuality: 'excellent' | 'good' | 'fair' | 'poor';
@@ -17,6 +18,11 @@ export interface AIAnalysisResult {
     recommendations: string[];
   };
   tableAssignments?: Record<string, string[]>;
+  validation?: {
+    validMappings: Record<string, { targetField: string; table: string }>;
+    invalidMappings: Record<string, { targetField: string; reason: string; assignedTable?: string }>;
+    suggestions: Array<{ sourceField: string; invalidField: string; suggestedField: string; table: string }>;
+  };
 }
 
 export interface AIMappingSuggestion {
@@ -43,14 +49,14 @@ export const aiPoweredMappingService = {
         dataType
       });
 
-      // Call our AI analysis edge function
-      const { data, error } = await supabase.functions.invoke('ai-data-analyzer', {
+      // Call our AI import processor edge function
+      const { data, error } = await supabase.functions.invoke('ai-import-processor', {
         body: {
-          columns: fileColumns,
-          sampleData: sampleData,
-          dataType: dataType,
+          fileContent: sampleData,
+          fileName: 'sample_data.json',
+          fileType: 'application/json',
           associationId: associationId,
-          systemFields: systemFields
+          userDescription: `Data type: ${dataType}`
         }
       });
 
@@ -59,31 +65,48 @@ export const aiPoweredMappingService = {
         throw error;
       }
 
-      if (!data?.success || !data?.analysis) {
+      if (!data?.success || !data?.analysisResult) {
         throw new Error('AI analysis failed: ' + (data?.error || 'Unknown error'));
       }
 
-      const analysis: AIAnalysisResult = data.analysis;
+      const analysisResult = data.analysisResult;
+      
+      // Convert the AI processor result to our expected format
+      const analysis: AIAnalysisResult = {
+        mappings: {},
+        overallAnalysis: {
+          dataQuality: analysisResult.confidence > 90 ? 'excellent' : 
+                      analysisResult.confidence > 70 ? 'good' : 
+                      analysisResult.confidence > 50 ? 'fair' : 'poor',
+          issues: analysisResult.dataQuality?.issues || [],
+          recommendations: analysisResult.dataQuality?.suggestions || []
+        },
+        tableAssignments: analysisResult.tableAssignments,
+        validation: analysisResult.validation
+      };
+      
+      // Convert field mappings to our format
+      Object.entries(analysisResult.fieldMappings || {}).forEach(([sourceField, targetField]) => {
+        const assignedTable = analysisResult.validation?.validMappings?.[sourceField]?.table;
+        analysis.mappings[sourceField] = {
+          systemField: targetField as string,
+          confidence: analysisResult.confidence / 100,
+          reasoning: assignedTable ? `Mapped to ${assignedTable}.${targetField}` : `Mapped to ${targetField}`,
+          dataQuality: analysisResult.confidence > 80 ? 'good' : 
+                      analysisResult.confidence > 60 ? 'warning' : 'error',
+          suggestions: [],
+          table: assignedTable
+        };
+      });
       
       // Convert AI analysis to mapping suggestions format with table assignments
       const suggestions: Record<string, AIMappingSuggestion> = {};
       
       Object.entries(analysis.mappings).forEach(([column, mapping]) => {
-        // Find which table this field should be assigned to
-        let assignedTable = null;
-        if (analysis.tableAssignments) {
-          for (const [tableName, fields] of Object.entries(analysis.tableAssignments)) {
-            if (fields.includes(column)) {
-              assignedTable = tableName;
-              break;
-            }
-          }
-        }
-        
         suggestions[column] = {
           fieldValue: mapping.systemField,
           confidence: mapping.confidence,
-          reasoning: assignedTable ? `${mapping.reasoning} (Assigned to ${assignedTable} table)` : mapping.reasoning,
+          reasoning: mapping.reasoning,
           dataQuality: mapping.dataQuality,
           suggestions: mapping.suggestions
         };
@@ -125,7 +148,8 @@ export const aiPoweredMappingService = {
           original_suggestion: {
             dataType,
             analysis: analysis.overallAnalysis,
-            mappingCount: Object.keys(analysis.mappings).length
+            mappingCount: Object.keys(analysis.mappings).length,
+            validation: analysis.validation
           },
           corrected_value: analysis.mappings,
           confidence_before: this.calculateAverageConfidence(analysis.mappings),

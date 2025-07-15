@@ -24,6 +24,11 @@ interface AIAnalysisResult {
     description: string;
   }>;
   summary: string;
+  validation?: {
+    validMappings: Record<string, { targetField: string; table: string }>;
+    invalidMappings: Record<string, { targetField: string; reason: string; assignedTable?: string }>;
+    suggestions: Array<{ sourceField: string; invalidField: string; suggestedField: string; table: string }>;
+  };
 }
 
 interface ProcessedData {
@@ -67,6 +72,13 @@ export class AIImportExecutor {
     };
 
     try {
+      // Step 0: Validate analysis result
+      const validationErrors = this.validateAnalysisResult(analysisResult);
+      if (validationErrors.length > 0) {
+        importResult.errors.push(...validationErrors);
+        return importResult;
+      }
+
       // Step 1: Process and validate data
       const processedData = await this.processDataWithTransformations(
         originalData,
@@ -228,8 +240,11 @@ export class AIImportExecutor {
     const tableData = mappedData.map(row => {
       const tableRow = { ...row };
       
-      // Add association_id to all records
-      tableRow.association_id = associationId;
+      // Add association_id only to tables that have this field
+      const tablesWithAssociationId = ['properties', 'residents', 'assessments', 'maintenance_requests', 'vendors'];
+      if (tablesWithAssociationId.includes(targetTable)) {
+        tableRow.association_id = associationId;
+      }
       
       // Add table-specific fields based on target table
       switch (targetTable) {
@@ -240,15 +255,36 @@ export class AIImportExecutor {
           if (!tableRow.property_type) {
             tableRow.property_type = 'residential';
           }
+          if (!tableRow.status) {
+            tableRow.status = 'active';
+          }
+          break;
+        case 'homeowners':
+          // Homeowners table doesn't have association_id, but needs other defaults
+          if (!tableRow.account_number) {
+            tableRow.account_number = this.generateAccountNumber();
+          }
+          if (!tableRow.status) {
+            tableRow.status = 'active';
+          }
+          if (!tableRow.current_balance) {
+            tableRow.current_balance = 0;
+          }
           break;
         case 'residents':
           if (!tableRow.move_in_date && tableRow.move_in) {
             tableRow.move_in_date = this.formatDate(tableRow.move_in);
           }
+          if (!tableRow.status) {
+            tableRow.status = 'active';
+          }
           break;
         case 'assessments':
           if (!tableRow.due_date) {
             tableRow.due_date = new Date().toISOString().split('T')[0];
+          }
+          if (!tableRow.payment_status) {
+            tableRow.payment_status = 'unpaid';
           }
           break;
       }
@@ -277,6 +313,9 @@ export class AIImportExecutor {
         case 'properties':
           insertResult = await supabase.from('properties').insert(data).select();
           break;
+        case 'homeowners':
+          insertResult = await supabase.from('homeowners').insert(data).select();
+          break;
         case 'residents':
           insertResult = await supabase.from('residents').insert(data).select();
           break;
@@ -290,7 +329,7 @@ export class AIImportExecutor {
           insertResult = await supabase.from('vendors').insert(data).select();
           break;
         default:
-          throw new Error(`Unsupported table: ${tableName}`);
+          throw new Error(`Unsupported table: ${tableName}. Supported tables: properties, homeowners, residents, assessments, maintenance_requests, vendors`);
       }
 
       const { data: insertedData, error } = insertResult;
@@ -360,6 +399,37 @@ export class AIImportExecutor {
 
   private generateAccountNumber(): string {
     return 'ACC' + Math.random().toString().slice(2, 8);
+  }
+
+  /**
+   * Validate analysis result before processing
+   */
+  private validateAnalysisResult(analysisResult: AIAnalysisResult): string[] {
+    const errors: string[] = [];
+    
+    // Check if we have valid target tables
+    if (!analysisResult.targetTables || analysisResult.targetTables.length === 0) {
+      errors.push('No target tables specified in analysis result');
+    }
+    
+    // Check if we have field mappings
+    if (!analysisResult.fieldMappings || Object.keys(analysisResult.fieldMappings).length === 0) {
+      errors.push('No field mappings specified in analysis result');
+    }
+    
+    // Validate that all target tables are supported
+    const supportedTables = ['properties', 'homeowners', 'residents', 'assessments', 'maintenance_requests', 'vendors'];
+    const unsupportedTables = analysisResult.targetTables?.filter(table => !supportedTables.includes(table));
+    if (unsupportedTables && unsupportedTables.length > 0) {
+      errors.push(`Unsupported tables detected: ${unsupportedTables.join(', ')}. Supported tables: ${supportedTables.join(', ')}`);
+    }
+    
+    // Check for validation errors in the analysis result
+    if (analysisResult.validation && Object.keys(analysisResult.validation.invalidMappings).length > 0) {
+      errors.push('Invalid field mappings detected in analysis result');
+    }
+    
+    return errors;
   }
 }
 

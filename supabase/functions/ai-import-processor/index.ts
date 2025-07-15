@@ -87,11 +87,12 @@ serve(async (req) => {
          - Move In Date → 'move_in_date'
          - Move Out Date → 'move_out_date'
 
-      4. GENERAL REQUIREMENTS:
-         - Use "current_balance" not "account_balance" for balance fields
-         - Only suggest target tables that exist: properties, homeowners, residents, assessments
-         - Map account numbers to "account_number" field
-         - Always include association_id in required fields
+       4. GENERAL REQUIREMENTS:
+          - Use "current_balance" not "account_balance" for balance fields
+          - Only suggest target tables that exist: properties, homeowners, residents, assessments
+          - Map account numbers to "account_number" field
+          - Include association_id only for tables that need it (properties, residents, assessments)
+          - homeowners table does NOT have association_id field
 
       5. MULTI-TABLE DATA HANDLING:
          - If data contains both homeowner and property info, use BOTH tables
@@ -126,8 +127,8 @@ serve(async (req) => {
             "description": "Standardize phone numbers"
           }
         ],
-        "requiredFields": ["address", "association_id"],
-        "missingFields": ["association_id"],
+        "requiredFields": ["address"],
+        "missingFields": [],
         "suggestedDefaults": {
           "property_type": "residential",
           "status": "active"
@@ -281,6 +282,24 @@ serve(async (req) => {
     // Update analysis result with validation info
     analysisResult.validation = validationResult;
     analysisResult.isValid = Object.keys(validationResult.invalidMappings).length === 0;
+    
+    // Add detailed validation errors to data quality issues
+    if (Object.keys(validationResult.invalidMappings).length > 0) {
+      const validationErrors = Object.entries(validationResult.invalidMappings).map(
+        ([field, error]) => `Field '${field}' mapping failed: ${error.reason}`
+      );
+      analysisResult.dataQuality = analysisResult.dataQuality || { issues: [], warnings: [], suggestions: [] };
+      analysisResult.dataQuality.issues = [...(analysisResult.dataQuality.issues || []), ...validationErrors];
+    }
+    
+    // Add validation suggestions to data quality suggestions
+    if (validationResult.suggestions.length > 0) {
+      const validationSuggestions = validationResult.suggestions.map(
+        (suggestion) => `Consider mapping '${suggestion.sourceField}' to '${suggestion.suggestedField}' in table '${suggestion.table}'`
+      );
+      analysisResult.dataQuality = analysisResult.dataQuality || { issues: [], warnings: [], suggestions: [] };
+      analysisResult.dataQuality.suggestions = [...(analysisResult.dataQuality.suggestions || []), ...validationSuggestions];
+    }
 
     console.log('Field validation result:', validationResult);
 
