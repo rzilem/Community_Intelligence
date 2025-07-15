@@ -13,73 +13,122 @@ const parseAddresses = (record: any) => {
   let state = '';
   let zip = '';
 
-  // Handle address field that contains both P: and M: addresses
+  // Get the address field from various possible column names
   const addressField = record['Property Address'] || record['Mailing Address'] || 
-                       record.address || record.property_address || record.street_address || '';
+                       record.address || record.property_address || record.street_address || 
+                       record.Address || record['Address'] || '';
   
   devLog.info('Raw address field:', addressField);
   
-  if (addressField.includes('P:') && addressField.includes('M:')) {
-    const pIndex = addressField.indexOf('P:');
-    const mIndex = addressField.indexOf('M:');
-    
-    if (pIndex < mIndex) {
-      propertyAddress = addressField.substring(pIndex + 2, mIndex).trim();
-      mailingAddress = addressField.substring(mIndex + 2).trim();
-    } else {
-      mailingAddress = addressField.substring(mIndex + 2, pIndex).trim();
-      propertyAddress = addressField.substring(pIndex + 2).trim();
-    }
-  } else if (addressField.includes('P:')) {
-    propertyAddress = addressField.replace('P:', '').trim();
-  } else if (addressField.includes('M:')) {
-    mailingAddress = addressField.replace('M:', '').trim();
-    propertyAddress = mailingAddress; // Use mailing as property if no P: found
-  } else {
-    propertyAddress = addressField;
+  if (!addressField) {
+    devLog.warn('No address field found in record');
+    return { propertyAddress: '', mailingAddress: '', city: '', state: '', zip: '' };
   }
 
-  devLog.info('Parsed property address:', propertyAddress);
-
-  // Extract city, state, zip from property address
-  if (propertyAddress) {
-    // Remove any remaining P: or M: prefixes that might have been missed
-    propertyAddress = propertyAddress.replace(/^[PM]:\s*/g, '').trim();
+  const addressStr = String(addressField).trim();
+  
+  // Handle cases with P: and M: prefixes
+  if (addressStr.includes('P:') || addressStr.includes('M:')) {
+    // Extract property address (P:)
+    const pMatch = addressStr.match(/P:\s*([^M]*)/i);
+    if (pMatch) {
+      propertyAddress = pMatch[1].trim();
+    }
     
-    // Common address patterns to parse city, state, zip
-    // Pattern 1: "123 Main St, Austin, TX 78701"
-    const commaPattern = propertyAddress.match(/^(.+),\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(-\d{4})?)?\s*$/);
-    if (commaPattern) {
-      propertyAddress = commaPattern[1].trim();
-      city = commaPattern[2].trim();
-      state = commaPattern[3].trim();
-      zip = commaPattern[4] || '';
+    // Extract mailing address (M:)
+    const mMatch = addressStr.match(/M:\s*(.*)/i);
+    if (mMatch) {
+      mailingAddress = mMatch[1].trim();
+    }
+    
+    // If no property address found but mailing exists, use mailing as property
+    if (!propertyAddress && mailingAddress) {
+      propertyAddress = mailingAddress;
+    }
+  } else {
+    // No prefixes, use the entire address as property address
+    propertyAddress = addressStr;
+  }
+
+  devLog.info('Extracted property address before parsing:', propertyAddress);
+
+  // Parse city, state, zip from property address
+  if (propertyAddress) {
+    // Remove any lingering P: or M: prefixes
+    propertyAddress = propertyAddress.replace(/^[PM]:\s*/gi, '').trim();
+    
+    // Enhanced parsing for different address formats
+    // Pattern 1: "123 Main St, City Name, ST 12345"
+    let match = propertyAddress.match(/^(.+?),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+    if (match) {
+      propertyAddress = match[1].trim();
+      city = match[2].trim();
+      state = match[3].toUpperCase();
+      zip = match[4];
+      devLog.info('Matched comma-separated pattern');
     } else {
-      // Pattern 2: "123 Main St Austin TX 78701" (no commas)
-      const spacePattern = propertyAddress.match(/^(.+)\s+([A-Za-z\s]+)\s+([A-Z]{2})\s*(\d{5}(-\d{4})?)?\s*$/);
-      if (spacePattern) {
-        const streetPart = spacePattern[1].trim();
-        const cityPart = spacePattern[2].trim();
-        state = spacePattern[3].trim();
-        zip = spacePattern[4] || '';
+      // Pattern 2: "123 Main St City Name ST 12345" (space-separated)
+      match = propertyAddress.match(/^(.+?)\s+([A-Za-z\s]+?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+      if (match) {
+        const streetPart = match[1].trim();
+        const cityPart = match[2].trim();
+        state = match[3].toUpperCase();
+        zip = match[4];
         
-        // Split street and city more carefully
-        const words = (streetPart + ' ' + cityPart).split(' ');
-        // Assume last 1-3 words before state are city
-        if (words.length >= 3) {
-          const cityWords = words.slice(-2); // Take last 2 words as city
-          city = cityWords.join(' ');
-          propertyAddress = words.slice(0, -2).join(' ');
+        // More intelligent street/city separation
+        const allWords = (streetPart + ' ' + cityPart).split(/\s+/);
+        
+        // Common street suffixes that help us identify where street ends
+        const streetSuffixes = ['ST', 'STREET', 'AVE', 'AVENUE', 'RD', 'ROAD', 'BLVD', 'BOULEVARD', 'LN', 'LANE', 'DR', 'DRIVE', 'CT', 'COURT', 'CIR', 'CIRCLE', 'WAY', 'PL', 'PLACE'];
+        
+        let streetEndIndex = -1;
+        for (let i = 0; i < allWords.length; i++) {
+          if (streetSuffixes.includes(allWords[i].toUpperCase())) {
+            streetEndIndex = i;
+            break;
+          }
+        }
+        
+        if (streetEndIndex > -1) {
+          // Street ends at suffix
+          propertyAddress = allWords.slice(0, streetEndIndex + 1).join(' ');
+          city = allWords.slice(streetEndIndex + 1).join(' ');
         } else {
-          city = cityPart;
-          propertyAddress = streetPart;
+          // Fallback: assume last 1-2 words are city
+          if (allWords.length >= 3) {
+            city = allWords.slice(-2).join(' ');
+            propertyAddress = allWords.slice(0, -2).join(' ');
+          } else {
+            city = cityPart;
+            propertyAddress = streetPart;
+          }
+        }
+        devLog.info('Matched space-separated pattern');
+      } else {
+        // Pattern 3: Try to find just state and zip at the end
+        match = propertyAddress.match(/^(.+?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+        if (match) {
+          const addressPart = match[1].trim();
+          state = match[2].toUpperCase();
+          zip = match[3];
+          
+          // Split address part into street and city
+          const words = addressPart.split(/\s+/);
+          if (words.length >= 2) {
+            city = words[words.length - 1];
+            propertyAddress = words.slice(0, -1).join(' ');
+          } else {
+            propertyAddress = addressPart;
+          }
+          devLog.info('Matched state-zip pattern');
         }
       }
     }
   }
 
-  devLog.info('Final parsed address:', { propertyAddress, city, state, zip });
-  return { propertyAddress, mailingAddress, city, state, zip };
+  const result = { propertyAddress, mailingAddress, city, state, zip };
+  devLog.info('Final parsed address components:', result);
+  return result;
 };
 
 export const enhancedPropertiesOwnersProcessor = {
