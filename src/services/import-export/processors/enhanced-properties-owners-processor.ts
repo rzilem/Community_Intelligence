@@ -17,6 +17,8 @@ const parseAddresses = (record: any) => {
   const addressField = record['Property Address'] || record['Mailing Address'] || 
                        record.address || record.property_address || record.street_address || '';
   
+  devLog.info('Raw address field:', addressField);
+  
   if (addressField.includes('P:') && addressField.includes('M:')) {
     const pIndex = addressField.indexOf('P:');
     const mIndex = addressField.indexOf('M:');
@@ -37,29 +39,46 @@ const parseAddresses = (record: any) => {
     propertyAddress = addressField;
   }
 
+  devLog.info('Parsed property address:', propertyAddress);
+
   // Extract city, state, zip from property address
   if (propertyAddress) {
-    // Try to extract city, state, zip using common patterns
-    const addressParts = propertyAddress.split(',').map(part => part.trim());
-    if (addressParts.length >= 2) {
-      const lastPart = addressParts[addressParts.length - 1];
-      const zipMatch = lastPart.match(/(\d{5}(-\d{4})?)/);
-      if (zipMatch) {
-        zip = zipMatch[1];
-        const stateCity = lastPart.replace(zipMatch[0], '').trim();
-        if (stateCity) {
-          const stateCityParts = stateCity.split(' ');
-          if (stateCityParts.length >= 2) {
-            state = stateCityParts[stateCityParts.length - 1];
-            city = stateCityParts.slice(0, -1).join(' ');
-          } else {
-            state = stateCity;
-          }
+    // Remove any remaining P: or M: prefixes that might have been missed
+    propertyAddress = propertyAddress.replace(/^[PM]:\s*/g, '').trim();
+    
+    // Common address patterns to parse city, state, zip
+    // Pattern 1: "123 Main St, Austin, TX 78701"
+    const commaPattern = propertyAddress.match(/^(.+),\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(-\d{4})?)?\s*$/);
+    if (commaPattern) {
+      propertyAddress = commaPattern[1].trim();
+      city = commaPattern[2].trim();
+      state = commaPattern[3].trim();
+      zip = commaPattern[4] || '';
+    } else {
+      // Pattern 2: "123 Main St Austin TX 78701" (no commas)
+      const spacePattern = propertyAddress.match(/^(.+)\s+([A-Za-z\s]+)\s+([A-Z]{2})\s*(\d{5}(-\d{4})?)?\s*$/);
+      if (spacePattern) {
+        const streetPart = spacePattern[1].trim();
+        const cityPart = spacePattern[2].trim();
+        state = spacePattern[3].trim();
+        zip = spacePattern[4] || '';
+        
+        // Split street and city more carefully
+        const words = (streetPart + ' ' + cityPart).split(' ');
+        // Assume last 1-3 words before state are city
+        if (words.length >= 3) {
+          const cityWords = words.slice(-2); // Take last 2 words as city
+          city = cityWords.join(' ');
+          propertyAddress = words.slice(0, -2).join(' ');
+        } else {
+          city = cityPart;
+          propertyAddress = streetPart;
         }
       }
     }
   }
 
+  devLog.info('Final parsed address:', { propertyAddress, city, state, zip });
   return { propertyAddress, mailingAddress, city, state, zip };
 };
 
@@ -118,7 +137,7 @@ export const enhancedPropertiesOwnersProcessor = {
                 address: propertyAddress,
                 city: city || record.city || null,
                 state: state || record.state || null,
-                zip: zip || record.zip || record.zip_code || null,
+                zip_code: zip || record.zip || record.zip_code || null,
                 property_type: record.property_type || 'single_family',
                 unit_number: record.unit_number || record.unit || null,
                 square_footage: record.square_footage ? parseFloat(record.square_footage) : null,
