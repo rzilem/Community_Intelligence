@@ -10,11 +10,16 @@ import OperationsCalendar from '@/pages/operations/OperationsCalendar';
 import PrintQueue from '@/pages/operations/PrintQueue';
 import OperationsReports from '@/pages/operations/OperationsReports';
 import VendorsAdvanced from '@/pages/operations/VendorsAdvanced';
+import MaintenanceRequests from '@/pages/operations/MaintenanceRequests';
 
 export const operationsRoutes = [
   {
     path: '/operations',
     element: <Operations />
+  },
+  {
+    path: '/maintenance-requests',
+    element: <MaintenanceRequests />
   },
   {
     path: '/operations/dashboard',
