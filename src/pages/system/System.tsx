@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Settings, Workflow, Network, Shield, Puzzle, Database, Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,23 +78,25 @@ const System = () => {
   ];
 
   return (
-    <PageTemplate 
-      title="System" 
-      icon={<Settings className="h-8 w-8" />}
-      description="Manage system-wide settings and configurations."
-    >
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {systemMenuItems.map((item, index) => (
-          <SystemMenuCard 
-            key={index}
-            title={item.title}
-            icon={item.icon}
-            description={item.description}
-            link={item.link}
-          />
-        ))}
-      </div>
-    </PageTemplate>
+    <AppLayout>
+      <PageTemplate 
+        title="System" 
+        icon={<Settings className="h-8 w-8" />}
+        description="Manage system-wide settings and configurations."
+      >
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {systemMenuItems.map((item, index) => (
+            <SystemMenuCard 
+              key={index}
+              title={item.title}
+              icon={item.icon}
+              description={item.description}
+              link={item.link}
+            />
+          ))}
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

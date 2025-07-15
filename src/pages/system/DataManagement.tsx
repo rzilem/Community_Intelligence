@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Database, FileSpreadsheet, Upload, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,110 +42,112 @@ const DataManagement: React.FC = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Data Management" 
-      icon={<Database className="h-8 w-8" />}
-      description="Manage associations, import/export data, and configure system settings."
-    >
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle>Data Management</CardTitle>
-              <CardDescription>
-                Manage associations, import/export data, and configure system settings
-              </CardDescription>
+    <AppLayout>
+      <PageTemplate 
+        title="Data Management" 
+        icon={<Database className="h-8 w-8" />}
+        description="Manage associations, import/export data, and configure system settings."
+      >
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Data Management</CardTitle>
+                <CardDescription>
+                  Manage associations, import/export data, and configure system settings
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle>Data Import & Export</CardTitle>
-              <CardDescription>
-                Import data from CSV or Excel files, or export data templates and reports
-              </CardDescription>
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Data Import & Export</CardTitle>
+                <CardDescription>
+                  Import data from CSV or Excel files, or export data templates and reports
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
 
-      <Tabs defaultValue="ai-import" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="ai-import">
-            <Upload className="h-4 w-4 mr-2" />
-            AI Import (New)
-          </TabsTrigger>
-          <TabsTrigger value="legacy-import">
-            <Upload className="h-4 w-4 mr-2" />
-            Legacy Import
-          </TabsTrigger>
-          <TabsTrigger value="export">
-            <Download className="h-4 w-4 mr-2" />
-            Export Templates
-          </TabsTrigger>
-          <TabsTrigger value="properties">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Properties
-          </TabsTrigger>
-          <TabsTrigger value="migration">
-            <Database className="h-4 w-4 mr-2" />
-            Migration Tools
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="ai-import" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="ai-import">
+              <Upload className="h-4 w-4 mr-2" />
+              AI Import (New)
+            </TabsTrigger>
+            <TabsTrigger value="legacy-import">
+              <Upload className="h-4 w-4 mr-2" />
+              Legacy Import
+            </TabsTrigger>
+            <TabsTrigger value="export">
+              <Download className="h-4 w-4 mr-2" />
+              Export Templates
+            </TabsTrigger>
+            <TabsTrigger value="properties">
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Properties
+            </TabsTrigger>
+            <TabsTrigger value="migration">
+              <Database className="h-4 w-4 mr-2" />
+              Migration Tools
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="ai-import">
-          <OneClickAIImport 
-            associationId={selectedAssociationId || ''}
-            onImportComplete={(results) => {
-              console.log('AI Import completed:', results);
-              // Handle completion - could trigger refresh of data tables
-            }}
-          />
-        </TabsContent>
+          <TabsContent value="ai-import">
+            <OneClickAIImport 
+              associationId={selectedAssociationId || ''}
+              onImportComplete={(results) => {
+                console.log('AI Import completed:', results);
+                // Handle completion - could trigger refresh of data tables
+              }}
+            />
+          </TabsContent>
 
-        <TabsContent value="legacy-import">
-          <ImportTabContent
+          <TabsContent value="legacy-import">
+            <ImportTabContent
+              associationId={selectedAssociationId}
+              importFile={importFile}
+              importResults={importResults}
+              isValidating={isValidating}
+              isImporting={isImporting}
+              onFileUpload={handleFileUpload}
+              onImportAnother={resetImportState}
+              onAssociationChange={handleAssociationChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="export">
+            <ExportDataTemplates associationId={selectedAssociationId} />
+          </TabsContent>
+
+          <TabsContent value="properties">
+            <PropertiesTab associationId={selectedAssociationId} />
+          </TabsContent>
+
+          <TabsContent value="migration">
+            <DataMigrationTools associationId={selectedAssociationId} />
+          </TabsContent>
+        </Tabs>
+
+        {showMappingModal && (
+          <ImportDataMappingModal
+            open={showMappingModal}
+            onOpenChange={setShowMappingModal}
+            importType={importType}
+            fileData={importData}
             associationId={selectedAssociationId}
-            importFile={importFile}
-            importResults={importResults}
-            isValidating={isValidating}
+            validationResults={validationResults}
+            onConfirmMapping={importDataWithMapping}
             isImporting={isImporting}
-            onFileUpload={handleFileUpload}
-            onImportAnother={resetImportState}
-            onAssociationChange={handleAssociationChange}
           />
-        </TabsContent>
-
-        <TabsContent value="export">
-          <ExportDataTemplates associationId={selectedAssociationId} />
-        </TabsContent>
-
-        <TabsContent value="properties">
-          <PropertiesTab associationId={selectedAssociationId} />
-        </TabsContent>
-
-        <TabsContent value="migration">
-          <DataMigrationTools associationId={selectedAssociationId} />
-        </TabsContent>
-      </Tabs>
-
-      {showMappingModal && (
-        <ImportDataMappingModal
-          open={showMappingModal}
-          onOpenChange={setShowMappingModal}
-          importType={importType}
-          fileData={importData}
-          associationId={selectedAssociationId}
-          validationResults={validationResults}
-          onConfirmMapping={importDataWithMapping}
-          isImporting={isImporting}
-        />
-      )}
-    </PageTemplate>
+        )}
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

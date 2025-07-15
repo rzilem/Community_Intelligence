@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Clock, PlayCircle } from 'lucide-react';
 import { useWorkflowSchedule } from '@/hooks/operations/useWorkflowSchedule';
@@ -61,24 +62,26 @@ const WorkflowSchedulePage = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Workflow Schedule" 
-      icon={<Clock className="h-8 w-8" />}
-      description="Manage scheduled automated system workflows and background processes."
-    >
-      <div className="space-y-6">
-        <WorkflowScheduleStats schedules={schedules} />
-        
-        <WorkflowScheduleFilters 
-          onRefresh={handleRefresh}
-          onFilterByType={handleTypeFilter}
-          onFilterByStatus={handleStatusFilter}
-          onSearch={handleSearch}
-        />
-        
-        <WorkflowScheduleTable schedules={filteredSchedules} isLoading={loading} />
-      </div>
-    </PageTemplate>
+    <AppLayout>
+      <PageTemplate 
+        title="Workflow Schedule" 
+        icon={<Clock className="h-8 w-8" />}
+        description="Manage scheduled automated system workflows and background processes."
+      >
+        <div className="space-y-6">
+          <WorkflowScheduleStats schedules={schedules} />
+          
+          <WorkflowScheduleFilters 
+            onRefresh={handleRefresh}
+            onFilterByType={handleTypeFilter}
+            onFilterByStatus={handleStatusFilter}
+            onSearch={handleSearch}
+          />
+          
+          <WorkflowScheduleTable schedules={filteredSchedules} isLoading={loading} />
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

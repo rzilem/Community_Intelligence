@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { MailCheck, Clock, ToggleLeft, ToggleRight, ArrowRight, Settings, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -167,116 +168,118 @@ const EmailWorkflows: React.FC = () => {
   });
 
   return (
-    <PageTemplate 
-      title="Email Workflows" 
-      icon={<MailCheck className="h-8 w-8" />}
-      description="Setup and manage automated email workflows and notifications."
-    >
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="relative w-full sm:w-auto">
-            <Input
-              placeholder="Search workflows..."
-              className="w-full sm:w-[300px]"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+    <AppLayout>
+      <PageTemplate 
+        title="Email Workflows" 
+        icon={<MailCheck className="h-8 w-8" />}
+        description="Setup and manage automated email workflows and notifications."
+      >
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="relative w-full sm:w-auto">
+              <Input
+                placeholder="Search workflows..."
+                className="w-full sm:w-[300px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Button variant="outline" className="flex-1 sm:flex-none gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+              <Button className="flex-1 sm:flex-none gap-2">
+                <Plus className="h-4 w-4" />
+                Create Workflow
+              </Button>
+            </div>
           </div>
           
-          <div className="flex gap-3 w-full sm:w-auto">
-            <Button variant="outline" className="flex-1 sm:flex-none gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
-            <Button className="flex-1 sm:flex-none gap-2">
-              <Plus className="h-4 w-4" />
-              Create Workflow
-            </Button>
-          </div>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All Workflows</TabsTrigger>
+              <TabsTrigger value="system">System</TabsTrigger>
+              <TabsTrigger value="automated">Automated</TabsTrigger>
+              <TabsTrigger value="triggered">Triggered</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="space-y-4">
+              {filteredWorkflows.length > 0 ? (
+                filteredWorkflows.map(workflow => (
+                  <EmailWorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    onToggle={toggleWorkflow}
+                  />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No workflows found matching your search.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="system" className="space-y-4">
+              {filteredWorkflows.length > 0 ? (
+                filteredWorkflows.map(workflow => (
+                  <EmailWorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    onToggle={toggleWorkflow}
+                  />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No system workflows found matching your search.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="automated" className="space-y-4">
+              {filteredWorkflows.length > 0 ? (
+                filteredWorkflows.map(workflow => (
+                  <EmailWorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    onToggle={toggleWorkflow}
+                  />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No automated workflows found matching your search.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="triggered" className="space-y-4">
+              {filteredWorkflows.length > 0 ? (
+                filteredWorkflows.map(workflow => (
+                  <EmailWorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    onToggle={toggleWorkflow}
+                  />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No triggered workflows found matching your search.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
-        
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">All Workflows</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="automated">Automated</TabsTrigger>
-            <TabsTrigger value="triggered">Triggered</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="space-y-4">
-            {filteredWorkflows.length > 0 ? (
-              filteredWorkflows.map(workflow => (
-                <EmailWorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  onToggle={toggleWorkflow}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No workflows found matching your search.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="system" className="space-y-4">
-            {filteredWorkflows.length > 0 ? (
-              filteredWorkflows.map(workflow => (
-                <EmailWorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  onToggle={toggleWorkflow}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No system workflows found matching your search.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="automated" className="space-y-4">
-            {filteredWorkflows.length > 0 ? (
-              filteredWorkflows.map(workflow => (
-                <EmailWorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  onToggle={toggleWorkflow}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No automated workflows found matching your search.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="triggered" className="space-y-4">
-            {filteredWorkflows.length > 0 ? (
-              filteredWorkflows.map(workflow => (
-                <EmailWorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  onToggle={toggleWorkflow}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No triggered workflows found matching your search.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

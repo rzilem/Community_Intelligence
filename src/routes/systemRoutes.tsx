@@ -11,6 +11,9 @@ import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
+import UserManagement from "@/pages/system/UserManagement";
+import AuditLogs from "@/pages/system/AuditLogs";
+import ApiKeys from "@/pages/system/ApiKeys";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
@@ -65,5 +68,17 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/workflow-schedule",
     element: <RequireAuth><WorkflowSchedule /></RequireAuth>
+  },
+  {
+    path: "/system/users",
+    element: <RequireAuth><UserManagement /></RequireAuth>
+  },
+  {
+    path: "/system/audit-logs",
+    element: <RequireAuth><AuditLogs /></RequireAuth>
+  },
+  {
+    path: "/system/api-keys",
+    element: <RequireAuth><ApiKeys /></RequireAuth>
   }
 ];

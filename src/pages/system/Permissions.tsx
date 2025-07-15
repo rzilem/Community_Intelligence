@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
@@ -81,33 +82,35 @@ const Permissions = () => {
   };
 
   return (
-    <PageTemplate 
-      title="User Permissions" 
-      icon={<Shield className="h-8 w-8" />}
-      description="Manage user roles and permissions across the platform."
-      actions={
-        <ProfileSyncButton 
-          syncInProgress={syncInProgress} 
-          onSync={syncMissingProfiles} 
+    <AppLayout>
+      <PageTemplate 
+        title="User Permissions" 
+        icon={<Shield className="h-8 w-8" />}
+        description="Manage user roles and permissions across the platform."
+        actions={
+          <ProfileSyncButton 
+            syncInProgress={syncInProgress} 
+            onSync={syncMissingProfiles} 
+          />
+        }
+      >
+        <ProfileSyncAlert
+          syncInfo={syncInfo}
+          syncResult={syncResult}
+          userCount={users.length}
+          isLoading={isLoading}
         />
-      }
-    >
-      <ProfileSyncAlert
-        syncInfo={syncInfo}
-        syncResult={syncResult}
-        userCount={users.length}
-        isLoading={isLoading}
-      />
-      
-      <UserManagement 
-        users={users} 
-        isLoading={isLoading} 
-        error={error} 
-        roles={roles}
-        onRefresh={handleRefresh} 
-      />
-      <RolePermissionsCard />
-    </PageTemplate>
+        
+        <UserManagement 
+          users={users} 
+          isLoading={isLoading} 
+          error={error} 
+          roles={roles}
+          onRefresh={handleRefresh} 
+        />
+        <RolePermissionsCard />
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
