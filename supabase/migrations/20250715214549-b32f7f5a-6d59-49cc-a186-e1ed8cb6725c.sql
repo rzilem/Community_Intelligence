@@ -1,0 +1,2 @@
+-- Clear the incorrectly imported properties (42 properties with null account numbers and no residents)
+DELETE FROM properties WHERE association_id = '85bdb4ea-4288-414d-8f17-83b4a33725b8' AND account_number IS NULL;
