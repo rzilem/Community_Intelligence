@@ -51,11 +51,13 @@ serve(async (req) => {
     const analysisPrompt = `
       You are an AI data analyst for a property management system. Analyze this data and provide a comprehensive import plan.
 
+      CRITICAL: Return ONLY valid JSON without any markdown formatting, code blocks, or explanatory text.
+      
       File: ${fileName} (${fileType})
       User Description: ${userDescription || 'No description provided'}
       
-      Data Preview (first 500 characters):
-      ${typeof fileContent === 'string' ? fileContent.substring(0, 500) : JSON.stringify(fileContent).substring(0, 500)}
+      Data Preview (first 1000 characters):
+      ${typeof fileContent === 'string' ? fileContent.substring(0, 1000) : JSON.stringify(fileContent).substring(0, 1000)}
 
       AVAILABLE DATABASE SCHEMA:
       ${JSON.stringify(schemaInfo.availableTables, null, 2)}
@@ -99,7 +101,8 @@ serve(async (req) => {
          - Create relationships between tables using account_number
          - Distribute fields logically based on their semantic meaning
 
-      Return a JSON response with this structure AND proper table assignments:
+      RESPONSE FORMAT: Return ONLY the JSON object below with actual analysis results. NO markdown, NO code blocks, NO explanatory text:
+
       {
         "dataType": "properties|residents|financial|maintenance|compliance|mixed",
         "confidence": 95,
@@ -123,7 +126,7 @@ serve(async (req) => {
         "transformations": [
           {
             "field": "phone",
-            "action": "format",
+            "action": "format_phone",
             "description": "Standardize phone numbers"
           }
         ],
@@ -152,11 +155,11 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are an expert data analyst for HOA management systems. Always respond with valid JSON matching the exact structure requested.' },
+          { role: 'system', content: 'You are an expert data analyst for HOA management systems. CRITICAL: Always respond with ONLY valid JSON matching the exact structure requested. Never include markdown formatting, code blocks, or explanatory text. Return only the JSON object.' },
           { role: 'user', content: analysisPrompt }
         ],
-        temperature: 0.2,
-        max_tokens: 2000,
+        temperature: 0.1,
+        max_tokens: 3000,
       }),
     });
 
@@ -164,15 +167,58 @@ serve(async (req) => {
     let analysisResult;
     
     try {
-      analysisResult = JSON.parse(aiData.choices[0].message.content);
+      let responseContent = aiData.choices[0].message.content;
+      console.log('Raw AI response:', responseContent);
+      
+      // Strip markdown formatting if present
+      responseContent = responseContent.replace(/```json\s*|\s*```/g, '').trim();
+      
+      // Remove any leading/trailing non-JSON content
+      const jsonStart = responseContent.indexOf('{');
+      const jsonEnd = responseContent.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        responseContent = responseContent.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      console.log('Cleaned AI response:', responseContent);
+      analysisResult = JSON.parse(responseContent);
+      
+      // Validate required fields
+      if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables)) {
+        throw new Error('Missing or invalid targetTables field');
+      }
+      
+      if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object') {
+        throw new Error('Missing or invalid fieldMappings field');
+      }
+      
+      // Ensure all required fields have defaults
+      analysisResult.dataType = analysisResult.dataType || 'unknown';
+      analysisResult.confidence = analysisResult.confidence || 50;
+      analysisResult.dataQuality = analysisResult.dataQuality || { issues: [], warnings: [], suggestions: [] };
+      analysisResult.transformations = analysisResult.transformations || [];
+      analysisResult.requiredFields = analysisResult.requiredFields || [];
+      analysisResult.missingFields = analysisResult.missingFields || [];
+      analysisResult.suggestedDefaults = analysisResult.suggestedDefaults || {};
+      analysisResult.relationships = analysisResult.relationships || [];
+      analysisResult.summary = analysisResult.summary || 'AI analysis completed';
+      
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
+      console.error('Original response:', aiData.choices[0].message.content);
+      
+      // Enhanced fallback with better error details
       analysisResult = {
         dataType: 'unknown',
-        confidence: 50,
+        confidence: 30,
         targetTables: [],
         fieldMappings: {},
-        dataQuality: { issues: ['Unable to analyze data structure'], warnings: [], suggestions: [] },
+        tableAssignments: {},
+        dataQuality: { 
+          issues: [`AI analysis failed: ${parseError.message}`, 'Unable to analyze data structure'], 
+          warnings: ['Manual review required'], 
+          suggestions: ['Try uploading a different file format or provide more sample data'] 
+        },
         transformations: [],
         requiredFields: [],
         missingFields: [],
@@ -317,6 +363,12 @@ serve(async (req) => {
 
     // Step 5: Generate import preview
     console.log('Step 5: Generating import preview...');
+    
+    // Enhanced data quality assessment
+    const hasValidTargetTables = analysisResult.targetTables && analysisResult.targetTables.length > 0;
+    const hasValidFieldMappings = analysisResult.fieldMappings && Object.keys(analysisResult.fieldMappings).length > 0;
+    const hasValidation = analysisResult.validation && analysisResult.isValid;
+    
     const importPreview = {
       analysisResult,
       association: associations,
@@ -324,11 +376,20 @@ serve(async (req) => {
                         typeof fileContent === 'string' ? fileContent.split('\n').length - 1 : 0,
       readyToImport: analysisResult.confidence > 70 && 
                      analysisResult.missingFields.length === 0 && 
-                     analysisResult.isValid,
-      humanReviewRequired: analysisResult.confidence < 90 || 
+                     hasValidTargetTables &&
+                     hasValidFieldMappings &&
+                     (hasValidation || analysisResult.confidence > 80),
+      humanReviewRequired: analysisResult.confidence < 85 || 
                            analysisResult.dataQuality.issues.length > 0 || 
-                           !analysisResult.isValid,
-      processingTime: new Date().toISOString()
+                           !hasValidTargetTables ||
+                           !hasValidFieldMappings,
+      processingTime: new Date().toISOString(),
+      validationSummary: {
+        hasValidTargetTables,
+        hasValidFieldMappings,
+        hasValidation,
+        validationErrors: analysisResult.validation?.invalidMappings ? Object.keys(analysisResult.validation.invalidMappings).length : 0
+      }
     };
 
     console.log('Import preview generated successfully');

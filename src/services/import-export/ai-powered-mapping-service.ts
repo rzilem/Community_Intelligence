@@ -66,10 +66,21 @@ export const aiPoweredMappingService = {
       }
 
       if (!data?.success || !data?.analysisResult) {
-        throw new Error('AI analysis failed: ' + (data?.error || 'Unknown error'));
+        const errorMessage = data?.error || 'Unknown error';
+        devLog.error('AI analysis failed:', { error: errorMessage, data });
+        throw new Error(`AI analysis failed: ${errorMessage}`);
       }
 
       const analysisResult = data.analysisResult;
+      
+      // Validate the analysis result structure
+      if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables)) {
+        throw new Error('Invalid analysis result: missing or invalid targetTables');
+      }
+      
+      if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object') {
+        throw new Error('Invalid analysis result: missing or invalid fieldMappings');
+      }
       
       // Convert the AI processor result to our expected format
       const analysis: AIAnalysisResult = {

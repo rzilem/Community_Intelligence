@@ -6,6 +6,7 @@ interface AIAnalysisResult {
   confidence: number;
   targetTables: string[];
   fieldMappings: Record<string, string>;
+  tableAssignments?: Record<string, string[]>;
   dataQuality: {
     issues: string[];
     warnings: string[];
@@ -408,13 +409,13 @@ export class AIImportExecutor {
     const errors: string[] = [];
     
     // Check if we have valid target tables
-    if (!analysisResult.targetTables || analysisResult.targetTables.length === 0) {
-      errors.push('No target tables specified in analysis result');
+    if (!analysisResult.targetTables || !Array.isArray(analysisResult.targetTables) || analysisResult.targetTables.length === 0) {
+      errors.push('No target tables specified in analysis result. Expected at least one table from: properties, homeowners, residents, assessments');
     }
     
     // Check if we have field mappings
-    if (!analysisResult.fieldMappings || Object.keys(analysisResult.fieldMappings).length === 0) {
-      errors.push('No field mappings specified in analysis result');
+    if (!analysisResult.fieldMappings || typeof analysisResult.fieldMappings !== 'object' || Object.keys(analysisResult.fieldMappings).length === 0) {
+      errors.push('No field mappings specified in analysis result. Expected object with source->target field mappings');
     }
     
     // Validate that all target tables are supported
@@ -426,7 +427,24 @@ export class AIImportExecutor {
     
     // Check for validation errors in the analysis result
     if (analysisResult.validation && Object.keys(analysisResult.validation.invalidMappings).length > 0) {
-      errors.push('Invalid field mappings detected in analysis result');
+      const invalidMappings = Object.entries(analysisResult.validation.invalidMappings)
+        .map(([field, error]) => `${field}: ${error.reason}`)
+        .join(', ');
+      errors.push(`Invalid field mappings detected: ${invalidMappings}`);
+    }
+    
+    // Additional validation for required analysis fields
+    if (analysisResult.confidence < 30) {
+      errors.push('Analysis confidence too low (< 30%). Data may be incompatible with system schema');
+    }
+    
+    // Validate table assignments if present
+    if (analysisResult.tableAssignments) {
+      const invalidAssignments = Object.entries(analysisResult.tableAssignments)
+        .filter(([table, fields]) => !supportedTables.includes(table));
+      if (invalidAssignments.length > 0) {
+        errors.push(`Invalid table assignments: ${invalidAssignments.map(([table]) => table).join(', ')}`);
+      }
     }
     
     return errors;
