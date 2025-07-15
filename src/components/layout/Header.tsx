@@ -61,17 +61,16 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-background to-background/95 backdrop-blur-sm shadow-sm">
-      {isMobile && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={toggleSidebar}
-        >
-          <Menu size={20} />
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
-      )}
+      {/* Sidebar Toggle - Always visible */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-8 w-8"
+        onClick={toggleSidebar}
+      >
+        <Menu size={20} />
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
       
       <div className="flex-1 flex items-center justify-between">
         {/* Left section - Logo/Brand on mobile */}

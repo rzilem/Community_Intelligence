@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LogOut, X } from 'lucide-react';
+import { LogOut, X, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -12,6 +12,7 @@ interface SidebarProps {
   isMobile: boolean;
   isSidebarOpen: boolean;
   closeSidebar: () => void;
+  toggleSidebar: () => void;
   mainNavItems: NavItemProps[];
   handleSignOut: () => void;
 }
@@ -20,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobile,
   isSidebarOpen,
   closeSidebar,
+  toggleSidebar,
   mainNavItems,
   handleSignOut
 }) => {
@@ -85,23 +87,39 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div
       className={cn(
         "fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
-        isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"
+        !isSidebarOpen ? "-translate-x-full" : "translate-x-0"
       )}
     >
       <div className="h-16 py-2.5 px-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-2">
           <h1 className="font-display font-bold text-lg text-white">Community<br />Intelligence</h1>
         </div>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white"
-            onClick={closeSidebar}
-          >
-            <X size={20} />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Desktop collapse button */}
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white hover:bg-white/10"
+              onClick={toggleSidebar}
+            >
+              <ChevronLeft size={20} />
+              <span className="sr-only">Collapse Sidebar</span>
+            </Button>
+          )}
+          {/* Mobile close button */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white hover:bg-white/10"
+              onClick={closeSidebar}
+            >
+              <X size={20} />
+              <span className="sr-only">Close Sidebar</span>
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto">

@@ -14,7 +14,14 @@ import GlobalSearch from '../global/GlobalSearch';
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    // Initialize from localStorage for desktop, default to closed on mobile
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarOpen');
+      return saved ? JSON.parse(saved) : !isMobile;
+    }
+    return !isMobile;
+  });
   const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
 
   console.log('AppLayout rendering, auth state:', { 
@@ -50,7 +57,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [userRole]);
 
   const toggleSidebar = () => {
-    setIsSidebarOpen(prev => !prev);
+    setIsSidebarOpen(prev => {
+      const newState = !prev;
+      // Persist to localStorage for desktop
+      if (!isMobile) {
+        localStorage.setItem('sidebarOpen', JSON.stringify(newState));
+      }
+      return newState;
+    });
   };
 
   return (
@@ -60,6 +74,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           isMobile={isMobile}
           isSidebarOpen={isSidebarOpen}
           closeSidebar={() => setIsSidebarOpen(false)}
+          toggleSidebar={toggleSidebar}
           mainNavItems={mainNavItems}
           handleSignOut={handleSignOut}
         />
