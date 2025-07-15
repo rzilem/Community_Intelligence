@@ -1,6 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { User, Mail, BarChart3, FilePlus, ClipboardCheck, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -55,33 +56,35 @@ const LeadManagement = () => {
   ];
 
   return (
-    <PageTemplate 
-      title="Lead Management" 
-      icon={<User className="h-8 w-8" />}
-      description="Manage and track potential new clients and business opportunities."
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature) => (
-          <Card key={feature.title} className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <div className={`p-3 w-fit rounded-md ${feature.color} mb-2`}>
-                {feature.icon}
-              </div>
-              <CardTitle>{feature.title}</CardTitle>
-              <CardDescription>{feature.description}</CardDescription>
-            </CardHeader>
-            <CardFooter className="pt-2">
-              <Button 
-                className="w-full"
-                onClick={() => navigate(feature.path)}
-              >
-                View
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </PageTemplate>
+    <AppLayout>
+      <PageTemplate 
+        title="Lead Management" 
+        icon={<User className="h-8 w-8" />}
+        description="Manage and track potential new clients and business opportunities."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => (
+            <Card key={feature.title} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className={`p-3 w-fit rounded-md ${feature.color} mb-2`}>
+                  {feature.icon}
+                </div>
+                <CardTitle>{feature.title}</CardTitle>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardHeader>
+              <CardFooter className="pt-2">
+                <Button 
+                  className="w-full"
+                  onClick={() => navigate(feature.path)}
+                >
+                  View
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

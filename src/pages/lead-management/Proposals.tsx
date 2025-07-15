@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { FileText, Plus, Settings, Filter, SortAsc, SortDesc, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -176,146 +177,148 @@ const Proposals = () => {
   const conversionRate = sentProposals > 0 ? Math.round((acceptedProposals / sentProposals) * 100) : 0;
 
   return (
-    <PageTemplate 
-      title="Proposals" 
-      icon={<FileText className="h-8 w-8" />}
-      description="Create and manage business proposals for potential clients."
-      actions={
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              if (currentProposal) {
-                setIsAIRecommendationsOpen(true);
-              } else {
-                toast.error("Please select a proposal to get AI recommendations");
-              }
-            }}
-          >
-            <BrainCircuit className="mr-2 h-4 w-4" /> AI Recommendations
-          </Button>
-          <Link to="/lead-management/templates">
-            <Button variant="outline">
-              <Settings className="mr-2 h-4 w-4" /> Manage Templates
+    <AppLayout>
+      <PageTemplate 
+        title="Proposals" 
+        icon={<FileText className="h-8 w-8" />}
+        description="Create and manage business proposals for potential clients."
+        actions={
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (currentProposal) {
+                  setIsAIRecommendationsOpen(true);
+                } else {
+                  toast.error("Please select a proposal to get AI recommendations");
+                }
+              }}
+            >
+              <BrainCircuit className="mr-2 h-4 w-4" /> AI Recommendations
             </Button>
-          </Link>
-          <Button onClick={handleCreateProposal}>
-            <Plus className="mr-2 h-4 w-4" /> Create Proposal
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-6">
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Proposals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProposals}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {pendingProposals} pending review
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Proposal Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total value of all proposals
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Accepted Proposals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{acceptedProposals}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                ${acceptedValue.toLocaleString()} in value
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Conversion Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{conversionRate}%</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {acceptedProposals} out of {sentProposals} sent
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <ProposalList 
-          proposals={proposals}
-          isLoading={isLoading}
-          onEdit={handleEditProposal}
-          onView={handleViewProposal}
-          onDelete={handleDeleteProposal}
-          onSend={handleSendProposal}
-          onSelect={setCurrentProposal}
-          selectedProposal={currentProposal}
-        />
-        
-        {isFormOpen && (
-          <ProposalForm 
-            isOpen={isFormOpen}
-            onClose={() => setIsFormOpen(false)}
-            onSave={handleSaveProposal}
-            proposal={currentProposal || undefined}
-          />
-        )}
-        
-        {isViewerOpen && currentProposal && (
-          <ProposalViewer 
-            isOpen={isViewerOpen}
-            onClose={() => setIsViewerOpen(false)}
-            proposal={currentProposal}
-            onSend={() => handleSendProposal(currentProposal)}
-          />
-        )}
-        
-        <Dialog 
-          open={isAIRecommendationsOpen} 
-          onOpenChange={setIsAIRecommendationsOpen}
-        >
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>AI Content Recommendations</DialogTitle>
-              <DialogDescription>
-                Get intelligent suggestions to improve your proposal based on analytics and successful patterns
-              </DialogDescription>
-            </DialogHeader>
+            <Link to="/lead-management/templates">
+              <Button variant="outline">
+                <Settings className="mr-2 h-4 w-4" /> Manage Templates
+              </Button>
+            </Link>
+            <Button onClick={handleCreateProposal}>
+              <Plus className="mr-2 h-4 w-4" /> Create Proposal
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {/* Stats cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Proposals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalProposals}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {pendingProposals} pending review
+                </p>
+              </CardContent>
+            </Card>
             
-            {currentProposal && (
-              <AIContentRecommendations 
-                proposal={currentProposal}
-                onApplyRecommendation={handleApplyRecommendation}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageTemplate>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Proposal Value
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total value of all proposals
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Accepted Proposals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{acceptedProposals}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  ${acceptedValue.toLocaleString()} in value
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Conversion Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {acceptedProposals} out of {sentProposals} sent
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <ProposalList 
+            proposals={proposals}
+            isLoading={isLoading}
+            onEdit={handleEditProposal}
+            onView={handleViewProposal}
+            onDelete={handleDeleteProposal}
+            onSend={handleSendProposal}
+            onSelect={setCurrentProposal}
+            selectedProposal={currentProposal}
+          />
+          
+          {isFormOpen && (
+            <ProposalForm 
+              isOpen={isFormOpen}
+              onClose={() => setIsFormOpen(false)}
+              onSave={handleSaveProposal}
+              proposal={currentProposal || undefined}
+            />
+          )}
+          
+          {isViewerOpen && currentProposal && (
+            <ProposalViewer 
+              isOpen={isViewerOpen}
+              onClose={() => setIsViewerOpen(false)}
+              proposal={currentProposal}
+              onSend={() => handleSendProposal(currentProposal)}
+            />
+          )}
+          
+          <Dialog 
+            open={isAIRecommendationsOpen} 
+            onOpenChange={setIsAIRecommendationsOpen}
+          >
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+              <DialogHeader>
+                <DialogTitle>AI Content Recommendations</DialogTitle>
+                <DialogDescription>
+                  Get intelligent suggestions to improve your proposal based on analytics and successful patterns
+                </DialogDescription>
+              </DialogHeader>
+              
+              {currentProposal && (
+                <AIContentRecommendations 
+                  proposal={currentProposal}
+                  onApplyRecommendation={handleApplyRecommendation}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

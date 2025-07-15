@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { User } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -61,123 +62,125 @@ const LeadsDashboard = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Lead Management" 
-      icon={<User className="h-8 w-8" />}
-      description="Track and manage potential association clients."
-    >
-      <div className="space-y-6">
-        {/* Quick stats cards */}
-        <LeadStatCards leadCounts={leadCounts} />
+    <AppLayout>
+      <PageTemplate 
+        title="Lead Management" 
+        icon={<User className="h-8 w-8" />}
+        description="Track and manage potential association clients."
+      >
+        <div className="space-y-6">
+          {/* Quick stats cards */}
+          <LeadStatCards leadCounts={leadCounts} />
 
-        {/* AI Bulk Processing */}
-        <BulkAIProcessor
-          items={leads}
-          itemType="leads"
-          onProcessingComplete={refreshLeads}
-        />
-
-        {/* Actions bar */}
-        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-          <LeadActionButtons 
-            onRefresh={refreshLeads} 
-            onCreateTestLead={createTestLead} 
+          {/* AI Bulk Processing */}
+          <BulkAIProcessor
+            items={leads}
+            itemType="leads"
+            onProcessingComplete={refreshLeads}
           />
 
-          <LeadColumnSelector
-            columns={columns}
-            selectedColumns={visibleColumnIds || []}
-            onChange={updateVisibleColumns}
-            onReorder={reorderColumns}
-            resetToDefaults={resetToDefaults}
-          />
+          {/* Actions bar */}
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
+            <LeadActionButtons 
+              onRefresh={refreshLeads} 
+              onCreateTestLead={createTestLead} 
+            />
+
+            <LeadColumnSelector
+              columns={columns}
+              selectedColumns={visibleColumnIds || []}
+              onChange={updateVisibleColumns}
+              onReorder={reorderColumns}
+              resetToDefaults={resetToDefaults}
+            />
+          </div>
+
+          {/* Tabs and Table */}
+          <Card>
+            <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+              <div className="flex items-center justify-between px-4 pt-4">
+                <LeadStatusTabs leadCounts={leadCounts} activeTab={activeTab} />
+              </div>
+              <CardContent className="pt-4 pb-0">
+                <TabsContent value="all">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="new">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="contacted">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="qualified">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="proposal">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="converted">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+                <TabsContent value="lost">
+                  <LeadsTable 
+                    leads={filteredLeads} 
+                    isLoading={isLoading}
+                    visibleColumnIds={visibleColumnIds}
+                    columns={columns}
+                    onDeleteLead={deleteLead}
+                    onUpdateLeadStatus={updateLeadStatus}
+                  />
+                </TabsContent>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground py-2 px-4 border-t">
+                Last updated: {lastRefreshed.toLocaleTimeString()}
+              </CardFooter>
+            </Tabs>
+          </Card>
         </div>
-
-        {/* Tabs and Table */}
-        <Card>
-          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <div className="flex items-center justify-between px-4 pt-4">
-              <LeadStatusTabs leadCounts={leadCounts} activeTab={activeTab} />
-            </div>
-            <CardContent className="pt-4 pb-0">
-              <TabsContent value="all">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="new">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="contacted">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="qualified">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="proposal">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="converted">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-              <TabsContent value="lost">
-                <LeadsTable 
-                  leads={filteredLeads} 
-                  isLoading={isLoading}
-                  visibleColumnIds={visibleColumnIds}
-                  columns={columns}
-                  onDeleteLead={deleteLead}
-                  onUpdateLeadStatus={updateLeadStatus}
-                />
-              </TabsContent>
-            </CardContent>
-            <CardFooter className="text-xs text-muted-foreground py-2 px-4 border-t">
-              Last updated: {lastRefreshed.toLocaleTimeString()}
-            </CardFooter>
-          </Tabs>
-        </Card>
-      </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

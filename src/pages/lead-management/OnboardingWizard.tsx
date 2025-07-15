@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
+import AppLayout from '@/components/layout/AppLayout';
 import { 
   ClipboardCheck, CheckCircle, Circle, Clock, Calendar, 
   Users, ArrowLeft, Plus, FileText, Upload, Trash2, MessageSquare,
@@ -333,455 +334,345 @@ const OnboardingWizard = () => {
 
   if (isLoading) {
     return (
+      <AppLayout>
+        <PageTemplate 
+          title="Community Onboarding" 
+          icon={<ClipboardCheck className="h-8 w-8" />}
+          description="Manage the onboarding process for new communities and associations."
+        >
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading onboarding data...</span>
+          </div>
+        </PageTemplate>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
       <PageTemplate 
         title="Community Onboarding" 
         icon={<ClipboardCheck className="h-8 w-8" />}
         description="Manage the onboarding process for new communities and associations."
       >
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-lg">Loading onboarding data...</span>
-        </div>
-      </PageTemplate>
-    );
-  }
+        <div className="space-y-6">
+          {/* Display template count for debugging */}
+          <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
+            Available templates: {templates.length} | 
+            Available projects: {projects.length} | 
+            Current view: {viewMode}
+          </div>
 
-  return (
-    <PageTemplate 
-      title="Community Onboarding" 
-      icon={<ClipboardCheck className="h-8 w-8" />}
-      description="Manage the onboarding process for new communities and associations."
-    >
-      <div className="space-y-6">
-        {/* Display template count for debugging */}
-        <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
-          Available templates: {templates.length} | 
-          Available projects: {projects.length} | 
-          Current view: {viewMode}
-        </div>
-
-        {/* Tabs to switch between project view and templates */}
-        {projects.length > 0 && (
-          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'project' | 'templates')}>
-            <TabsList>
-              <TabsTrigger value="project">Active Projects</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
-        
-        {viewMode === 'templates' ? (
-          <OnboardingTemplates />
-        ) : (
-          <div>
-            {/* Active HOA Project */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {activeProject?.name || "No active projects"}
-                </h2>
-                {activeProject && (
-                  <p className="text-muted-foreground">
-                    Started {formatStartDate(activeProject.start_date)}
-                    {lead && ` • ${lead.association_name || lead.name}`}
-                  </p>
-                )}
-              </div>
-              
-              <div className="flex gap-2 mt-2 md:mt-0">
-                <TooltipButton 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => navigate('/lead-management/dashboard')}
-                  tooltip="Return to the Lead Management Dashboard"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Dashboard
-                </TooltipButton>
-                <TooltipButton 
-                  className="flex items-center gap-2"
-                  onClick={() => setIsNewProjectDialogOpen(true)}
-                  tooltip="Start a new onboarding project from a template"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </TooltipButton>
-              </div>
-            </div>
-            
-            {/* Summary Card */}
-            <Card className="mt-6">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Onboarding Progress</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {metrics.completed} of {metrics.total} tasks completed
-                    </p>
-                    <Progress value={calculateTotalProgress()} className="h-2 mt-2" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-100 p-2 rounded-md">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Completed</p>
-                        <p className="font-medium">{metrics.completed} tasks</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="bg-amber-100 p-2 rounded-md">
-                        <Clock className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Days Since Start</p>
-                        <p className="font-medium">{metrics.daysSinceStart} days</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-100 p-2 rounded-md">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Est. Days Remaining</p>
-                        <p className="font-medium">{metrics.daysRemaining} days</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="bg-purple-100 p-2 rounded-md">
-                        <Users className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Client Access</p>
-                        <p className="font-medium">{metrics.clientAccess}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Tabs Section */}
-            <Tabs defaultValue="tasks" className="w-full mt-6">
-              <TabsList className="bg-card border-b">
-                <TabsTrigger value="tasks">Tasks & Timeline</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="sharing">Client Sharing</TabsTrigger>
+          {/* Tabs to switch between project view and templates */}
+          {projects.length > 0 && (
+            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'project' | 'templates')}>
+              <TabsList>
+                <TabsTrigger value="project">Active Projects</TabsTrigger>
+                <TabsTrigger value="templates">Templates</TabsTrigger>
               </TabsList>
+            </Tabs>
+          )}
+          
+          {viewMode === 'templates' ? (
+            <OnboardingTemplates />
+          ) : (
+            <div>
+              {/* Active HOA Project */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {activeProject?.name || "No active projects"}
+                  </h2>
+                  {activeProject && (
+                    <p className="text-muted-foreground">
+                      Started {formatStartDate(activeProject.start_date)}
+                      {lead && ` • ${lead.association_name || lead.name}`}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 mt-2 md:mt-0">
+                  <TooltipButton 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                    onClick={() => navigate('/lead-management/dashboard')}
+                    tooltip="Return to the Lead Management Dashboard"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Dashboard
+                  </TooltipButton>
+                  <TooltipButton 
+                    className="flex items-center gap-2"
+                    onClick={() => setIsNewProjectDialogOpen(true)}
+                    tooltip="Start a new onboarding project from a template"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Project
+                  </TooltipButton>
+                </div>
+              </div>
               
-              <TabsContent value="tasks" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Timeline Sidebar */}
-                  <Card className="md:col-span-1">
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-4">Timeline</h3>
+              {/* Summary Card */}
+              <Card className="mt-6">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Onboarding Progress</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {metrics.completed} of {metrics.total} tasks completed
+                      </p>
+                      <Progress value={calculateTotalProgress()} className="h-2 mt-2" />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-md">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Completed</p>
+                          <p className="font-medium">{metrics.completed} tasks</p>
+                        </div>
+                      </div>
                       
-                      <div className="space-y-6">
-                        {tasksByStage.map((stage) => (
-                          <div key={stage.id} className="space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Circle className={getStageColorClass(stage.completed, stage.total)} />
-                              <h4 className="font-medium">{stage.title}</h4>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-amber-100 p-2 rounded-md">
+                          <Clock className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Days Since Start</p>
+                          <p className="font-medium">{metrics.daysSinceStart} days</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-100 p-2 rounded-md">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Est. Days Remaining</p>
+                          <p className="font-medium">{metrics.daysRemaining} days</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="bg-purple-100 p-2 rounded-md">
+                          <Users className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Client Access</p>
+                          <p className="font-medium">{metrics.clientAccess}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Tabs Section */}
+              <Tabs defaultValue="tasks" className="w-full mt-6">
+                <TabsList className="bg-card border-b">
+                  <TabsTrigger value="tasks">Tasks & Timeline</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                  <TabsTrigger value="milestones">Milestones</TabsTrigger>
+                  <TabsTrigger value="communication">Communication</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="tasks" className="space-y-4">
+                  <Accordion type="multiple" defaultValue={["initial-setup"]} className="w-full">
+                    {tasksByStage.map((stage) => (
+                      <AccordionItem key={stage.id} value={stage.id}>
+                        <AccordionTrigger className="text-left">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-md ${stage.completed === stage.total ? 'bg-green-100' : 'bg-amber-100'}`}>
+                              {stage.completed === stage.total ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <Clock className="h-5 w-5 text-amber-600" />
+                              )}
                             </div>
-                            
-                            <p className="text-xs text-muted-foreground ml-7">
-                              {stage.completed} of {stage.tasks?.length || 0} tasks completed
-                            </p>
-                            
-                            <ul className="space-y-2 ml-7 border-l pl-4">
-                              {stage.tasks?.map((task: any) => (
-                                <li 
-                                  key={task.id}
-                                  className={`text-sm flex items-center gap-2 ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                            <div>
+                              <h3 className="font-medium">{stage.title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {stage.completed} of {stage.total} completed
+                              </p>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3 pl-14">
+                            {stage.tasks.map((task: any) => (
+                              <div key={task.id} className="flex items-center gap-3 p-3 bg-card rounded-md">
+                                <button
+                                  onClick={() => toggleTaskStatus(task.id, task.status)}
+                                  className={`p-1 rounded-full ${task.completed 
+                                    ? 'bg-green-100 text-green-600' 
+                                    : 'bg-amber-100 text-amber-600'
+                                  }`}
                                 >
                                   {task.completed ? (
-                                    <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                    <CheckCircle className="h-4 w-4" />
                                   ) : (
-                                    <Circle className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                    <Circle className="h-4 w-4" />
                                   )}
-                                  <span>{task.title}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Task Details */}
-                  <Card className="md:col-span-2">
-                    <CardContent className="p-4">
-                      <Accordion type="multiple" className="space-y-4">
-                        {tasksByStage.map((stage) => (
-                          <AccordionItem 
-                            key={stage.id} 
-                            value={stage.id}
-                            className="border rounded-md"
-                          >
-                            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
-                              <div className="flex flex-col sm:flex-row sm:items-center w-full">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold">{stage.title}</span>
-                                </div>
-                                <span className="text-sm text-muted-foreground ml-0 sm:ml-2">
-                                  {stage.completed} of {stage.tasks?.length || 0} tasks completed
-                                </span>
-                              </div>
-                            </AccordionTrigger>
-                            
-                            <AccordionContent className="pt-2">
-                              <div className="space-y-2">
-                                {stage.tasks?.map((task: any) => (
-                                  <div 
-                                    key={task.id} 
-                                    className="border rounded-md p-4 flex justify-between items-center"
-                                  >
-                                    <div className="flex items-center">
-                                      <TooltipButton
-                                        variant="ghost"
-                                        size="sm"
-                                        className="rounded-full p-0 h-6 w-6 mr-2"
-                                        onClick={() => toggleTaskStatus(task.id, task.status || (task.completed ? 'completed' : 'pending'))}
-                                        tooltip={task.completed ? "Mark as incomplete" : "Mark as completed"}
-                                      >
-                                        {task.completed ? (
-                                          <CheckCircle className="h-5 w-5 text-green-500" />
-                                        ) : (
-                                          <Circle className="h-5 w-5 text-muted-foreground" />
-                                        )}
-                                      </TooltipButton>
-                                      
-                                      <span className={`${task.completed ? 'line-through text-muted-foreground' : ''}`}>
+                                </button>
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <h4 className={`font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
                                         {task.title}
-                                      </span>
+                                      </h4>
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>{task.teamAssigned}</span>
+                                        {task.due_date && (
+                                          <>
+                                            <span>•</span>
+                                            <span>Due: {format(new Date(task.due_date), 'MMM d')}</span>
+                                          </>
+                                        )}
+                                      </div>
                                     </div>
-                                    
-                                    <div className="flex items-center gap-4">
-                                      <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground">
-                                        <Calendar className="h-3 w-3" />
-                                        <span>Due {format(new Date(task.due_date), 'MMM d')}</span>
-                                      </div>
-                                      
-                                      <div className={`text-sm px-2 py-1 rounded ${
-                                        task.teamAssigned === 'Team' 
-                                          ? 'bg-blue-100 text-blue-800' 
-                                          : 'bg-green-100 text-green-800'
-                                      }`}>
-                                        {task.teamAssigned}
-                                      </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button variant="ghost" size="sm">
+                                        <MessageSquare className="h-4 w-4" />
+                                      </Button>
+                                      <Button variant="ghost" size="sm">
+                                        <FileText className="h-4 w-4" />
+                                      </Button>
                                     </div>
                                   </div>
-                                ))}
+                                </div>
                               </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </CardContent>
-                  </Card>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </TabsContent>
+                
+                <TabsContent value="documents" className="space-y-4">
+                  <div className="text-center py-10">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Document Management</h3>
+                    <p className="text-muted-foreground">
+                      Document sharing and management features will be available soon.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="milestones" className="space-y-4">
+                  <div className="text-center py-10">
+                    <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Project Milestones</h3>
+                    <p className="text-muted-foreground">
+                      Milestone tracking and reporting will be available soon.
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="communication" className="space-y-4">
+                  <div className="text-center py-10">
+                    <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Communication Log</h3>
+                    <p className="text-muted-foreground">
+                      Communication history and team messaging will be available soon.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+          
+          {/* New Project Dialog */}
+          <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Onboarding Project</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <label htmlFor="template" className="text-sm font-medium">Template</label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          <div className="flex items-center gap-2">
+                            {getTemplateIcon(template.template_type)}
+                            {template.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </TabsContent>
+                
+                <div className="grid gap-2">
+                  <label htmlFor="lead" className="text-sm font-medium">Lead/Client</label>
+                  <Select value={selectedLeadId} onValueChange={handleLeadChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a lead" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leads.map((lead) => (
+                        <SelectItem key={lead.id} value={lead.id}>
+                          {lead.association_name || lead.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <label htmlFor="project-name" className="text-sm font-medium">Project Name</label>
+                  <Input 
+                    id="project-name"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Enter project name"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <label htmlFor="start-date" className="text-sm font-medium">Start Date</label>
+                  <Input
+                    type="date"
+                    value={startDate.toISOString().split('T')[0]}
+                    onChange={(e) => setStartDate(new Date(e.target.value))}
+                  />
+                </div>
+              </div>
               
-              <TabsContent value="documents">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Document Management</CardTitle>
-                    <CardDescription>Upload and manage documents for this onboarding process</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Documents</h3>
-                        <TooltipButton className="flex gap-2 items-center" tooltip="Upload a new document to this project">
-                          <Upload className="h-4 w-4" />
-                          Upload Document
-                        </TooltipButton>
-                      </div>
-                      
-                      <div className="border rounded-md divide-y">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="p-4 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                              <FileText className="text-blue-500 h-5 w-5" />
-                              <div>
-                                <p className="font-medium">Document {i}.pdf</p>
-                                <p className="text-xs text-muted-foreground">Uploaded 3 days ago</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <TooltipButton size="sm" variant="outline" className="h-8" tooltip="Download this document">
-                                Download
-                              </TooltipButton>
-                              <TooltipButton size="sm" variant="ghost" className="h-8 text-red-500 hover:text-red-600" tooltip="Delete this document">
-                                <Trash2 className="h-4 w-4" />
-                              </TooltipButton>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="sharing">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Client Sharing Settings</CardTitle>
-                    <CardDescription>Control what information is shared with the client during onboarding</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium">Client Portal Access</h3>
-                          <p className="text-sm text-muted-foreground">Enable or disable client access to the onboarding portal</p>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="bg-green-500 h-3 w-3 rounded-full mr-2"></div>
-                          <span>Active</span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <h4 className="font-medium">Contact Information</h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border p-4 rounded-md">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">Primary Contact</p>
-                                <p className="text-sm">John Smith - Board President</p>
-                                <p className="text-sm text-muted-foreground">john.smith@example.com</p>
-                                <p className="text-sm text-muted-foreground">(555) 123-4567</p>
-                              </div>
-                              <TooltipButton variant="ghost" size="sm" tooltip="Send a message to this contact">
-                                <MessageSquare className="h-4 w-4" />
-                              </TooltipButton>
-                            </div>
-                          </div>
-                          
-                          <div className="border p-4 rounded-md">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">Secondary Contact</p>
-                                <p className="text-sm">Sarah Johnson - Treasurer</p>
-                                <p className="text-sm text-muted-foreground">sarah.j@example.com</p>
-                                <p className="text-sm text-muted-foreground">(555) 987-6543</p>
-                              </div>
-                              <TooltipButton variant="ghost" size="sm" tooltip="Send a message to this contact">
-                                <MessageSquare className="h-4 w-4" />
-                              </TooltipButton>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-end">
-                          <TooltipButton tooltip="Add a new contact to this project">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Contact
-                          </TooltipButton>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-      </div>
-
-      {/* Create New Project Dialog */}
-      <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Create New Onboarding Project</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-6 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Template</label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Templates</SelectLabel>
-                    {templates.map(template => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex items-center gap-2">
-                          {getTemplateIcon(template.template_type)}
-                          <span>{template.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Lead</label>
-              <Select value={selectedLeadId} onValueChange={handleLeadChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a lead" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Active Leads</SelectLabel>
-                    {leads.map(lead => (
-                      <SelectItem key={lead.id} value={lead.id}>
-                        {lead.association_name || lead.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Project Name</label>
-              <Input 
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="Enter project name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
-              <DatePicker
-                date={startDate}
-                setDate={setStartDate}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewProjectDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateProject} disabled={isCreatingProject}>
-              {isCreatingProject ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Start Project
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </PageTemplate>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsNewProjectDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateProject} disabled={isCreatingProject}>
+                  {isCreatingProject ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Create Project
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
