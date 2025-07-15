@@ -132,7 +132,7 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
               <div>
                 <h3 className="font-medium mb-3">Field Mappings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {Object.entries(analysisResult.fieldMappings).map(([source, target]) => (
+                  {(Object.entries(analysisResult.fieldMappings) as [string, string][]).map(([source, target]) => (
                     <div key={source} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
                       <span className="font-medium">{source}</span>
                       <span className="text-muted-foreground">→</span>
