@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { CreditCard, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,11 +20,12 @@ const TransactionsAndPayments = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Transactions & Payments" 
-      icon={<CreditCard className="h-8 w-8" />}
-      description="Manage all financial transactions, vendor payments, and journal entries."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Transactions & Payments" 
+        icon={<CreditCard className="h-8 w-8" />}
+        description="Manage all financial transactions, vendor payments, and journal entries."
+      >
       <div className="mb-6">
         <AssociationSelector 
           onAssociationChange={handleAssociationChange}
@@ -54,7 +56,8 @@ const TransactionsAndPayments = () => {
           />
         </TabsContent>
       </Tabs>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -520,11 +521,12 @@ const BudgetPlanning = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Budget Planning" 
-      icon={<PiggyBank className="h-8 w-8" />}
-      description="Create and manage detailed operating, reserve, and capital budgets."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Budget Planning" 
+        icon={<PiggyBank className="h-8 w-8" />}
+        description="Create and manage detailed operating, reserve, and capital budgets."
+      >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
           <Card>
@@ -663,7 +665,8 @@ const BudgetPlanning = () => {
         budget={undefined}
         years={Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - 2 + i).toString())}
       />
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

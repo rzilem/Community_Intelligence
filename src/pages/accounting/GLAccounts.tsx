@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,75 +41,76 @@ const GLAccounts: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Chart of Accounts</h1>
-          <p className="text-muted-foreground">
-            Manage your general ledger account structure
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Account
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search accounts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+    <AppLayout>
+      <PageTemplate
+        title="Chart of Accounts"
+        icon={<Plus className="h-8 w-8" />}
+        description="Manage your general ledger account structure"
+        actions={
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Account
+          </Button>
+        }
+      >
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search accounts..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={accountType} onValueChange={setAccountType}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="asset">Assets</SelectItem>
+                    <SelectItem value="liability">Liabilities</SelectItem>
+                    <SelectItem value="equity">Equity</SelectItem>
+                    <SelectItem value="revenue">Revenue</SelectItem>
+                    <SelectItem value="expense">Expenses</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <Select value={accountType} onValueChange={setAccountType}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="asset">Assets</SelectItem>
-                <SelectItem value="liability">Liabilities</SelectItem>
-                <SelectItem value="equity">Equity</SelectItem>
-                <SelectItem value="revenue">Revenue</SelectItem>
-                <SelectItem value="expense">Expenses</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <GLAccountsTable
-            searchTerm={searchTerm}
-            accountType={accountType}
+          <Card>
+            <CardContent className="p-0">
+              <GLAccountsTable
+                searchTerm={searchTerm}
+                accountType={accountType}
+                associationId={associationId}
+                onEditAccount={handleEditAccount}
+                onRefresh={handleRefresh}
+                key={refreshTrigger}
+              />
+            </CardContent>
+          </Card>
+
+          <GLAccountDialog
+            open={showCreateDialog}
+            onOpenChange={handleDialogClose}
+            account={editingAccount}
             associationId={associationId}
-            onEditAccount={handleEditAccount}
-            onRefresh={handleRefresh}
-            key={refreshTrigger}
+            onSave={handleSave}
           />
-        </CardContent>
-      </Card>
-
-      <GLAccountDialog
-        open={showCreateDialog}
-        onOpenChange={handleDialogClose}
-        account={editingAccount}
-        associationId={associationId}
-        onSave={handleSave}
-      />
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

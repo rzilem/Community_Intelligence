@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,7 +66,13 @@ const FinancialReports: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <AppLayout>
+      <PageTemplate
+        title="Financial Reports"
+        icon={<FileText className="h-8 w-8" />}
+        description="Generate comprehensive financial reports and statements"
+      >
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Financial Reports</h1>
@@ -175,7 +183,9 @@ const FinancialReports: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 import { Plus, FileText, CheckCircle, XCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,19 +25,19 @@ const JournalEntries = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Journal Entries</h1>
-          <p className="text-muted-foreground">
-            Create and manage general ledger journal entries with double-entry validation
-          </p>
-        </div>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Entry
-        </Button>
-      </div>
+    <AppLayout>
+      <PageTemplate
+        title="Journal Entries"
+        icon={<FileText className="h-8 w-8" />}
+        description="Create and manage general ledger journal entries with double-entry validation"
+        actions={
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Entry
+          </Button>
+        }
+      >
+        <div className="space-y-6">
 
       <div className="flex gap-4 items-center flex-wrap">
         <div className="flex items-center gap-2">
@@ -160,7 +162,9 @@ const JournalEntries = () => {
         associationId={associationId}
         onSave={handleRefresh}
       />
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

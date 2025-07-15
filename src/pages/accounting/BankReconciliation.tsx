@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
 import { Plus, Download, Upload, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,7 +29,13 @@ const BankReconciliation = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <AppLayout>
+      <PageTemplate
+        title="Bank Reconciliation"
+        icon={<CheckCircle className="h-8 w-8" />}
+        description="Reconcile bank statements with your financial records"
+      >
+        <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bank Reconciliation</h1>
@@ -144,7 +152,9 @@ const BankReconciliation = () => {
         onOpenChange={setShowUpload}
         selectedAccount={selectedAccount}
       />
-    </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

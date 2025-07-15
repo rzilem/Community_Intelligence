@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BarChart, ArrowUp, ArrowDown, DollarSign, PiggyBank, Clock, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,11 +44,12 @@ const AccountingDashboard = () => {
   const associationId = 'demo-association-id'; // Replace with actual association ID from context
 
   return (
-    <PageTemplate
-      title="Accounting Dashboard"
-      icon={<BarChart className="h-8 w-8" />}
-      description="Financial overview and insights for your community associations."
-    >
+    <AppLayout>
+      <PageTemplate
+        title="Accounting Dashboard"
+        icon={<BarChart className="h-8 w-8" />}
+        description="Financial overview and insights for your community associations."
+      >
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -273,7 +275,8 @@ const AccountingDashboard = () => {
           <AutomationDashboard associationId={associationId} />
         </TabsContent>
       </Tabs>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

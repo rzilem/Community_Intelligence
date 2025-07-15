@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BarChart3, Download, Calendar, Filter, TrendingUp, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,11 +93,12 @@ const FinancialStatements = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Financial Statements" 
-      icon={<BarChart3 className="h-8 w-8" />}
-      description="Generate and view comprehensive financial reports"
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Financial Statements" 
+        icon={<BarChart3 className="h-8 w-8" />}
+        description="Generate and view comprehensive financial reports"
+      >
       <div className="space-y-6">
         {/* Header Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -493,7 +495,8 @@ const FinancialStatements = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Building, Search, Download, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,11 +93,12 @@ const BankAccounts: React.FC = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Bank Accounts" 
-      icon={<Building className="h-8 w-8" />}
-      description="Manage association bank accounts and financial institutions."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Bank Accounts" 
+        icon={<Building className="h-8 w-8" />}
+        description="Manage association bank accounts and financial institutions."
+      >
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -157,7 +159,8 @@ const BankAccounts: React.FC = () => {
           />
         </CardContent>
       </Card>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

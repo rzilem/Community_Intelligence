@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AssessmentService } from '@/services/accounting/assessment-service';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt, Plus, Calendar, DollarSign, Users, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,11 +76,12 @@ const AssessmentManagement = () => {
   ];
 
   return (
-    <PageTemplate 
-      title="Assessment Management" 
-      icon={<Receipt className="h-8 w-8" />}
-      description="Manage assessments, collections, and accounts receivable"
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Assessment Management" 
+        icon={<Receipt className="h-8 w-8" />}
+        description="Manage assessments, collections, and accounts receivable"
+      >
       <div className="space-y-6">
         {/* Header with Association Selector */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -291,7 +293,8 @@ const AssessmentManagement = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

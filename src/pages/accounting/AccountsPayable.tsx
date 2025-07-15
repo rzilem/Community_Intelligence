@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,11 +118,12 @@ const AccountsPayable = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Accounts Payable" 
-      icon={<FileText className="h-8 w-8" />}
-      description="Manage vendor invoices, purchase orders, and payment approvals"
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Accounts Payable" 
+        icon={<FileText className="h-8 w-8" />}
+        description="Manage vendor invoices, purchase orders, and payment approvals"
+      >
       <div className="space-y-6">
         {/* Header with Association Selector */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -354,7 +356,8 @@ const AccountsPayable = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 

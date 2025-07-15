@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -61,11 +62,12 @@ const InvoiceQueue = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Invoice Queue" 
-      icon={<Receipt className="h-8 w-8" />}
-      description="Process and approve incoming vendor invoices for payment."
-    >
+    <AppLayout>
+      <PageTemplate 
+        title="Invoice Queue" 
+        icon={<Receipt className="h-8 w-8" />}
+        description="Process and approve incoming vendor invoices for payment."
+      >
       <div className="mt-6 space-y-4">
         {/* AI Bulk Processing */}
         <BulkAIProcessor
@@ -184,7 +186,8 @@ const InvoiceQueue = () => {
           <div>Last updated: {lastRefreshed.toLocaleString()}</div>
         </div>
       </div>
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
