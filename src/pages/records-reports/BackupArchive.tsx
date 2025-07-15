@@ -1,0 +1,28 @@
+import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import PageTemplate from '@/components/layout/PageTemplate';
+import { Archive } from 'lucide-react';
+
+const BackupArchive: React.FC = () => {
+  return (
+    <AppLayout>
+      <PageTemplate
+        title="Backup & Archive"
+        icon={<Archive className="h-8 w-8" />}
+        description="Manage system backups and archived data"
+      >
+        <div className="space-y-6">
+          <div className="bg-muted/30 rounded-lg p-8 text-center">
+            <Archive className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Backup & Archive</h3>
+            <p className="text-muted-foreground">
+              This page is coming soon. You'll be able to manage system backups, create archives, and restore data here.
+            </p>
+          </div>
+        </div>
+      </PageTemplate>
+    </AppLayout>
+  );
+};
+
+export default BackupArchive;
