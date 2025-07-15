@@ -181,7 +181,16 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   };
 
   const showImportPreview = async () => {
-    if (!analysisResults) return;
+    if (!analysisResults) {
+      toast.error('Please complete AI analysis first');
+      return;
+    }
+
+    // Validate analysis results have required fields
+    if (!analysisResults.targetTables || !analysisResults.fieldMappings) {
+      toast.error('Analysis results are incomplete. Please retry analysis.');
+      return;
+    }
 
     try {
       setCurrentStep('Preparing preview...');
@@ -197,6 +206,8 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         } else if (typeof content === 'string') {
           // Convert CSV string to array
           const lines = content.split('\n').filter(line => line.trim());
+          if (lines.length === 0) continue;
+          
           const headers = lines[0].split(',').map(h => h.trim());
           const data = lines.slice(1).map(line => {
             const values = line.split(',');
@@ -208,6 +219,11 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
           });
           fileContents.push(...data);
         }
+      }
+
+      if (fileContents.length === 0) {
+        toast.error('No data found to preview');
+        return;
       }
 
       setPreviewData(fileContents);

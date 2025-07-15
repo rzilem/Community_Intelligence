@@ -62,6 +62,28 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
   const hasErrors = requiredFieldsErrors.length > 0;
   const hasWarnings = warnings.length > 0;
 
+  // Check if analysisResult is valid
+  if (!analysisResult) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Analysis Required
+            </DialogTitle>
+            <DialogDescription>
+              Please complete the AI analysis before previewing the import.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={onClose}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -120,7 +142,7 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
                   Target Tables
                 </h3>
                 <div className="flex gap-2 flex-wrap">
-                  {analysisResult.targetTables.map((table: string) => (
+                  {(analysisResult.targetTables || []).map((table: string) => (
                     <Badge key={table} variant="secondary">
                       {table}
                     </Badge>
@@ -132,7 +154,7 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
               <div>
                 <h3 className="font-medium mb-3">Field Mappings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {(Object.entries(analysisResult.fieldMappings) as [string, string][]).map(([source, target]) => (
+                  {(Object.entries(analysisResult.fieldMappings || {}) as [string, string][]).map(([source, target]) => (
                     <div key={source} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
                       <span className="font-medium">{source}</span>
                       <span className="text-muted-foreground">→</span>
