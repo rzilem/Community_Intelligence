@@ -60,30 +60,59 @@ export const enhancedPropertiesOwnersProcessor = {
               devLog.info(`Created property: ${property.id} - ${propertyData.address} (Account: ${accountNumber})`);
 
               // Create owner/resident if owner data exists
-              if (record.first_name || record.last_name || record.owner_name) {
-                const determineResidentType = (data: any): 'owner' | 'tenant' | 'family' | 'other' => {
-                  if (data.resident_type) return data.resident_type;
-                  if (data.owner_type?.toLowerCase().includes('tenant')) return 'tenant';
-                  if (data.is_tenant === true || data.tenant === true) return 'tenant';
-                  if (data.is_owner === false) return 'tenant';
-                  return 'owner';
-                };
+              if (record.first_name || record.last_name || record.owner_name || record.homeowner) {
+                try {
+                  const determineResidentType = (data: any): 'owner' | 'tenant' | 'family' | 'other' => {
+                    if (data.resident_type) return data.resident_type;
+                    if (data.owner_type?.toLowerCase().includes('tenant')) return 'tenant';
+                    if (data.is_tenant === true || data.tenant === true) return 'tenant';
+                    if (data.is_owner === false) return 'tenant';
+                    return 'owner';
+                  };
 
-                const ownerData = {
-                  association_id: associationId,
-                  property_id: property.id,
-                  first_name: record.first_name || record.owner_name?.split(' ')[0] || '',
-                  last_name: record.last_name || record.owner_name?.split(' ').slice(1).join(' ') || '',
-                  email: record.email || record.contact_email || null,
-                  phone: record.phone || record.phone_number || null,
-                  move_in_date: record.move_in_date || null,
-                  is_primary: record.is_primary !== undefined ? record.is_primary : true,
-                  emergency_contact: record.emergency_contact || null,
-                  resident_type: determineResidentType(record)
-                };
+                  // Extract name from various possible fields
+                  let firstName = record.first_name || '';
+                  let lastName = record.last_name || '';
+                  
+                  // Handle cases where name is in owner_name or homeowner field
+                  if (!firstName && !lastName && (record.owner_name || record.homeowner)) {
+                    const fullName = record.owner_name || record.homeowner;
+                    const nameParts = fullName.split(' ');
+                    firstName = nameParts[0] || '';
+                    lastName = nameParts.slice(1).join(' ') || '';
+                  }
 
-                const resident = await transactionManager.trackedInsert(context, 'residents', ownerData);
-                devLog.info(`Created resident: ${resident.id} for property ${property.id}`);
+                  const ownerData = {
+                    property_id: property.id,
+                    name: `${firstName} ${lastName}`.trim() || record.owner_name || record.homeowner,
+                    email: record.email || record.contact_email || null,
+                    phone: record.phone || record.phone_number || null,
+                    move_in_date: record.move_in_date || null,
+                    is_primary: record.is_primary !== undefined ? record.is_primary : true,
+                    emergency_contact: record.emergency_contact || null,
+                    resident_type: determineResidentType(record)
+                  };
+
+                  const resident = await transactionManager.trackedInsert(context, 'residents', ownerData);
+                  devLog.info(`Created resident: ${resident.id} - ${ownerData.name} for property ${property.address}`);
+                  
+                  details.push({
+                    status: 'success',
+                    message: `Created resident: ${ownerData.name} for property ${property.address}`
+                  });
+                  
+                } catch (residentError) {
+                  devLog.error(`Failed to create resident for property ${property.address}:`, residentError);
+                  details.push({
+                    status: 'warning',
+                    message: `Property created but resident creation failed for ${property.address}: ${residentError.message}`
+                  });
+                }
+              } else {
+                details.push({
+                  status: 'warning',
+                  message: `Property created but no owner/resident data found for ${property.address}`
+                });
               }
 
               successfulImports++;
