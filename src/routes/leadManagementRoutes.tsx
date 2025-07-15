@@ -11,6 +11,7 @@ import Templates from "@/pages/lead-management/Templates";
 import LeadDetailPage from "@/components/leads/LeadDetailPage";
 import TemplateDetails from "@/components/onboarding/TemplateDetails";
 import ClientPortal from "@/pages/ClientPortal";
+import LeadFollowUps from "@/pages/lead-management/LeadFollowUps";
 
 // Lead Management Routes
 export const leadManagementRoutes: RouteObject[] = [
@@ -57,6 +58,10 @@ export const leadManagementRoutes: RouteObject[] = [
   {
     path: "/lead-management/templates",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><Templates /></RequireAuth>
+  },
+  {
+    path: "/lead-management/lead-follow-ups",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadFollowUps /></RequireAuth>
   },
   {
     path: "/lead-management/leads/:leadId",
