@@ -60,13 +60,13 @@ export const mainNavItems: NavItemProps[] = [
     path: '/accounting',
     icon: CreditCard,
     submenu: [
-      { name: 'Invoices', path: '/invoices', icon: CreditCard },
-      { name: 'Accounts Receivable', path: '/accounts-receivable', icon: CreditCard },
-      { name: 'Accounts Payable', path: '/accounts-payable', icon: CreditCard },
-      { name: 'General Ledger', path: '/general-ledger', icon: CreditCard },
-      { name: 'Chart of Accounts', path: '/chart-of-accounts', icon: CreditCard },
-      { name: 'Financial Reports', path: '/financial-reports', icon: CreditCard },
-      { name: 'Assessment Schedules', path: '/assessment-schedules', icon: CreditCard }
+      { name: 'Invoices', path: '/accounting/invoices', icon: CreditCard },
+      { name: 'Accounts Receivable', path: '/accounting/accounts-receivable', icon: CreditCard },
+      { name: 'Accounts Payable', path: '/accounting/accounts-payable', icon: CreditCard },
+      { name: 'General Ledger', path: '/accounting/general-ledger', icon: CreditCard },
+      { name: 'Chart of Accounts', path: '/accounting/chart-of-accounts', icon: CreditCard },
+      { name: 'Financial Reports', path: '/accounting/financial-reports', icon: CreditCard },
+      { name: 'Assessment Schedules', path: '/accounting/assessment-schedules', icon: CreditCard }
     ]
   },
   {
@@ -74,8 +74,8 @@ export const mainNavItems: NavItemProps[] = [
     path: '/communications',
     icon: MessageSquare,
     submenu: [
-      { name: 'Messages', path: '/communications/messages', icon: MessageSquare },
-      { name: 'Email Campaigns', path: '/communications/campaigns', icon: Mail },
+      { name: 'Messages', path: '/communications/messaging', icon: MessageSquare },
+      { name: 'Email Campaigns', path: '/enhanced-email-campaigns', icon: Mail },
       { name: 'Announcements', path: '/communications/announcements', icon: MessageSquare },
       { name: 'Notifications', path: '/communications/notifications', icon: MessageSquare },
       { name: 'Templates', path: '/communications/templates', icon: MessageSquare },
@@ -87,10 +87,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/lead-management',
     icon: UserPlus,
     submenu: [
-      { name: 'Leads', path: '/leads', icon: UserPlus },
-      { name: 'Proposals', path: '/proposals', icon: UserPlus },
-      { name: 'Bid Requests', path: '/bid-requests', icon: UserPlus },
-      { name: 'Follow-ups', path: '/lead-follow-ups', icon: UserPlus }
+      { name: 'Leads', path: '/lead-management/leads', icon: UserPlus },
+      { name: 'Proposals', path: '/lead-management/proposals', icon: UserPlus },
+      { name: 'Bid Requests', path: '/community-management/bid-requests', icon: UserPlus },
+      { name: 'Follow-ups', path: '/lead-management/lead-follow-ups', icon: UserPlus }
     ]
   },
   {
@@ -98,10 +98,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/operations',
     icon: Wrench,
     submenu: [
-      { name: 'Workflows', path: '/workflows', icon: Wrench },
-      { name: 'Vendors', path: '/vendors', icon: Wrench },
-      { name: 'Work Orders', path: '/work-orders', icon: Wrench },
-      { name: 'Inspections', path: '/inspections', icon: Wrench }
+      { name: 'Workflows', path: '/operations/workflows', icon: Wrench },
+      { name: 'Vendors', path: '/operations/vendors', icon: Wrench },
+      { name: 'Work Orders', path: '/operations/work-orders', icon: Wrench },
+      { name: 'Inspections', path: '/operations/inspections', icon: Wrench }
     ]
   },
   {
@@ -109,10 +109,10 @@ export const mainNavItems: NavItemProps[] = [
     path: '/records-reports',
     icon: FileText,
     submenu: [
-      { name: 'Documents', path: '/documents', icon: FileText },
-      { name: 'Reports', path: '/reports', icon: FileText },
-      { name: 'Data Import/Export', path: '/data-import-export', icon: FileText },
-      { name: 'Backup & Archive', path: '/backup-archive', icon: FileText }
+      { name: 'Documents', path: '/records-reports/documents', icon: FileText },
+      { name: 'Reports', path: '/records-reports/reports', icon: FileText },
+      { name: 'Data Import/Export', path: '/records-reports/data-import-export', icon: FileText },
+      { name: 'Backup & Archive', path: '/records-reports/backup-archive', icon: FileText }
     ]
   },
   {

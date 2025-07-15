@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';
@@ -11,6 +11,7 @@ import { recordsReportsRoutes } from './recordsReportsRoutes';
 import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
 import { aiWorkflowRoutes } from './aiWorkflowRoutes';
+import { enhancedEmailCampaignsRoutes } from './enhancedEmailCampaignsRoutes';
 
 /**
  * Main application router component that consolidates all routes
@@ -80,6 +81,28 @@ export const AppRouter = () => {
       
       {/* AI Workflow routes */}
       {aiWorkflowRoutes.map((route, index) => renderRoute(route, index, 'ai-workflow'))}
+      
+      {/* Enhanced Email Campaigns routes */}
+      {enhancedEmailCampaignsRoutes.map((route, index) => renderRoute(route, index, 'enhanced-email-campaigns'))}
+      
+      {/* Redirect routes for legacy/mismatched paths */}
+      <Route path="/proposals" element={<Navigate to="/lead-management/proposals" replace />} />
+      <Route path="/workflows" element={<Navigate to="/operations/workflows" replace />} />
+      <Route path="/vendors" element={<Navigate to="/operations/vendors" replace />} />
+      <Route path="/documents" element={<Navigate to="/records-reports/documents" replace />} />
+      <Route path="/reports" element={<Navigate to="/records-reports/reports" replace />} />
+      <Route path="/invoices" element={<Navigate to="/accounting/invoices" replace />} />
+      <Route path="/accounts-receivable" element={<Navigate to="/accounting/accounts-receivable" replace />} />
+      <Route path="/accounts-payable" element={<Navigate to="/accounting/accounts-payable" replace />} />
+      <Route path="/general-ledger" element={<Navigate to="/accounting/general-ledger" replace />} />
+      <Route path="/chart-of-accounts" element={<Navigate to="/accounting/chart-of-accounts" replace />} />
+      <Route path="/financial-reports" element={<Navigate to="/accounting/financial-reports" replace />} />
+      <Route path="/assessment-schedules" element={<Navigate to="/accounting/assessment-schedules" replace />} />
+      <Route path="/leads" element={<Navigate to="/lead-management/leads" replace />} />
+      <Route path="/lead-follow-ups" element={<Navigate to="/lead-management/lead-follow-ups" replace />} />
+      <Route path="/work-orders" element={<Navigate to="/operations/work-orders" replace />} />
+      <Route path="/inspections" element={<Navigate to="/operations/inspections" replace />} />
+      <Route path="/backup-archive" element={<Navigate to="/records-reports/backup-archive" replace />} />
       
       {/* Catch-all route for undefined paths */}
       <Route 
