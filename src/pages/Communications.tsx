@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MessagingPage from './communications/Messaging';
@@ -50,42 +51,46 @@ const Communications = () => {
 
   if (loading) {
     return (
+      <AppLayout>
+        <PageTemplate 
+          title="Communications" 
+          icon={<MessageSquare className="h-8 w-8" />}
+          description="Manage communications with residents and stakeholders"
+        >
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="h-8 w-8 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2">Loading communications...</p>
+            </div>
+          </div>
+        </PageTemplate>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
       <PageTemplate 
         title="Communications" 
         icon={<MessageSquare className="h-8 w-8" />}
         description="Manage communications with residents and stakeholders"
       >
-        <div className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="h-8 w-8 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-2">Loading communications...</p>
-          </div>
-        </div>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="w-full grid grid-cols-2 md:w-auto md:inline-flex mb-6">
+            <TabsTrigger value="messaging">Messaging</TabsTrigger>
+            <TabsTrigger value="announcements">Announcements</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="messaging" className="space-y-6">
+            <MessagingPage />
+          </TabsContent>
+          
+          <TabsContent value="announcements" className="space-y-6">
+            <AnnouncementsPage />
+          </TabsContent>
+        </Tabs>
       </PageTemplate>
-    );
-  }
-
-  return (
-    <PageTemplate 
-      title="Communications" 
-      icon={<MessageSquare className="h-8 w-8" />}
-      description="Manage communications with residents and stakeholders"
-    >
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="w-full grid grid-cols-2 md:w-auto md:inline-flex mb-6">
-          <TabsTrigger value="messaging">Messaging</TabsTrigger>
-          <TabsTrigger value="announcements">Announcements</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="messaging" className="space-y-6">
-          <MessagingPage />
-        </TabsContent>
-        
-        <TabsContent value="announcements" className="space-y-6">
-          <AnnouncementsPage />
-        </TabsContent>
-      </Tabs>
-    </PageTemplate>
+    </AppLayout>
   );
 };
 

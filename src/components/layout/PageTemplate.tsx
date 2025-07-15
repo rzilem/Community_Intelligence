@@ -21,7 +21,7 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {icon}
-          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+          <h1 className="text-3xl font-bold font-display tracking-tight text-hoa-blue-900">{title}</h1>
         </div>
         {actions && (
           <div className="flex items-center">
@@ -31,13 +31,13 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
       </div>
       
       {description && (
-        <p className="text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground font-sans">{description}</p>
       )}
 
       {!children ? (
         <div className="card">
           <div className="card-content">
-            <p>{description}</p>
+            <p className="font-sans">{description}</p>
           </div>
         </div>
       ) : (
