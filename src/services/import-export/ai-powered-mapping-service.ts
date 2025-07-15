@@ -16,6 +16,7 @@ export interface AIAnalysisResult {
     issues: string[];
     recommendations: string[];
   };
+  tableAssignments?: Record<string, string[]>;
 }
 
 export interface AIMappingSuggestion {
@@ -64,14 +65,25 @@ export const aiPoweredMappingService = {
 
       const analysis: AIAnalysisResult = data.analysis;
       
-      // Convert AI analysis to mapping suggestions format
+      // Convert AI analysis to mapping suggestions format with table assignments
       const suggestions: Record<string, AIMappingSuggestion> = {};
       
       Object.entries(analysis.mappings).forEach(([column, mapping]) => {
+        // Find which table this field should be assigned to
+        let assignedTable = null;
+        if (analysis.tableAssignments) {
+          for (const [tableName, fields] of Object.entries(analysis.tableAssignments)) {
+            if (fields.includes(column)) {
+              assignedTable = tableName;
+              break;
+            }
+          }
+        }
+        
         suggestions[column] = {
           fieldValue: mapping.systemField,
           confidence: mapping.confidence,
-          reasoning: mapping.reasoning,
+          reasoning: assignedTable ? `${mapping.reasoning} (Assigned to ${assignedTable} table)` : mapping.reasoning,
           dataQuality: mapping.dataQuality,
           suggestions: mapping.suggestions
         };

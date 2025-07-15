@@ -60,34 +60,59 @@ serve(async (req) => {
       AVAILABLE DATABASE SCHEMA:
       ${JSON.stringify(schemaInfo.availableTables, null, 2)}
 
-      CRITICAL REQUIREMENTS:
-      1. Only suggest field mappings to columns that exist in the available schema above
-      2. Use "current_balance" not "account_balance" for balance fields
-      3. Only suggest target tables that exist: properties, homeowners, residents, assessments
-      4. Map homeowner names to "full_homeowner_name" or "first_name"/"last_name" fields
-      5. Map addresses to "address" field in properties table
-      6. Map account numbers to "account_number" field
+      CRITICAL FIELD ASSIGNMENT RULES:
+      1. HOMEOWNER FIELDS go to 'homeowners' table:
+         - Email, All Emails → 'email' or 'all_emails'
+         - Phone, All Phones → 'phone' or 'all_phones'
+         - Homeowner Name, Full Name → 'full_homeowner_name'
+         - First Name, Last Name → 'first_name', 'last_name'
+         - Mailing Address → 'mailing_address'
+         - ACH Start Date → 'ach_start_date'
+         - Last Payment Date → 'last_payment_date'
+         - Last Payment Amount → 'last_payment_amount'
+         - Collection Status → 'collection_status'
+         - Tags → 'tags'
+         - Current Balance (homeowner) → 'current_balance'
 
-      Analyze and identify:
-      1. Data type (properties, residents, financial, maintenance, compliance, etc.)
-      2. Which of the available tables best fit this data
-      3. Field mappings using ONLY the column names from the schema above
-      4. Data quality issues
-      5. Required transformations
-      6. Confidence level (0-100%)
-      7. Missing required fields
-      8. Suggested default values
-      9. Data relationships
+      2. PROPERTY FIELDS go to 'properties' table:
+         - Property Address, Address → 'address'
+         - Account Number, Account # → 'account_number'
+         - Unit Number → 'unit_number'
+         - Square Footage → 'square_footage'
+         - Property Type → 'property_type'
+         - Current Balance (property) → 'current_balance'
 
-      Return a JSON response with this structure:
+      3. RESIDENT FIELDS go to 'residents' table:
+         - Emergency Contact → 'emergency_contact'
+         - Move In Date → 'move_in_date'
+         - Move Out Date → 'move_out_date'
+
+      4. GENERAL REQUIREMENTS:
+         - Use "current_balance" not "account_balance" for balance fields
+         - Only suggest target tables that exist: properties, homeowners, residents, assessments
+         - Map account numbers to "account_number" field
+         - Always include association_id in required fields
+
+      5. MULTI-TABLE DATA HANDLING:
+         - If data contains both homeowner and property info, use BOTH tables
+         - Create relationships between tables using account_number
+         - Distribute fields logically based on their semantic meaning
+
+      Return a JSON response with this structure AND proper table assignments:
       {
         "dataType": "properties|residents|financial|maintenance|compliance|mixed",
         "confidence": 95,
         "targetTables": ["properties", "homeowners"],
         "fieldMappings": {
-          "Address": "address",
+          "Email": "email",
+          "Property Address": "address",
           "Homeowner": "full_homeowner_name",
-          "Balance": "current_balance"
+          "Balance": "current_balance",
+          "ACH Start Date": "ach_start_date"
+        },
+        "tableAssignments": {
+          "properties": ["Property Address", "Account #", "Balance"],
+          "homeowners": ["Email", "Homeowner", "ACH Start Date", "Last Payment Date"]
         },
         "dataQuality": {
           "issues": ["Missing phone numbers in 3 rows"],
@@ -102,7 +127,7 @@ serve(async (req) => {
           }
         ],
         "requiredFields": ["address", "association_id"],
-        "missingFields": [],
+        "missingFields": ["association_id"],
         "suggestedDefaults": {
           "property_type": "residential",
           "status": "active"
@@ -124,7 +149,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'You are an expert data analyst for HOA management systems. Always respond with valid JSON matching the exact structure requested.' },
           { role: 'user', content: analysisPrompt }
@@ -158,7 +183,7 @@ serve(async (req) => {
 
     console.log('AI Analysis Result:', analysisResult);
 
-    // Step 3: Validate field mappings against database schema
+    // Step 3: Validate field mappings against database schema with intelligent table assignment
     console.log('Step 3: Validating field mappings against database schema...');
     const validationResult = {
       validMappings: {},
@@ -166,46 +191,88 @@ serve(async (req) => {
       suggestions: []
     };
 
-    // Validate each field mapping
+    // Validate each field mapping using table assignments from AI analysis
     for (const [sourceField, targetField] of Object.entries(analysisResult.fieldMappings || {})) {
       let isValid = false;
-      let validTable = null;
+      let assignedTable = null;
       
-      // Check if target field exists in any of the suggested tables
-      for (const tableName of analysisResult.targetTables || []) {
-        if (schemaInfo.availableTables[tableName]?.columns.includes(targetField)) {
-          isValid = true;
-          validTable = tableName;
-          break;
+      // First, check if AI provided table assignments
+      if (analysisResult.tableAssignments) {
+        // Find which table this field was assigned to
+        for (const [tableName, fields] of Object.entries(analysisResult.tableAssignments)) {
+          if (fields.includes(sourceField)) {
+            assignedTable = tableName;
+            break;
+          }
         }
       }
       
-      if (isValid) {
+      // If we have an assigned table, validate against that specific table
+      if (assignedTable && schemaInfo.availableTables[assignedTable]?.columns.includes(targetField)) {
+        isValid = true;
         validationResult.validMappings[sourceField] = {
           targetField,
-          table: validTable
+          table: assignedTable
         };
-      } else {
+      } else if (assignedTable) {
+        // Field was assigned to a table but doesn't exist in that table
         validationResult.invalidMappings[sourceField] = {
           targetField,
-          reason: `Field '${targetField}' does not exist in any of the target tables`
+          assignedTable,
+          reason: `Field '${targetField}' does not exist in assigned table '${assignedTable}'`
         };
         
-        // Try to suggest a similar field
+        // Try to suggest a similar field in the assigned table
+        const columns = schemaInfo.availableTables[assignedTable]?.columns || [];
+        const similarField = columns.find(col => 
+          col.toLowerCase().includes(targetField.toLowerCase()) ||
+          targetField.toLowerCase().includes(col.toLowerCase())
+        );
+        if (similarField) {
+          validationResult.suggestions.push({
+            sourceField,
+            invalidField: targetField,
+            suggestedField: similarField,
+            table: assignedTable
+          });
+        }
+      } else {
+        // No table assignment, fall back to checking all target tables
         for (const tableName of analysisResult.targetTables || []) {
-          const columns = schemaInfo.availableTables[tableName]?.columns || [];
-          const similarField = columns.find(col => 
-            col.toLowerCase().includes(targetField.toLowerCase()) ||
-            targetField.toLowerCase().includes(col.toLowerCase())
-          );
-          if (similarField) {
-            validationResult.suggestions.push({
-              sourceField,
-              invalidField: targetField,
-              suggestedField: similarField,
-              table: tableName
-            });
+          if (schemaInfo.availableTables[tableName]?.columns.includes(targetField)) {
+            isValid = true;
+            assignedTable = tableName;
             break;
+          }
+        }
+        
+        if (isValid) {
+          validationResult.validMappings[sourceField] = {
+            targetField,
+            table: assignedTable
+          };
+        } else {
+          validationResult.invalidMappings[sourceField] = {
+            targetField,
+            reason: `Field '${targetField}' does not exist in any of the target tables`
+          };
+          
+          // Try to suggest a similar field from any table
+          for (const tableName of analysisResult.targetTables || []) {
+            const columns = schemaInfo.availableTables[tableName]?.columns || [];
+            const similarField = columns.find(col => 
+              col.toLowerCase().includes(targetField.toLowerCase()) ||
+              targetField.toLowerCase().includes(col.toLowerCase())
+            );
+            if (similarField) {
+              validationResult.suggestions.push({
+                sourceField,
+                invalidField: targetField,
+                suggestedField: similarField,
+                table: tableName
+              });
+              break;
+            }
           }
         }
       }
