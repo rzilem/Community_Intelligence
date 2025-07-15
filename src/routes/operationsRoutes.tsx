@@ -12,6 +12,7 @@ import OperationsReports from '@/pages/operations/OperationsReports';
 import VendorsAdvanced from '@/pages/operations/VendorsAdvanced';
 import MaintenanceRequests from '@/pages/operations/MaintenanceRequests';
 import WorkOrders from '@/pages/operations/WorkOrders';
+import Inspections from '@/pages/operations/Inspections';
 
 export const operationsRoutes = [
   {
@@ -49,6 +50,10 @@ export const operationsRoutes = [
   {
     path: '/operations/work-orders',
     element: <WorkOrders />
+  },
+  {
+    path: '/operations/inspections',
+    element: <Inspections />
   },
   {
     path: '/operations/workflows/:id',
