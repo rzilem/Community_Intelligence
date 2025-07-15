@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Workflow as WorkflowIcon, Plus, Loader2, Filter } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -138,45 +139,46 @@ const Workflows = () => {
   };
 
   return (
-    <PageTemplate 
-      title="Workflow Management" 
-      icon={<WorkflowIcon className="h-8 w-8" />}
-      description="Create and manage automated workflows for your association processes"
-      actions={
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                {typeFilter === 'all' ? 'All Types' : typeFilter}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === 'all'}
-                onCheckedChange={() => setTypeFilter('all')}
-              >
-                All Types
-              </DropdownMenuCheckboxItem>
-              {workflowTypes.map((type) => (
+    <AppLayout>
+      <PageTemplate 
+        title="Workflow Management" 
+        icon={<WorkflowIcon className="h-8 w-8" />}
+        description="Create and manage automated workflows for your association processes"
+        actions={
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Filter className="mr-2 h-4 w-4" />
+                  {typeFilter === 'all' ? 'All Types' : typeFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
                 <DropdownMenuCheckboxItem
-                  key={type}
-                  checked={typeFilter === type}
-                  onCheckedChange={() => setTypeFilter(type)}
+                  checked={typeFilter === 'all'}
+                  onCheckedChange={() => setTypeFilter('all')}
                 >
-                  {type}
+                  All Types
                 </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Custom Workflow
-          </Button>
-        </div>
-      }
-    >
+                {workflowTypes.map((type) => (
+                  <DropdownMenuCheckboxItem
+                    key={type}
+                    checked={typeFilter === type}
+                    onCheckedChange={() => setTypeFilter(type)}
+                  >
+                    {type}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Custom Workflow
+            </Button>
+          </div>
+        }
+      >
       <div className="space-y-6">
         <WorkflowTabs 
           activeTab={activeTab} 
@@ -309,7 +311,8 @@ const Workflows = () => {
         workflowName={deleteDialogState.workflowName}
         isTemplate={deleteDialogState.isTemplate}
       />
-    </PageTemplate>
+      </PageTemplate>
+    </AppLayout>
   );
 };
 
