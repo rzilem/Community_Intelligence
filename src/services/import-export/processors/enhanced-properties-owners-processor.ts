@@ -14,7 +14,8 @@ const parseAddresses = (record: any) => {
   let zip = '';
 
   // Handle address field that contains both P: and M: addresses
-  const addressField = record.address || record.property_address || record.street_address || '';
+  const addressField = record['Property Address'] || record['Mailing Address'] || 
+                       record.address || record.property_address || record.street_address || '';
   
   if (addressField.includes('P:') && addressField.includes('M:')) {
     const pIndex = addressField.indexOf('P:');
@@ -93,12 +94,17 @@ export const enhancedPropertiesOwnersProcessor = {
               }
 
               // Map account number from various possible field names
-              let accountNumber = record.account_number || 
+              let accountNumber = record['Account #'] || 
+                                record['Homeowner ID'] || 
+                                record.account_number || 
                                 record.account || 
                                 record.homeowner_id || 
-                                record['Account #'] || 
-                                record['Homeowner ID'] || 
                                 null;
+              
+              // Ensure account number is a string and not empty
+              if (accountNumber) {
+                accountNumber = String(accountNumber).trim();
+              }
               
               // Generate account number if still not found
               if (!accountNumber) {
@@ -127,9 +133,9 @@ export const enhancedPropertiesOwnersProcessor = {
               devLog.info(`Created property: ${property.id} - ${propertyAddress} (Account: ${accountNumber})`);
 
               // Create resident - check for various name field formats
-              const homeownerName = record.homeowner || record.Homeowner || record.owner_name || record.first_name || record.last_name;
-              const email = record.email || record.Email || record.contact_email || null;
-              const phone = record.phone || record.Phone || record.phone_number || null;
+              const homeownerName = record['Homeowner'] || record.homeowner || record.Homeowner || record.owner_name || record.first_name || record.last_name;
+              const email = record['Email'] || record.email || record.Email || record.contact_email || null;
+              const phone = record['Phone'] || record.phone || record.Phone || record.phone_number || null;
               const balance = record.balance || record.Balance || record.current_balance || null;
 
               if (homeownerName || record.first_name || record.last_name) {
