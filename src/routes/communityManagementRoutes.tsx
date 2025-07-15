@@ -8,6 +8,7 @@ import Compliance from "@/pages/Compliance";
 import BidRequests from "@/pages/community-management/BidRequests";
 import CreateBidRequest from "@/pages/community-management/CreateBidRequest";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
+import Amenities from "@/pages/Amenities";
 
 // Community Management Routes
 export const communityManagementRoutes: RouteObject[] = [
@@ -35,6 +36,10 @@ export const communityManagementRoutes: RouteObject[] = [
   {
     path: "/compliance",
     element: <RequireAuth><Compliance /></RequireAuth>
+  },
+  {
+    path: "/amenities",
+    element: <RequireAuth><Amenities /></RequireAuth>
   },
   {
     path: "/community-management/bid-requests",
