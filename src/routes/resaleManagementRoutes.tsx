@@ -8,6 +8,9 @@ import DocsCenter from "@/pages/resale-management/DocsCenter";
 import OrderQueue from "@/pages/resale-management/OrderQueue";
 import ResaleAnalytics from "@/pages/resale-management/ResaleAnalytics";
 import ResaleCalendar from "@/pages/resale-management/ResaleCalendar";
+import ResaleCertificates from "@/pages/resale-management/ResaleCertificates";
+import TransferRequirements from "@/pages/resale-management/TransferRequirements";
+import DocumentTemplates from "@/pages/resale-management/DocumentTemplates";
 
 // Resale Management Routes
 export const resaleManagementRoutes: RouteObject[] = [
@@ -38,5 +41,18 @@ export const resaleManagementRoutes: RouteObject[] = [
   {
     path: "/resale-management/analytics",
     element: <RequireAuth><ResaleAnalytics /></RequireAuth>
+  },
+  // Routes that match navigation paths
+  {
+    path: "/resale-certificates",
+    element: <RequireAuth><ResaleCertificates /></RequireAuth>
+  },
+  {
+    path: "/transfer-requirements",
+    element: <RequireAuth><TransferRequirements /></RequireAuth>
+  },
+  {
+    path: "/document-templates",
+    element: <RequireAuth><DocumentTemplates /></RequireAuth>
   }
 ];
