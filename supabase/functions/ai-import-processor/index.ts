@@ -284,7 +284,36 @@ async function preprocessDataForAI(fileContent: any, fileName: string, fileType:
   try {
     let preview = '';
     
-    if (typeof fileContent === 'string') {
+    // Handle enhanced ZIP structure
+    if (fileContent && typeof fileContent === 'object' && fileContent.files && fileContent.folderStructure) {
+      // Enhanced ZIP file processing
+      const zipData = fileContent;
+      
+      preview = `ZIP ARCHIVE ANALYSIS:
+Folder Structure: ${JSON.stringify(zipData.folderStructure, null, 2)}
+Processing Summary: ${JSON.stringify(zipData.processingSummary, null, 2)}
+Analysis Metadata: ${JSON.stringify(zipData.analysisMetadata, null, 2)}
+
+FILE SAMPLES:`;
+      
+      // Include samples from prioritized files
+      const prioritizedSamples = zipData.processingSummary.prioritizedFiles.slice(0, 3);
+      for (const filename of prioritizedSamples) {
+        const fileData = zipData.files[filename] || zipData.files[`root/${filename}`];
+        if (fileData) {
+          preview += `\n\n--- ${filename} (${fileData.folderCategory}) ---\n`;
+          
+          if (fileData.type === 'csv' && typeof fileData.content === 'string') {
+            const lines = fileData.content.split('\n');
+            preview += lines.slice(0, 3).join('\n');
+          } else if (fileData.type === 'excel' && Array.isArray(fileData.content)) {
+            preview += JSON.stringify(fileData.content.slice(0, 2), null, 2);
+          } else if (typeof fileData.content === 'string') {
+            preview += fileData.content.substring(0, 300);
+          }
+        }
+      }
+    } else if (typeof fileContent === 'string') {
       // For CSV/text files, take first 5 lines + sample from middle
       const lines = fileContent.split('\n');
       const headerLines = lines.slice(0, 3);
@@ -299,7 +328,7 @@ async function preprocessDataForAI(fileContent: any, fileName: string, fileType:
     }
     
     // Limit preview size to avoid token limits
-    return preview.substring(0, 2000);
+    return preview.substring(0, 4000); // Increased limit for ZIP analysis
   } catch (error) {
     console.error('Error preprocessing data:', error);
     return 'Error preprocessing data for AI analysis';
@@ -307,8 +336,10 @@ async function preprocessDataForAI(fileContent: any, fileName: string, fileType:
 }
 
 function createAnalysisPrompt(fileName: string, fileType: string, userDescription: string, preprocessedData: string, schemaInfo: any, attempt: number): string {
-  // Simplify prompt based on attempt number
-  const basePrompt = `CRITICAL: Return ONLY valid JSON. NO markdown, NO explanations, NO code blocks.
+  // Check if this is a ZIP file with folder structure
+  const isZipWithFolders = preprocessedData.includes('ZIP ARCHIVE ANALYSIS:');
+  
+  let basePrompt = `CRITICAL: Return ONLY valid JSON. NO markdown, NO explanations, NO code blocks.
 
 File: ${fileName} (${fileType})
 ${userDescription ? `Description: ${userDescription}` : ''}
@@ -320,7 +351,40 @@ Available Tables:
 - properties: ${schemaInfo.availableTables.properties.columns.slice(0, 10).join(', ')}...
 - homeowners: ${schemaInfo.availableTables.homeowners.columns.slice(0, 10).join(', ')}...
 - residents: ${schemaInfo.availableTables.residents.columns.slice(0, 10).join(', ')}...
-- assessments: ${schemaInfo.availableTables.assessments.columns.slice(0, 10).join(', ')}...
+- assessments: ${schemaInfo.availableTables.assessments.columns.slice(0, 10).join(', ')}...`;
+
+  if (isZipWithFolders) {
+    basePrompt += `
+
+SPECIAL INSTRUCTIONS FOR ZIP ARCHIVES:
+1. Analyze the folder structure and categorization provided
+2. Consider file relationships and prioritization
+3. Map each file to appropriate target tables based on folder context
+4. Provide specific mappings for each file in the ZIP
+5. Use the folder categories to enhance data type detection
+
+Enhanced JSON Response for ZIP:
+{
+  "dataType": "mixed",
+  "confidence": 85,
+  "targetTables": ["properties", "residents"],
+  "fieldMappings": {"file1/field1": "targetField1", "file2/field2": "targetField2"},
+  "tableAssignments": {"properties": ["file1/field1"], "residents": ["file2/field2"]},
+  "zipAnalysis": {
+    "folderMappings": {"folder1": "properties", "folder2": "residents"},
+    "fileProcessingOrder": ["file1", "file2"],
+    "crossFileRelationships": [{"from": "file1", "to": "file2", "via": "property_id"}]
+  },
+  "dataQuality": {"issues": [], "warnings": [], "suggestions": []},
+  "transformations": [],
+  "requiredFields": [],
+  "missingFields": [],
+  "suggestedDefaults": {},
+  "relationships": [],
+  "summary": "ZIP archive analysis with folder-aware processing"
+}`;
+  } else {
+    basePrompt += `
 
 Required JSON Response:
 {
@@ -337,6 +401,7 @@ Required JSON Response:
   "relationships": [],
   "summary": "Analysis complete"
 }`;
+  }
   
   if (attempt === 1) {
     return basePrompt;

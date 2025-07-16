@@ -106,74 +106,325 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
       const worksheet = workbook.Sheets[sheetName];
       return XLSX.utils.sheet_to_json(worksheet);
     } else if (file.name.endsWith('.zip')) {
-      const buffer = await file.arrayBuffer();
-      const zip = new JSZip();
-      const zipFile = await zip.loadAsync(buffer);
-      const fileContents: Record<string, any> = {};
-      const processedFiles: string[] = [];
-      const skippedFiles: string[] = [];
-      
-      for (const filename of Object.keys(zipFile.files)) {
-        const zipEntry = zipFile.files[filename];
-        
-        // Skip directories
-        if (zipEntry.dir) {
-          continue;
-        }
-        
-        try {
-          // Check if file is supported
-          if (!isSupportedFileType(filename)) {
-            skippedFiles.push(filename);
-            continue;
-          }
-          
-          // Note: Cannot reliably check uncompressed size without reading the file
-          // so we'll use a timeout-based approach for very large files
-          
-          // Parse based on file type
-          if (filename.toLowerCase().endsWith('.csv')) {
-            const text = await zipEntry.async('text');
-            if (text.length > 10 * 1024 * 1024) { // 10MB text limit
-              skippedFiles.push(`${filename} (text too large)`);
-              continue;
-            }
-            fileContents[filename] = text;
-          } else if (filename.toLowerCase().endsWith('.xlsx') || filename.toLowerCase().endsWith('.xls')) {
-            const buffer = await zipEntry.async('arraybuffer');
-            const workbook = XLSX.read(buffer, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            fileContents[filename] = XLSX.utils.sheet_to_json(worksheet);
-          } else if (filename.toLowerCase().endsWith('.txt')) {
-            const text = await zipEntry.async('text');
-            if (text.length > 5 * 1024 * 1024) { // 5MB text limit
-              skippedFiles.push(`${filename} (text too large)`);
-              continue;
-            }
-            fileContents[filename] = text;
-          }
-          
-          processedFiles.push(filename);
-        } catch (error) {
-          console.warn(`Failed to process file ${filename} in ZIP:`, error);
-          skippedFiles.push(`${filename} (processing error)`);
-        }
-      }
-      
-      // Add metadata about processing
-      if (processedFiles.length > 0 || skippedFiles.length > 0) {
-        fileContents['_zipProcessingInfo'] = {
-          processedFiles,
-          skippedFiles,
-          totalFiles: Object.keys(zipFile.files).filter(f => !zipFile.files[f].dir).length
-        };
-      }
-      
-      return fileContents;
+      return await parseZipFileWithFolders(file);
     } else {
       return await file.text();
     }
+  };
+
+  const parseZipFileWithFolders = async (file: File): Promise<any> => {
+    const buffer = await file.arrayBuffer();
+    const zip = new JSZip();
+    const zipFile = await zip.loadAsync(buffer);
+    
+    // Enhanced ZIP processing with folder structure preservation
+    const result = {
+      files: {} as Record<string, any>,
+      folderStructure: {} as Record<string, string[]>,
+      processingSummary: {
+        processedFiles: [] as string[],
+        skippedFiles: [] as string[],
+        totalFiles: 0,
+        foldersProcessed: [] as string[],
+        prioritizedFiles: [] as string[]
+      },
+      analysisMetadata: {
+        hasMultipleFolders: false,
+        suggestedDataTypes: {} as Record<string, string>,
+        folderCategories: {} as Record<string, string>,
+        fileRelationships: [] as Array<{from: string, to: string, type: string}>
+      }
+    };
+
+    // Step 1: Analyze folder structure
+    const folders = new Set<string>();
+    const allFiles = Object.keys(zipFile.files).filter(f => !zipFile.files[f].dir);
+    
+    for (const filename of allFiles) {
+      const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
+      folders.add(folderPath);
+      
+      if (!result.folderStructure[folderPath]) {
+        result.folderStructure[folderPath] = [];
+      }
+      result.folderStructure[folderPath].push(filename);
+    }
+
+    result.analysisMetadata.hasMultipleFolders = folders.size > 1;
+    result.processingSummary.totalFiles = allFiles.length;
+
+    // Step 2: Categorize folders by content
+    for (const [folderPath, files] of Object.entries(result.folderStructure)) {
+      result.analysisMetadata.folderCategories[folderPath] = categorizeFolderByName(folderPath, files);
+      result.processingSummary.foldersProcessed.push(folderPath);
+    }
+
+    // Step 3: Prioritize files for processing
+    const prioritizedFiles = prioritizeFilesForProcessing(allFiles, result.folderStructure, result.analysisMetadata.folderCategories);
+    result.processingSummary.prioritizedFiles = prioritizedFiles;
+
+    // Step 4: Process files in priority order
+    for (const filename of prioritizedFiles) {
+      const zipEntry = zipFile.files[filename];
+      
+      if (zipEntry.dir) continue;
+      
+      try {
+        if (!isSupportedFileType(filename)) {
+          result.processingSummary.skippedFiles.push(`${filename} (unsupported type)`);
+          continue;
+        }
+
+        const fileData = await processZipEntryWithContext(zipEntry, filename, result.analysisMetadata.folderCategories);
+        
+        if (fileData) {
+          // Preserve folder context in filename
+          const contextualName = filename.includes('/') ? filename : `root/${filename}`;
+          result.files[contextualName] = fileData;
+          result.processingSummary.processedFiles.push(filename);
+          
+          // Suggest data type based on folder context and file content
+          const suggestedType = suggestDataTypeFromContext(filename, fileData, result.analysisMetadata.folderCategories);
+          result.analysisMetadata.suggestedDataTypes[contextualName] = suggestedType;
+        }
+      } catch (error) {
+        console.warn(`Failed to process file ${filename} in ZIP:`, error);
+        result.processingSummary.skippedFiles.push(`${filename} (processing error: ${error.message})`);
+      }
+    }
+
+    // Step 5: Identify relationships between files
+    result.analysisMetadata.fileRelationships = identifyFileRelationships(result.files);
+
+    return result;
+  };
+
+  const categorizeFolderByName = (folderPath: string, files: string[]): string => {
+    const lowerPath = folderPath.toLowerCase();
+    
+    // Check folder name patterns
+    if (lowerPath.includes('property') || lowerPath.includes('unit') || lowerPath.includes('address')) {
+      return 'properties';
+    }
+    if (lowerPath.includes('owner') || lowerPath.includes('resident') || lowerPath.includes('tenant')) {
+      return 'residents';
+    }
+    if (lowerPath.includes('financial') || lowerPath.includes('assessment') || lowerPath.includes('payment') || lowerPath.includes('billing')) {
+      return 'financial';
+    }
+    if (lowerPath.includes('maintenance') || lowerPath.includes('repair') || lowerPath.includes('work') || lowerPath.includes('service')) {
+      return 'maintenance';
+    }
+    if (lowerPath.includes('compliance') || lowerPath.includes('violation') || lowerPath.includes('fine') || lowerPath.includes('arc')) {
+      return 'compliance';
+    }
+    if (lowerPath.includes('association') || lowerPath.includes('hoa') || lowerPath.includes('community') || lowerPath.includes('board')) {
+      return 'associations';
+    }
+    
+    // Analyze file names within folder
+    const fileTypes = files.map(f => {
+      const fileName = f.toLowerCase();
+      if (fileName.includes('property') || fileName.includes('unit')) return 'properties';
+      if (fileName.includes('owner') || fileName.includes('resident')) return 'residents';
+      if (fileName.includes('financial') || fileName.includes('assessment')) return 'financial';
+      if (fileName.includes('maintenance')) return 'maintenance';
+      if (fileName.includes('compliance')) return 'compliance';
+      return 'mixed';
+    });
+    
+    // Return most common type or 'mixed' if diverse
+    const typeCounts = fileTypes.reduce((acc, type) => {
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const dominantType = Object.entries(typeCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+    return dominantType === 'mixed' && Object.keys(typeCounts).length > 2 ? 'mixed' : dominantType;
+  };
+
+  const prioritizeFilesForProcessing = (files: string[], folderStructure: Record<string, string[]>, folderCategories: Record<string, string>): string[] => {
+    // Priority order: properties > residents > financial > associations > maintenance > compliance > mixed
+    const priorityOrder = ['properties', 'residents', 'financial', 'associations', 'maintenance', 'compliance', 'mixed'];
+    
+    const prioritized: string[] = [];
+    
+    // Process by folder category priority
+    for (const category of priorityOrder) {
+      for (const [folderPath, folderFiles] of Object.entries(folderStructure)) {
+        if (folderCategories[folderPath] === category) {
+          // Within each folder, prioritize by file importance
+          const sortedFiles = folderFiles.sort((a, b) => {
+            const aName = a.toLowerCase();
+            const bName = b.toLowerCase();
+            
+            // Prioritize main/master files
+            if (aName.includes('main') || aName.includes('master')) return -1;
+            if (bName.includes('main') || bName.includes('master')) return 1;
+            
+            // Prioritize by file type relevance
+            const aScore = getFileRelevanceScore(aName);
+            const bScore = getFileRelevanceScore(bName);
+            
+            return bScore - aScore;
+          });
+          
+          prioritized.push(...sortedFiles);
+        }
+      }
+    }
+    
+    // Add any remaining files
+    const processedFiles = new Set(prioritized);
+    files.forEach(file => {
+      if (!processedFiles.has(file)) {
+        prioritized.push(file);
+      }
+    });
+    
+    return prioritized;
+  };
+
+  const getFileRelevanceScore = (fileName: string): number => {
+    let score = 0;
+    
+    // Higher score for more important file types
+    if (fileName.includes('property') || fileName.includes('unit')) score += 10;
+    if (fileName.includes('owner') || fileName.includes('resident')) score += 9;
+    if (fileName.includes('financial') || fileName.includes('assessment')) score += 8;
+    if (fileName.includes('association') || fileName.includes('hoa')) score += 7;
+    if (fileName.includes('maintenance')) score += 6;
+    if (fileName.includes('compliance')) score += 5;
+    
+    // Bonus for CSV/Excel files
+    if (fileName.endsWith('.csv')) score += 3;
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) score += 2;
+    
+    return score;
+  };
+
+  const processZipEntryWithContext = async (zipEntry: any, filename: string, folderCategories: Record<string, string>): Promise<any> => {
+    const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
+    const folderCategory = folderCategories[folderPath] || 'mixed';
+    
+    try {
+      if (filename.toLowerCase().endsWith('.csv')) {
+        const text = await zipEntry.async('text');
+        if (text.length > 10 * 1024 * 1024) { // 10MB limit
+          throw new Error('File too large');
+        }
+        
+        // Add context metadata
+        return {
+          type: 'csv',
+          content: text,
+          folderPath,
+          folderCategory,
+          estimatedRows: text.split('\n').length - 1
+        };
+      } else if (filename.toLowerCase().endsWith('.xlsx') || filename.toLowerCase().endsWith('.xls')) {
+        const buffer = await zipEntry.async('arraybuffer');
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        return {
+          type: 'excel',
+          content: jsonData,
+          folderPath,
+          folderCategory,
+          estimatedRows: jsonData.length,
+          sheets: workbook.SheetNames
+        };
+      } else if (filename.toLowerCase().endsWith('.txt')) {
+        const text = await zipEntry.async('text');
+        if (text.length > 5 * 1024 * 1024) { // 5MB limit
+          throw new Error('File too large');
+        }
+        
+        return {
+          type: 'text',
+          content: text,
+          folderPath,
+          folderCategory,
+          estimatedRows: text.split('\n').length
+        };
+      }
+    } catch (error) {
+      throw new Error(`Processing failed: ${error.message}`);
+    }
+    
+    return null;
+  };
+
+  const suggestDataTypeFromContext = (filename: string, fileData: any, folderCategories: Record<string, string>): string => {
+    const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
+    const folderCategory = folderCategories[folderPath];
+    
+    // Start with folder category as base suggestion
+    let suggestion = folderCategory || 'mixed';
+    
+    // Refine based on file content if available
+    if (fileData && fileData.content) {
+      const content = Array.isArray(fileData.content) ? fileData.content : [];
+      if (content.length > 0) {
+        const firstRow = content[0];
+        const columns = Object.keys(firstRow || {}).map(k => k.toLowerCase());
+        
+        // Analyze column names for more specific typing
+        if (columns.some(col => col.includes('address') || col.includes('unit') || col.includes('property'))) {
+          if (columns.some(col => col.includes('owner') || col.includes('name'))) {
+            suggestion = 'properties_with_owners';
+          } else {
+            suggestion = 'properties';
+          }
+        } else if (columns.some(col => col.includes('owner') || col.includes('resident') || col.includes('tenant'))) {
+          suggestion = 'residents';
+        } else if (columns.some(col => col.includes('amount') || col.includes('payment') || col.includes('assessment'))) {
+          suggestion = 'financial';
+        }
+      }
+    }
+    
+    return suggestion;
+  };
+
+  const identifyFileRelationships = (files: Record<string, any>): Array<{from: string, to: string, type: string}> => {
+    const relationships: Array<{from: string, to: string, type: string}> = [];
+    const fileNames = Object.keys(files);
+    
+    // Look for common relationship patterns
+    for (let i = 0; i < fileNames.length; i++) {
+      for (let j = i + 1; j < fileNames.length; j++) {
+        const file1 = fileNames[i];
+        const file2 = fileNames[j];
+        const data1 = files[file1];
+        const data2 = files[file2];
+        
+        // Check for property-owner relationships
+        if ((file1.toLowerCase().includes('property') && file2.toLowerCase().includes('owner')) ||
+            (file1.toLowerCase().includes('owner') && file2.toLowerCase().includes('property'))) {
+          relationships.push({
+            from: file1,
+            to: file2,
+            type: 'property_owner'
+          });
+        }
+        
+        // Check for financial relationships
+        if ((file1.toLowerCase().includes('property') && file2.toLowerCase().includes('assessment')) ||
+            (file1.toLowerCase().includes('owner') && file2.toLowerCase().includes('payment'))) {
+          relationships.push({
+            from: file1,
+            to: file2,
+            type: 'financial_link'
+          });
+        }
+      }
+    }
+    
+    return relationships;
   };
 
   const isSupportedFileType = (filename: string): boolean => {
