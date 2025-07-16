@@ -117,26 +117,24 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     const zip = new JSZip();
     const zipFile = await zip.loadAsync(buffer);
     
-    // Enhanced ZIP processing with folder structure preservation
+    // Simplified ZIP processing optimized for AI analysis
     const result = {
+      type: 'zip_archive',
       files: {} as Record<string, any>,
-      folderStructure: {} as Record<string, string[]>,
-      processingSummary: {
-        processedFiles: [] as string[],
-        skippedFiles: [] as string[],
+      structure: {
+        folders: [] as string[],
+        filesByFolder: {} as Record<string, string[]>,
         totalFiles: 0,
-        foldersProcessed: [] as string[],
-        prioritizedFiles: [] as string[]
+        processedFiles: 0
       },
-      analysisMetadata: {
-        hasMultipleFolders: false,
-        suggestedDataTypes: {} as Record<string, string>,
-        folderCategories: {} as Record<string, string>,
-        fileRelationships: [] as Array<{from: string, to: string, type: string}>
+      summary: {
+        primaryDataType: '',
+        confidence: 0,
+        folderTypes: {} as Record<string, string>
       }
     };
 
-    // Step 1: Analyze folder structure
+    // Step 1: Quick folder analysis
     const folders = new Set<string>();
     const allFiles = Object.keys(zipFile.files).filter(f => !zipFile.files[f].dir);
     
@@ -144,57 +142,66 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
       const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
       folders.add(folderPath);
       
-      if (!result.folderStructure[folderPath]) {
-        result.folderStructure[folderPath] = [];
+      if (!result.structure.filesByFolder[folderPath]) {
+        result.structure.filesByFolder[folderPath] = [];
       }
-      result.folderStructure[folderPath].push(filename);
+      result.structure.filesByFolder[folderPath].push(filename);
     }
 
-    result.analysisMetadata.hasMultipleFolders = folders.size > 1;
-    result.processingSummary.totalFiles = allFiles.length;
+    result.structure.folders = Array.from(folders);
+    result.structure.totalFiles = allFiles.length;
 
-    // Step 2: Categorize folders by content
-    for (const [folderPath, files] of Object.entries(result.folderStructure)) {
-      result.analysisMetadata.folderCategories[folderPath] = categorizeFolderByName(folderPath, files);
-      result.processingSummary.foldersProcessed.push(folderPath);
+    // Step 2: Categorize folders and prioritize files
+    const prioritizedFiles = [];
+    let processedCount = 0;
+    const maxFilesToProcess = 10; // Limit to prevent AI overload
+    
+    for (const folderPath of result.structure.folders) {
+      const folderFiles = result.structure.filesByFolder[folderPath];
+      const folderCategory = categorizeFolderByName(folderPath, folderFiles);
+      result.summary.folderTypes[folderPath] = folderCategory;
+      
+      // Process most important files from each folder
+      const sortedFiles = folderFiles
+        .filter(f => isSupportedFileType(f))
+        .sort((a, b) => getFileRelevanceScore(b.toLowerCase()) - getFileRelevanceScore(a.toLowerCase()))
+        .slice(0, 3); // Max 3 files per folder
+        
+      prioritizedFiles.push(...sortedFiles);
+      
+      if (prioritizedFiles.length >= maxFilesToProcess) break;
     }
 
-    // Step 3: Prioritize files for processing
-    const prioritizedFiles = prioritizeFilesForProcessing(allFiles, result.folderStructure, result.analysisMetadata.folderCategories);
-    result.processingSummary.prioritizedFiles = prioritizedFiles;
-
-    // Step 4: Process files in priority order
-    for (const filename of prioritizedFiles) {
+    // Step 3: Process prioritized files with size limits
+    for (const filename of prioritizedFiles.slice(0, maxFilesToProcess)) {
       const zipEntry = zipFile.files[filename];
       
       if (zipEntry.dir) continue;
       
       try {
-        if (!isSupportedFileType(filename)) {
-          result.processingSummary.skippedFiles.push(`${filename} (unsupported type)`);
-          continue;
-        }
-
-        const fileData = await processZipEntryWithContext(zipEntry, filename, result.analysisMetadata.folderCategories);
+        const fileData = await processZipEntryOptimized(zipEntry, filename);
         
         if (fileData) {
-          // Preserve folder context in filename
-          const contextualName = filename.includes('/') ? filename : `root/${filename}`;
-          result.files[contextualName] = fileData;
-          result.processingSummary.processedFiles.push(filename);
-          
-          // Suggest data type based on folder context and file content
-          const suggestedType = suggestDataTypeFromContext(filename, fileData, result.analysisMetadata.folderCategories);
-          result.analysisMetadata.suggestedDataTypes[contextualName] = suggestedType;
+          const simplifiedName = filename.replace(/^.*\//, ''); // Remove path for simplicity
+          result.files[simplifiedName] = fileData;
+          processedCount++;
         }
       } catch (error) {
         console.warn(`Failed to process file ${filename} in ZIP:`, error);
-        result.processingSummary.skippedFiles.push(`${filename} (processing error: ${error.message})`);
       }
     }
 
-    // Step 5: Identify relationships between files
-    result.analysisMetadata.fileRelationships = identifyFileRelationships(result.files);
+    result.structure.processedFiles = processedCount;
+    
+    // Step 4: Determine primary data type
+    const folderTypes = Object.values(result.summary.folderTypes);
+    const typeCount = folderTypes.reduce((acc, type) => {
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    result.summary.primaryDataType = Object.entries(typeCount).reduce((a, b) => a[1] > b[1] ? a : b)[0] || 'mixed';
+    result.summary.confidence = Math.min(90, 60 + (processedCount * 5));
 
     return result;
   };
@@ -303,24 +310,25 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     return score;
   };
 
-  const processZipEntryWithContext = async (zipEntry: any, filename: string, folderCategories: Record<string, string>): Promise<any> => {
+  const processZipEntryOptimized = async (zipEntry: any, filename: string): Promise<any> => {
     const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
-    const folderCategory = folderCategories[folderPath] || 'mixed';
     
     try {
       if (filename.toLowerCase().endsWith('.csv')) {
         const text = await zipEntry.async('text');
-        if (text.length > 10 * 1024 * 1024) { // 10MB limit
+        if (text.length > 2 * 1024 * 1024) { // 2MB limit for ZIP files
           throw new Error('File too large');
         }
         
-        // Add context metadata
+        // Return only essential data for AI analysis
+        const lines = text.split('\n');
+        const sampleLines = lines.slice(0, 5); // Only first 5 lines for analysis
+        
         return {
           type: 'csv',
-          content: text,
-          folderPath,
-          folderCategory,
-          estimatedRows: text.split('\n').length - 1
+          content: sampleLines.join('\n'),
+          rowCount: lines.length - 1,
+          folderPath
         };
       } else if (filename.toLowerCase().endsWith('.xlsx') || filename.toLowerCase().endsWith('.xls')) {
         const buffer = await zipEntry.async('arraybuffer');
@@ -329,26 +337,24 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
+        // Return only sample data for AI analysis
         return {
           type: 'excel',
-          content: jsonData,
+          content: jsonData.slice(0, 3), // Only first 3 rows for analysis
+          rowCount: jsonData.length,
           folderPath,
-          folderCategory,
-          estimatedRows: jsonData.length,
           sheets: workbook.SheetNames
         };
       } else if (filename.toLowerCase().endsWith('.txt')) {
         const text = await zipEntry.async('text');
-        if (text.length > 5 * 1024 * 1024) { // 5MB limit
+        if (text.length > 1 * 1024 * 1024) { // 1MB limit for text files
           throw new Error('File too large');
         }
         
         return {
           type: 'text',
-          content: text,
-          folderPath,
-          folderCategory,
-          estimatedRows: text.split('\n').length
+          content: text.substring(0, 500), // Only first 500 chars for analysis
+          folderPath
         };
       }
     } catch (error) {
@@ -458,7 +464,7 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     setCurrentStep('Parsing files...');
 
     try {
-      // Parse all files
+      // Parse all files with enhanced error tracking
       const fileContents: Array<{ name: string; content: any; type: string }> = [];
       
       for (let i = 0; i < files.length; i++) {
@@ -466,16 +472,45 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         setProgress((i / files.length) * 50);
         setCurrentStep(`Parsing ${file.name}...`);
         
-        const content = await parseFileContent(file);
-        fileContents.push({
-          name: file.name,
-          content,
-          type: file.type
-        });
+        console.log(`Processing file ${i + 1}/${files.length}: ${file.name} (${file.size} bytes)`);
+        
+        try {
+          const content = await parseFileContent(file);
+          
+          // Enhanced logging for ZIP files
+          if (file.name.endsWith('.zip')) {
+            console.log('ZIP file structure:', {
+              type: content.type,
+              totalFiles: content.structure?.totalFiles,
+              processedFiles: content.structure?.processedFiles,
+              folders: content.structure?.folders,
+              primaryDataType: content.summary?.primaryDataType,
+              confidence: content.summary?.confidence
+            });
+          }
+          
+          fileContents.push({
+            name: file.name,
+            content,
+            type: file.type
+          });
+          
+          console.log(`Successfully parsed ${file.name}`);
+        } catch (parseError) {
+          console.error(`Failed to parse ${file.name}:`, parseError);
+          toast.error(`Failed to parse ${file.name}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+          throw parseError;
+        }
       }
 
       setProgress(60);
       setCurrentStep('Analyzing with AI...');
+
+      console.log('Sending to AI processor:', {
+        fileCount: fileContents.length,
+        totalSize: fileContents.reduce((sum, f) => sum + JSON.stringify(f.content).length, 0),
+        types: fileContents.map(f => f.type)
+      });
 
       // Send to AI for analysis
       const { data, error } = await supabase.functions.invoke('ai-import-processor', {
@@ -488,11 +523,25 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('AI processor error:', error);
+        throw error;
+      }
+
+      if (!data || !data.analysisResult) {
+        console.error('Invalid AI processor response:', data);
+        throw new Error('Invalid response from AI processor');
+      }
 
       setProgress(100);
       setCurrentStep('Analysis complete!');
       setAnalysisResults(data.analysisResult);
+      
+      console.log('AI analysis completed successfully:', {
+        confidence: data.analysisResult.confidence,
+        targetTables: data.analysisResult.targetTables,
+        fieldMappings: Object.keys(data.analysisResult.fieldMappings || {}).length
+      });
       
       toast.success('AI analysis completed successfully!');
     } catch (error) {
