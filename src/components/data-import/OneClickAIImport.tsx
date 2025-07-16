@@ -110,18 +110,90 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
       const zip = new JSZip();
       const zipFile = await zip.loadAsync(buffer);
       const fileContents: Record<string, any> = {};
+      const processedFiles: string[] = [];
+      const skippedFiles: string[] = [];
       
       for (const filename of Object.keys(zipFile.files)) {
-        if (!zipFile.files[filename].dir) {
-          const content = await zipFile.files[filename].async('text');
-          fileContents[filename] = content;
+        const zipEntry = zipFile.files[filename];
+        
+        // Skip directories
+        if (zipEntry.dir) {
+          continue;
         }
+        
+        try {
+          // Check if file is supported
+          if (!isSupportedFileType(filename)) {
+            skippedFiles.push(filename);
+            continue;
+          }
+          
+          // Note: Cannot reliably check uncompressed size without reading the file
+          // so we'll use a timeout-based approach for very large files
+          
+          // Parse based on file type
+          if (filename.toLowerCase().endsWith('.csv')) {
+            const text = await zipEntry.async('text');
+            if (text.length > 10 * 1024 * 1024) { // 10MB text limit
+              skippedFiles.push(`${filename} (text too large)`);
+              continue;
+            }
+            fileContents[filename] = text;
+          } else if (filename.toLowerCase().endsWith('.xlsx') || filename.toLowerCase().endsWith('.xls')) {
+            const buffer = await zipEntry.async('arraybuffer');
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            fileContents[filename] = XLSX.utils.sheet_to_json(worksheet);
+          } else if (filename.toLowerCase().endsWith('.txt')) {
+            const text = await zipEntry.async('text');
+            if (text.length > 5 * 1024 * 1024) { // 5MB text limit
+              skippedFiles.push(`${filename} (text too large)`);
+              continue;
+            }
+            fileContents[filename] = text;
+          }
+          
+          processedFiles.push(filename);
+        } catch (error) {
+          console.warn(`Failed to process file ${filename} in ZIP:`, error);
+          skippedFiles.push(`${filename} (processing error)`);
+        }
+      }
+      
+      // Add metadata about processing
+      if (processedFiles.length > 0 || skippedFiles.length > 0) {
+        fileContents['_zipProcessingInfo'] = {
+          processedFiles,
+          skippedFiles,
+          totalFiles: Object.keys(zipFile.files).filter(f => !zipFile.files[f].dir).length
+        };
       }
       
       return fileContents;
     } else {
       return await file.text();
     }
+  };
+
+  const isSupportedFileType = (filename: string): boolean => {
+    const supportedExtensions = ['.csv', '.xlsx', '.xls', '.txt'];
+    const lowerFilename = filename.toLowerCase();
+    
+    // Skip system files and unsupported types
+    if (lowerFilename.startsWith('__macosx') || 
+        lowerFilename.includes('.ds_store') ||
+        lowerFilename.endsWith('.pdf') ||
+        lowerFilename.endsWith('.jpg') ||
+        lowerFilename.endsWith('.jpeg') ||
+        lowerFilename.endsWith('.png') ||
+        lowerFilename.endsWith('.gif') ||
+        lowerFilename.endsWith('.doc') ||
+        lowerFilename.endsWith('.docx')) {
+      return false;
+    }
+    
+    return supportedExtensions.some(ext => lowerFilename.endsWith(ext));
   };
 
   const analyzeWithAI = async () => {
