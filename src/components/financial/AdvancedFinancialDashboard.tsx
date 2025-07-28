@@ -513,7 +513,7 @@ const AdvancedFinancialDashboard: React.FC<AdvancedFinancialDashboardProps> = ({
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <span className="font-medium">Budget Variance Alerts</span>
-                        <p className="text-sm text-muted-foreground">When >10% over budget</p>
+                        <p className="text-sm text-muted-foreground">When {'>'}10% over budget</p>
                       </div>
                       <Badge className="bg-success/10 text-success">Active</Badge>
                     </div>
