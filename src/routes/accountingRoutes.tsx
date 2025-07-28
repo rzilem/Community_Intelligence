@@ -20,6 +20,10 @@ import TaxReporting1099 from "@/pages/accounting/TaxReporting1099";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
 import ResidentPaymentPortal from "@/pages/accounting/ResidentPaymentPortal";
 import AutomationWorkflows from "@/pages/accounting/AutomationWorkflows";
+import AssessmentSchedules from "@/pages/accounting/AssessmentSchedules";
+import AccountsReceivable from "@/pages/accounting/AccountsReceivable";
+import GeneralLedger from "@/pages/accounting/GeneralLedger";
+import ChartOfAccounts from "@/pages/accounting/ChartOfAccounts";
 
 // Accounting Routes
 export const accountingRoutes: RouteObject[] = [
@@ -98,5 +102,21 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/automation",
     element: <RequireAuth><AutomationWorkflows /></RequireAuth>
+  },
+  {
+    path: "/accounting/assessment-schedules",
+    element: <RequireAuth><AssessmentSchedules /></RequireAuth>
+  },
+  {
+    path: "/accounting/accounts-receivable",
+    element: <RequireAuth><AccountsReceivable /></RequireAuth>
+  },
+  {
+    path: "/accounting/general-ledger",
+    element: <RequireAuth><GeneralLedger /></RequireAuth>
+  },
+  {
+    path: "/accounting/chart-of-accounts",
+    element: <RequireAuth><ChartOfAccounts /></RequireAuth>
   }
 ];
