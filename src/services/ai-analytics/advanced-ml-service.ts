@@ -186,15 +186,18 @@ export class AdvancedMLService {
 
       if (error) throw error;
 
-      return (data || []).map(model => ({
-        accuracy: model.accuracy_score || 0,
-        precision: model.performance_metrics?.precision || 0,
-        recall: model.performance_metrics?.recall || 0,
-        f1Score: model.performance_metrics?.f1_score || 0,
-        lastTrained: model.last_trained || '',
-        trainingDataSize: model.training_data_size || 0,
-        modelVersion: model.model_version || 'v1.0'
-      }));
+      return (data || []).map(model => {
+        const metrics = model.performance_metrics as Record<string, any> || {};
+        return {
+          accuracy: model.accuracy_score || 0,
+          precision: metrics.precision || 0,
+          recall: metrics.recall || 0,
+          f1Score: metrics.f1_score || 0,
+          lastTrained: model.last_trained || '',
+          trainingDataSize: model.training_data_size || 0,
+          modelVersion: model.model_version || 'v1.0'
+        };
+      });
 
     } catch (error) {
       console.error('Failed to fetch ML model metrics:', error);
