@@ -247,6 +247,42 @@ export type Database = {
           },
         ]
       }
+      ai_agent_chains: {
+        Row: {
+          association_id: string
+          created_at: string
+          current_task_index: number
+          id: string
+          metadata: Json
+          name: string
+          status: string
+          tasks: Json
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          current_task_index?: number
+          id: string
+          metadata?: Json
+          name: string
+          status?: string
+          tasks?: Json
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          current_task_index?: number
+          id?: string
+          metadata?: Json
+          name?: string
+          status?: string
+          tasks?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_conversation_history: {
         Row: {
           association_id: string
@@ -7536,6 +7572,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notices: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          recipient_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id: string
+          recipient_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          recipient_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       notification_queue: {
         Row: {
