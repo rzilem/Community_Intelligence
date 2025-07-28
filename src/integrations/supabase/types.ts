@@ -12246,6 +12246,7 @@ export type Database = {
           property_id: string
           resident_id: string | null
           resolved_date: string | null
+          severity: string | null
           status: string
           updated_at: string
           violation_type: string
@@ -12261,6 +12262,7 @@ export type Database = {
           property_id: string
           resident_id?: string | null
           resolved_date?: string | null
+          severity?: string | null
           status?: string
           updated_at?: string
           violation_type: string
@@ -12276,6 +12278,7 @@ export type Database = {
           property_id?: string
           resident_id?: string | null
           resolved_date?: string | null
+          severity?: string | null
           status?: string
           updated_at?: string
           violation_type?: string
