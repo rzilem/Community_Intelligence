@@ -9,7 +9,7 @@ export const validationService = {
     associationId: string
   ): Promise<ValidationResult> {
     try {
-      devLog.info('Starting data validation:', { dataType, recordCount: data.length });
+      devLog.info('Starting enhanced data validation:', { dataType, recordCount: data.length, associationId });
       
       if (!data || !Array.isArray(data) || data.length === 0) {
         return {
@@ -22,29 +22,57 @@ export const validationService = {
         };
       }
 
+      // Enhanced validation with better categorization
       const issues: Array<{ row: number; field: string; issue: string }> = [];
       let validRows = 0;
       let warnings = 0;
 
-      // Validate each row
+      // Pre-validation checks
+      const sampleData = data.slice(0, Math.min(5, data.length));
+      const detectedColumns = this.detectColumns(sampleData);
+      const missingRequiredFields = this.checkRequiredFields(dataType, detectedColumns);
+      
+      if (missingRequiredFields.length > 0) {
+        issues.push(...missingRequiredFields.map(field => ({
+          row: 0,
+          field: 'structure',
+          issue: `Missing required column: ${field}`
+        })));
+      }
+
+      // Validate each row with enhanced checks
       for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        const rowIssues = this.validateRow(row, dataType, i + 1);
+        const rowIssues = this.validateRowEnhanced(row, dataType, i + 1, detectedColumns);
         
         if (rowIssues.length === 0) {
           validRows++;
         } else {
-          const criticalIssues = rowIssues.filter(issue => issue.issue.includes('required') || issue.issue.includes('invalid'));
-          const warningIssues = rowIssues.filter(issue => !issue.issue.includes('required') && !issue.issue.includes('invalid'));
+          const criticalIssues = rowIssues.filter(issue => 
+            issue.issue.includes('required') || 
+            issue.issue.includes('invalid') ||
+            issue.issue.includes('missing')
+          );
+          const warningIssues = rowIssues.filter(issue => 
+            !issue.issue.includes('required') && 
+            !issue.issue.includes('invalid') &&
+            !issue.issue.includes('missing')
+          );
           
           warnings += warningIssues.length;
+          
+          // Only count critical issues towards invalid rows
+          if (criticalIssues.length === 0) {
+            validRows++;
+          }
+          
           issues.push(...rowIssues);
         }
       }
 
       const invalidRows = data.length - validRows;
       const result: ValidationResult = {
-        valid: invalidRows === 0,
+        valid: invalidRows === 0 && missingRequiredFields.length === 0,
         totalRows: data.length,
         validRows,
         invalidRows,
@@ -52,7 +80,12 @@ export const validationService = {
         issues
       };
 
-      devLog.info('Validation completed:', result);
+      devLog.info('Enhanced validation completed:', {
+        ...result,
+        detectedColumns,
+        missingRequiredFields
+      });
+      
       return result;
     } catch (error) {
       devLog.error('Validation error:', error);
@@ -65,6 +98,108 @@ export const validationService = {
         issues: [{ row: 0, field: 'validation', issue: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }]
       };
     }
+  },
+
+  detectColumns(sampleData: any[]): string[] {
+    const allKeys = new Set<string>();
+    sampleData.forEach(row => {
+      if (row && typeof row === 'object') {
+        Object.keys(row).forEach(key => allKeys.add(key));
+      }
+    });
+    return Array.from(allKeys);
+  },
+
+  checkRequiredFields(dataType: string, detectedColumns: string[]): string[] {
+    const requiredFields = this.getRequiredFieldsForType(dataType);
+    return requiredFields.filter(field => {
+      // Check if any detected column matches this required field (flexible matching)
+      return !detectedColumns.some(col => 
+        col.toLowerCase().includes(field.toLowerCase()) ||
+        field.toLowerCase().includes(col.toLowerCase()) ||
+        this.getFieldAliases(field).some(alias => 
+          col.toLowerCase().includes(alias.toLowerCase())
+        )
+      );
+    });
+  },
+
+  getRequiredFieldsForType(dataType: string): string[] {
+    switch (dataType) {
+      case 'properties':
+        return ['address'];
+      case 'owners':
+      case 'homeowners':
+        return ['name', 'email'];
+      case 'properties_owners':
+        return ['address', 'owner_name'];
+      case 'financial':
+      case 'assessments':
+        return ['amount', 'property'];
+      case 'compliance':
+        return ['violation_type', 'property'];
+      case 'maintenance':
+        return ['title', 'property'];
+      case 'residents':
+        return ['name', 'property'];
+      default:
+        return [];
+    }
+  },
+
+  getFieldAliases(field: string): string[] {
+    const aliases: Record<string, string[]> = {
+      'address': ['property_address', 'street_address', 'location', 'addr'],
+      'name': ['owner_name', 'full_name', 'first_name', 'last_name'],
+      'email': ['email_address', 'contact_email', 'owner_email'],
+      'amount': ['balance', 'payment_amount', 'assessment_amount', 'fee'],
+      'property': ['property_id', 'unit', 'unit_number', 'property_address'],
+      'owner_name': ['homeowner_name', 'resident_name', 'tenant_name']
+    };
+    return aliases[field.toLowerCase()] || [];
+  },
+
+  validateRowEnhanced(row: any, dataType: string, rowNumber: number, detectedColumns: string[]): Array<{ row: number; field: string; issue: string }> {
+    const issues: Array<{ row: number; field: string; issue: string }> = [];
+    
+    if (!row || typeof row !== 'object') {
+      issues.push({ row: rowNumber, field: 'row', issue: 'Invalid row data' });
+      return issues;
+    }
+
+    // Enhanced validation based on data type with flexible field matching
+    switch (dataType) {
+      case 'properties':
+        this.validatePropertyEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'owners':
+      case 'homeowners':
+        this.validateOwnerEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'properties_owners':
+        this.validatePropertyOwnerEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'financial':
+      case 'assessments':
+        this.validateFinancialEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'compliance':
+        this.validateComplianceEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'maintenance':
+        this.validateMaintenanceEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'residents':
+        this.validateResidentEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      case 'associations':
+        this.validateAssociationEnhanced(row, rowNumber, issues, detectedColumns);
+        break;
+      default:
+        this.validateGenericEnhanced(row, rowNumber, issues);
+    }
+
+    return issues;
   },
 
   validateRow(row: any, dataType: string, rowNumber: number): Array<{ row: number; field: string; issue: string }> {
@@ -163,6 +298,116 @@ export const validationService = {
     if (keys.length === 0) {
       issues.push({ row: rowNumber, field: 'row', issue: 'Row is empty' });
     }
+  },
+
+  // Enhanced validation methods
+  validatePropertyEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const addressField = this.findField(row, ['address', 'property_address', 'street_address', 'location']);
+    if (!addressField) {
+      issues.push({ row: rowNumber, field: 'address', issue: 'Address is required' });
+    }
+  },
+
+  validateOwnerEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const nameField = this.findField(row, ['name', 'owner_name', 'full_name', 'first_name']);
+    const emailField = this.findField(row, ['email', 'email_address', 'contact_email']);
+    
+    if (!nameField) {
+      issues.push({ row: rowNumber, field: 'name', issue: 'Name is required' });
+    }
+    
+    if (emailField && !this.isValidEmail(emailField)) {
+      issues.push({ row: rowNumber, field: 'email', issue: 'Invalid email format' });
+    }
+  },
+
+  validatePropertyOwnerEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    this.validatePropertyEnhanced(row, rowNumber, issues, detectedColumns);
+    this.validateOwnerEnhanced(row, rowNumber, issues, detectedColumns);
+  },
+
+  validateFinancialEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const amountField = this.findField(row, ['amount', 'balance', 'payment_amount', 'assessment_amount']);
+    const propertyField = this.findField(row, ['property_id', 'unit', 'unit_number', 'property_address']);
+    
+    if (!amountField) {
+      issues.push({ row: rowNumber, field: 'amount', issue: 'Amount is required' });
+    } else if (isNaN(parseFloat(amountField))) {
+      issues.push({ row: rowNumber, field: 'amount', issue: 'Amount must be a valid number' });
+    }
+    
+    if (!propertyField) {
+      issues.push({ row: rowNumber, field: 'property', issue: 'Property identifier is required' });
+    }
+  },
+
+  validateComplianceEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const violationField = this.findField(row, ['violation_type', 'issue_type', 'compliance_type']);
+    const propertyField = this.findField(row, ['property_id', 'unit', 'unit_number', 'property_address']);
+    
+    if (!violationField) {
+      issues.push({ row: rowNumber, field: 'violation_type', issue: 'Violation type is required' });
+    }
+    
+    if (!propertyField) {
+      issues.push({ row: rowNumber, field: 'property', issue: 'Property identifier is required' });
+    }
+  },
+
+  validateMaintenanceEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const titleField = this.findField(row, ['title', 'description', 'issue_title', 'request_title']);
+    const propertyField = this.findField(row, ['property_id', 'unit', 'unit_number', 'property_address']);
+    
+    if (!titleField) {
+      issues.push({ row: rowNumber, field: 'title', issue: 'Title or description is required' });
+    }
+    
+    if (!propertyField) {
+      issues.push({ row: rowNumber, field: 'property', issue: 'Property identifier is required' });
+    }
+  },
+
+  validateResidentEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const nameField = this.findField(row, ['name', 'resident_name', 'first_name', 'full_name']);
+    const propertyField = this.findField(row, ['property_id', 'unit', 'unit_number', 'property_address']);
+    
+    if (!nameField) {
+      issues.push({ row: rowNumber, field: 'name', issue: 'Resident name is required' });
+    }
+    
+    if (!propertyField) {
+      issues.push({ row: rowNumber, field: 'property', issue: 'Property identifier is required' });
+    }
+  },
+
+  validateAssociationEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>, detectedColumns: string[]) {
+    const nameField = this.findField(row, ['name', 'association_name', 'hoa_name']);
+    
+    if (!nameField) {
+      issues.push({ row: rowNumber, field: 'name', issue: 'Association name is required' });
+    }
+  },
+
+  validateGenericEnhanced(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    const keys = Object.keys(row);
+    if (keys.length === 0) {
+      issues.push({ row: rowNumber, field: 'row', issue: 'Row is empty' });
+    }
+    
+    // Check for common data quality issues
+    const emptyFields = keys.filter(key => !row[key] || row[key].toString().trim() === '');
+    if (emptyFields.length > keys.length * 0.7) {
+      issues.push({ row: rowNumber, field: 'data_quality', issue: 'Row has mostly empty fields' });
+    }
+  },
+
+  findField(row: any, fieldNames: string[]): any {
+    for (const fieldName of fieldNames) {
+      if (row.hasOwnProperty(fieldName) && row[fieldName] !== null && row[fieldName] !== undefined && row[fieldName] !== '') {
+        return row[fieldName];
+      }
+    }
+    return null;
   },
 
   isValidEmail(email: string): boolean {

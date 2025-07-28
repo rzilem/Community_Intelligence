@@ -15,13 +15,14 @@ interface ImportTabContentProps {
   importResults: ImportResult | null;
   isValidating: boolean;
   isImporting: boolean;
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File, parsedData?: any[], type?: string) => void;
   onImportAnother: () => void;
   onAssociationChange: (associationId: string) => void;
 }
 
 const ImportTabContent: React.FC<ImportTabContentProps> = ({
   associationId,
+  onFileUpload,
   onImportAnother,
   onAssociationChange
 }) => {
@@ -84,6 +85,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
               associationId={associationId}
               onImportAnother={onImportAnother}
               onAssociationChange={onAssociationChange}
+              onFileUpload={onFileUpload}
             />
           </TabsContent>
 

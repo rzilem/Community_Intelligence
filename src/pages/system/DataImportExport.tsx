@@ -12,6 +12,7 @@ import ImportDataMappingModal from '@/components/data-import/ImportDataMappingMo
 import OneClickAIImport from '@/components/data-import/OneClickAIImport';
 import AIImportHistory from '@/components/data-import/AIImportHistory';
 import { useImportState } from '@/hooks/import-export/useImportState';
+import { useFileUploadHandler } from '@/hooks/import-export/useFileUploadHandler';
 
 const DataImportExport: React.FC = () => {
   const {
@@ -34,11 +35,23 @@ const DataImportExport: React.FC = () => {
     importDataWithMapping
   } = useImportState();
 
-  // Simple file upload handler for legacy CSV/Excel imports
-  const handleFileUpload = (file: File) => {
-    setImportFile(file);
-    // For document imports, the enhanced uploader handles everything
-    // For CSV/Excel, we'd need additional processing
+  // Enhanced file upload handler that handles the full import pipeline
+  const { handleFileUpload: processFileUpload, isProcessing: isFileProcessing } = useFileUploadHandler({
+    setImportFile,
+    setImportData,
+    setImportType,
+    validateData,
+    selectedAssociationId: selectedAssociationId || ''
+  });
+
+  const handleFileUpload = (file: File, parsedData?: any[], type?: string) => {
+    if (parsedData && type) {
+      // Data is already parsed, process it directly
+      processFileUpload(file, parsedData, type);
+    } else {
+      // File needs parsing
+      processFileUpload(file, [], type || '');
+    }
   };
 
   return (

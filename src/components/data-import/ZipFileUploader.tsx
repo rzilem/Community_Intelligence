@@ -25,11 +25,25 @@ const ZipFileUploader: React.FC = () => {
     if (!selectedFile) return;
     
     setIsProcessing(true);
-    // TODO: Implement smart import logic
-    setTimeout(() => {
+    try {
+      const { smartImportService } = await import('@/services/import-export/smart-import-service');
+      
+      const result = await smartImportService.processZipFile(selectedFile, {
+        associationId: 'default', // This should be passed as prop
+        autoImportThreshold: 0.85
+      });
+      
+      if (result.success) {
+        alert(`Smart import completed! Processed ${result.processedFiles} files with ${result.importedRecords} records imported.`);
+      } else {
+        alert(`Smart import completed with warnings. ${result.processedFiles} files processed, but manual review may be required.`);
+      }
+    } catch (error) {
+      console.error('Smart import failed:', error);
+      alert(`Smart import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
       setIsProcessing(false);
-      alert('Smart import feature coming soon!');
-    }, 2000);
+    }
   };
 
   return (

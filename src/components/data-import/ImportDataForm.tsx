@@ -13,12 +13,14 @@ interface ImportDataFormProps {
   associationId: string | null;
   onImportAnother: () => void;
   onAssociationChange: (associationId: string) => void;
+  onFileUpload?: (file: File, parsedData?: any[], type?: string) => void;
 }
 
-const ImportDataForm: React.FC<ImportDataFormProps> = ({ 
-  associationId, 
+const ImportDataForm: React.FC<ImportDataFormProps> = ({
+  associationId,
   onImportAnother,
-  onAssociationChange 
+  onAssociationChange,
+  onFileUpload
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importType, setImportType] = useState<string>('associations');
@@ -40,8 +42,12 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({
         
         console.log('Parsed data:', parsedData.slice(0, 2)); // Log first two items for debugging
         
-        // For now, just show success message - integration with actual import will be handled elsewhere
-        toast.success('File parsed successfully. Import functionality will be integrated separately.');
+        // Trigger the import process via the parent component's onFileUpload
+        if (onFileUpload) {
+          onFileUpload(selectedFile, parsedData, importType);
+        } else {
+          toast.success(`File parsed successfully! Found ${parsedData.length} rows.`);
+        }
         
       } catch (error) {
         console.error('Error parsing file:', error);
