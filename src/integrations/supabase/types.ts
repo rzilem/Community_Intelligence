@@ -3935,6 +3935,39 @@ export type Database = {
           },
         ]
       }
+      communication_channels: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       communication_intelligence: {
         Row: {
           ai_category: string | null
@@ -6308,6 +6341,36 @@ export type Database = {
           },
         ]
       }
+      integration_configs: {
+        Row: {
+          config: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       invoice_line_items: {
         Row: {
           ai_confidence: number | null
@@ -7572,6 +7635,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      multi_channel_messages: {
+        Row: {
+          channels: string[] | null
+          created_at: string | null
+          id: string
+          message_template: string
+          metadata: Json | null
+          priority: string | null
+          scheduled_for: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channels?: string[] | null
+          created_at?: string | null
+          id?: string
+          message_template: string
+          metadata?: Json | null
+          priority?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channels?: string[] | null
+          created_at?: string | null
+          id?: string
+          message_template?: string
+          metadata?: Json | null
+          priority?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       notices: {
         Row: {
@@ -9417,6 +9516,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      realtime_channels: {
+        Row: {
+          channel_name: string
+          channel_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_name: string
+          channel_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_name?: string
+          channel_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      realtime_events: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realtime_events_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "realtime_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       receipt_lines: {
         Row: {
