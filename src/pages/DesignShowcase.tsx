@@ -9,6 +9,10 @@ import designConcept1 from '@/assets/design-concept-1.jpg';
 import designConcept2 from '@/assets/design-concept-2.jpg';
 import designConcept3 from '@/assets/design-concept-3.jpg';
 import designConceptMobile from '@/assets/design-concept-mobile.jpg';
+import designConceptDark from '@/assets/design-concept-dark.jpg';
+import designConceptGrid from '@/assets/design-concept-grid.jpg';
+import designConceptAI from '@/assets/design-concept-ai.jpg';
+import designConceptVibrant from '@/assets/design-concept-vibrant.jpg';
 
 const DesignShowcase: React.FC = () => {
   const concepts = [
@@ -43,6 +47,38 @@ const DesignShowcase: React.FC = () => {
       image: designConceptMobile,
       features: ["Touch-friendly", "Responsive design", "Gesture support", "Mobile optimized"],
       category: "Mobile First"
+    },
+    {
+      id: 5,
+      title: "Dark Mode Professional",
+      description: "Elegant dark theme interface with deep navy backgrounds, neon blue accents, and sophisticated styling for extended usage sessions.",
+      image: designConceptDark,
+      features: ["Dark theme", "Neon accents", "Eye-friendly", "Night mode optimized"],
+      category: "Dark Theme"
+    },
+    {
+      id: 6,
+      title: "Grid-Based Organization",
+      description: "Clean grid layout design with organized card systems, perfect spacing, and intuitive data organization for maximum efficiency.",
+      image: designConceptGrid,
+      features: ["Grid layouts", "Organized cards", "Clean spacing", "Data focused"],
+      category: "Organized Layout"
+    },
+    {
+      id: 7,
+      title: "AI-Integrated Interface",
+      description: "Smart interface featuring prominent AI assistant integration, conversational UI elements, and seamless human-AI collaboration.",
+      image: designConceptAI,
+      features: ["AI chat panel", "Smart suggestions", "Conversational UI", "AI-first design"],
+      category: "AI-Powered"
+    },
+    {
+      id: 8,
+      title: "Vibrant & Engaging",
+      description: "Colorful and energetic design with bright gradients, cheerful palette, and engaging visual elements that inspire productivity.",
+      image: designConceptVibrant,
+      features: ["Bright colors", "Gradient effects", "Engaging visuals", "Energetic design"],
+      category: "Colorful"
     }
   ];
 
