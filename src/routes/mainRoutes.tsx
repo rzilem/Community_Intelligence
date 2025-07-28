@@ -8,6 +8,7 @@ import Index from '@/pages/Index';
 import Permissions from '@/pages/system/Permissions';
 import UserProfile from '@/pages/user/UserProfile';
 import AllActions from '@/pages/AllActions';
+import DesignShowcase from '@/pages/DesignShowcase';
 
 export const mainRoutes = [
   {
@@ -21,6 +22,10 @@ export const mainRoutes = [
   {
     path: '/dashboard/actions',
     element: <AllActions />
+  },
+  {
+    path: '/design-showcase',
+    element: <DesignShowcase />
   },
   {
     path: '/properties',

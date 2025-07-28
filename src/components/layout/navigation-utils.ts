@@ -16,6 +16,7 @@ import {
   Home,
   Mail,
   TrendingUp,
+  Palette,
 } from 'lucide-react';
 
 export const mainNavItems: NavItemProps[] = [
@@ -25,7 +26,8 @@ export const mainNavItems: NavItemProps[] = [
     icon: LayoutDashboard,
     submenu: [
       { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-      { name: 'All Actions', path: '/dashboard/actions', icon: LayoutDashboard }
+      { name: 'All Actions', path: '/dashboard/actions', icon: LayoutDashboard },
+      { name: 'Design Showcase', path: '/design-showcase', icon: Palette }
     ]
   },
   {
