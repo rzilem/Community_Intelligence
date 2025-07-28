@@ -40,8 +40,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Apply immediately for instant feedback
     applyThemeSettings(updatedSettings);
     
-    // Then persist to database
-    await updateSettingsMutation.mutateAsync(updatedSettings);
+    try {
+      // Then persist to database
+      await updateSettingsMutation.mutateAsync(updatedSettings);
+    } catch (error) {
+      console.error('Failed to persist theme settings:', error);
+      // Don't revert the UI changes since they're already applied
+      // The user will see the error via the toast notification from the mutation
+    }
   };
 
   return (

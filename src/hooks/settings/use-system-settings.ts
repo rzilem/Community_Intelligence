@@ -110,22 +110,22 @@ export const useSystemSetting = <T>(key: SettingKey) => {
           return (defaultSettings[key] as unknown) as T;
         }
 
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+        // Use the settings edge function through Supabase client instead of direct fetch
+        const { data: functionData, error: functionError } = await supabase.functions.invoke(`settings/${key}`, {
+          method: 'GET'
         });
 
-        const result = await handleJsonResponse(response);
-        
-        if (!result.success) {
-          console.error(`Error fetching ${key} settings:`, result.error);
+        if (functionError) {
+          console.error(`Error calling settings function for ${key}:`, functionError);
+          return (defaultSettings[key] as unknown) as T;
+        }
+
+        if (!functionData?.success) {
+          console.error(`Error fetching ${key} settings:`, functionData?.error);
           return (defaultSettings[key] as unknown) as T;
         }
         
-        return result.data as T;
+        return functionData.data as T;
       } catch (err) {
         console.error(`Error in useSystemSetting for ${key}:`, err);
         return (defaultSettings[key] as unknown) as T;
@@ -165,20 +165,20 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
+      // Use the settings edge function through Supabase client instead of direct fetch
+      const { data: functionData, error: functionError } = await supabase.functions.invoke(`settings/${key}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newValue),
+        body: newValue,
       });
       
-      const result = await handleJsonResponse(response);
+      if (functionError) {
+        console.error("Error calling settings function:", functionError);
+        throw new Error(functionError.message || 'Failed to update settings');
+      }
       
-      if (!result.success) {
-        console.error("Error updating settings:", result);
-        throw new Error(result.error || 'Failed to update settings');
+      if (!functionData?.success) {
+        console.error("Error updating settings:", functionData);
+        throw new Error(functionData?.error || 'Failed to update settings');
       }
       
       console.log(`Successfully updated system setting: ${key}`);
