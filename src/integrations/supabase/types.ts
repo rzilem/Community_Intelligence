@@ -13153,6 +13153,10 @@ export type Database = {
         Args: { preferences: Json }
         Returns: boolean
       }
+      validate_webhook_signature: {
+        Args: { payload: string; signature: string; secret: string }
+        Returns: boolean
+      }
       verify_totp: {
         Args: { p_user_id: string; p_token: string }
         Returns: Json
