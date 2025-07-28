@@ -165,20 +165,18 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
         throw new Error('Authentication required');
       }
 
-      // Use the settings edge function through Supabase client instead of direct fetch
-      const { data: functionData, error: functionError } = await supabase.functions.invoke(`settings/${key}`, {
-        method: 'POST',
-        body: newValue,
-      });
+      // Use direct database access instead of edge function to avoid issues
+      const { error: dbError } = await supabase
+        .from('system_settings')
+        .upsert({
+          key,
+          value: newValue as any,
+          updated_at: new Date().toISOString()
+        });
       
-      if (functionError) {
-        console.error("Error calling settings function:", functionError);
-        throw new Error(functionError.message || 'Failed to update settings');
-      }
-      
-      if (!functionData?.success) {
-        console.error("Error updating settings:", functionData);
-        throw new Error(functionData?.error || 'Failed to update settings');
+      if (dbError) {
+        console.error("Error updating settings directly:", dbError);
+        throw new Error(dbError.message || 'Failed to update settings');
       }
       
       console.log(`Successfully updated system setting: ${key}`);
