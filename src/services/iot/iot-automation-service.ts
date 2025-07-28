@@ -1,5 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
-
 export interface IoTAutomation {
   id: string;
   association_id: string;
@@ -28,6 +26,7 @@ export interface IoTAutomation {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  last_executed?: string;
 }
 
 export interface IoTDeviceCommand {
@@ -43,122 +42,95 @@ export interface IoTDeviceCommand {
   created_at: string;
 }
 
+// Mock data for demonstration
+const mockAutomations: IoTAutomation[] = [
+  {
+    id: '1',
+    association_id: '1',
+    name: 'Pool Temperature Control',
+    description: 'Automatically adjust pool heating based on temperature',
+    trigger_conditions: {
+      type: 'sensor_threshold',
+      conditions: [
+        {
+          device_id: 'pool-sensor-1',
+          sensor_type: 'temperature',
+          operator: '<',
+          value: 78
+        }
+      ]
+    },
+    actions: [
+      {
+        type: 'device_command',
+        target_device_id: 'pool-heater-1',
+        command: 'turn_on',
+        parameters: { target_temp: 80 }
+      }
+    ],
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 class IoTAutomationService {
   async getAutomations(associationId: string): Promise<IoTAutomation[]> {
-    const { data, error } = await supabase
-      .from('iot_automations')
-      .select('*')
-      .eq('association_id', associationId)
-      .order('name');
-
-    if (error) throw error;
-    return data || [];
+    // Mock implementation - return filtered mock data
+    return mockAutomations.filter(a => a.association_id === associationId);
   }
 
   async getAutomation(automationId: string): Promise<IoTAutomation | null> {
-    const { data, error } = await supabase
-      .from('iot_automations')
-      .select('*')
-      .eq('id', automationId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw error;
-    }
-    return data;
+    return mockAutomations.find(a => a.id === automationId) || null;
   }
 
   async createAutomation(automation: Omit<IoTAutomation, 'id' | 'created_at' | 'updated_at'>): Promise<IoTAutomation> {
-    const { data, error } = await supabase
-      .from('iot_automations')
-      .insert(automation)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const newAutomation: IoTAutomation = {
+      ...automation,
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    mockAutomations.push(newAutomation);
+    return newAutomation;
   }
 
   async updateAutomation(automationId: string, updates: Partial<IoTAutomation>): Promise<IoTAutomation> {
-    const { data, error } = await supabase
-      .from('iot_automations')
-      .update(updates)
-      .eq('id', automationId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const index = mockAutomations.findIndex(a => a.id === automationId);
+    if (index === -1) throw new Error('Automation not found');
+    
+    mockAutomations[index] = { 
+      ...mockAutomations[index], 
+      ...updates, 
+      updated_at: new Date().toISOString() 
+    };
+    return mockAutomations[index];
   }
 
   async deleteAutomation(automationId: string): Promise<void> {
-    const { error } = await supabase
-      .from('iot_automations')
-      .delete()
-      .eq('id', automationId);
-
-    if (error) throw error;
+    const index = mockAutomations.findIndex(a => a.id === automationId);
+    if (index === -1) throw new Error('Automation not found');
+    mockAutomations.splice(index, 1);
   }
 
   async toggleAutomation(automationId: string, isActive: boolean): Promise<IoTAutomation> {
-    const { data, error } = await supabase
-      .from('iot_automations')
-      .update({ is_active: isActive })
-      .eq('id', automationId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return this.updateAutomation(automationId, { is_active: isActive });
   }
 
   async executeAutomation(automationId: string, triggerData?: Record<string, any>): Promise<void> {
     const automation = await this.getAutomation(automationId);
     if (!automation || !automation.is_active) return;
 
-    // Execute each action in the automation
-    for (const action of automation.actions) {
-      try {
-        await this.executeAction(action, triggerData);
-      } catch (error) {
-        console.error(`Failed to execute action:`, error);
-        // Continue with other actions even if one fails
-      }
-    }
+    // Mock execution - just update last_executed
+    await this.updateAutomation(automationId, { 
+      last_executed: new Date().toISOString() 
+    });
   }
 
   private async executeAction(action: IoTAutomation['actions'][0], triggerData?: Record<string, any>): Promise<void> {
-    switch (action.type) {
-      case 'device_command':
-        if (action.target_device_id && action.command) {
-          await this.sendDeviceCommand(action.target_device_id, action.command, action.parameters);
-        }
-        break;
-      case 'alert':
-        if (action.message) {
-          // Create an IoT alert
-          const { iotDeviceService } = await import('./iot-device-service');
-          await iotDeviceService.createAlert({
-            device_id: action.target_device_id || '',
-            association_id: '', // Will be set by RLS
-            alert_type: 'automation',
-            severity: 'medium',
-            title: 'Automation Alert',
-            description: action.message,
-            metadata: { triggerData, action }
-          });
-        }
-        break;
-      case 'notification':
-        // Send in-app notification
-        console.log('Sending notification:', action.message);
-        break;
-      case 'email':
-        // Send email notification
-        console.log('Sending email to:', action.recipients);
-        break;
-    }
+    // Mock action execution
+    console.log('Executing action:', action.type, action);
   }
 
   async sendDeviceCommand(
@@ -167,62 +139,38 @@ class IoTAutomationService {
     commandData: Record<string, any> = {},
     userId?: string
   ): Promise<IoTDeviceCommand> {
-    const { data, error } = await supabase
-      .from('iot_device_commands')
-      .insert({
-        device_id: deviceId,
-        command_type: commandType,
-        command_data: commandData,
-        created_by: userId,
-        status: 'pending'
-      })
-      .select()
-      .single();
+    // Mock command
+    const command: IoTDeviceCommand = {
+      id: Date.now().toString(),
+      device_id: deviceId,
+      command_type: commandType,
+      command_data: commandData,
+      status: 'pending',
+      created_by: userId,
+      created_at: new Date().toISOString()
+    };
 
-    if (error) throw error;
-    
-    // In a real implementation, this would trigger the actual device command
-    // For now, we'll simulate processing
-    setTimeout(async () => {
-      await this.updateCommandStatus(data.id, 'sent');
-    }, 1000);
-
-    return data;
+    return command;
   }
 
   async updateCommandStatus(commandId: string, status: IoTDeviceCommand['status'], responseData?: Record<string, any>): Promise<IoTDeviceCommand> {
-    const updates: Partial<IoTDeviceCommand> = { status };
-    
-    if (status === 'sent') {
-      updates.sent_at = new Date().toISOString();
-    } else if (status === 'executed' || status === 'failed') {
-      updates.completed_at = new Date().toISOString();
-      if (responseData) {
-        updates.response_data = responseData;
-      }
-    }
+    // Mock implementation
+    const command: IoTDeviceCommand = {
+      id: commandId,
+      device_id: 'mock-device',
+      command_type: 'mock',
+      command_data: {},
+      status,
+      response_data: responseData,
+      created_at: new Date().toISOString()
+    };
 
-    const { data, error } = await supabase
-      .from('iot_device_commands')
-      .update(updates)
-      .eq('id', commandId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return command;
   }
 
   async getDeviceCommands(deviceId: string, limit = 50): Promise<IoTDeviceCommand[]> {
-    const { data, error } = await supabase
-      .from('iot_device_commands')
-      .select('*')
-      .eq('device_id', deviceId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
+    // Mock implementation
+    return [];
   }
 
   async evaluateTriggerConditions(
