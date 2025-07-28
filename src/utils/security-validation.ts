@@ -103,13 +103,62 @@ export const validatePassword = (password: string): { valid: boolean; errors: st
 };
 
 /**
- * Sanitize user input for database queries
+ * Sanitize user input for database queries with enhanced XSS protection
  */
 export const sanitizeInput = (input: string): string => {
+  if (typeof input !== 'string') return '';
+  
   return input
     .trim()
     .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/data:/gi, '') // Remove data: protocol
+    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
     .substring(0, 1000); // Limit length
+};
+
+/**
+ * Enhanced XSS protection for user content
+ */
+export const preventXSS = (content: string): string => {
+  const xssPatterns = [
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+    /<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi,
+    /<embed\b[^<]*>/gi,
+    /<link\b[^<]*>/gi,
+    /<meta\b[^<]*>/gi,
+    /javascript:/gi,
+    /vbscript:/gi,
+    /on\w+\s*=/gi
+  ];
+  
+  let sanitized = content;
+  xssPatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '');
+  });
+  
+  return sanitized;
+};
+
+/**
+ * Validate and sanitize URL input
+ */
+export const validateURL = (url: string): { valid: boolean; sanitized?: string; error?: string } => {
+  try {
+    const parsed = new URL(url);
+    
+    // Check for dangerous protocols
+    const allowedProtocols = ['http:', 'https:', 'mailto:'];
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      return { valid: false, error: 'Invalid protocol' };
+    }
+    
+    return { valid: true, sanitized: parsed.toString() };
+  } catch (error) {
+    return { valid: false, error: 'Invalid URL format' };
+  }
 };
 
 /**

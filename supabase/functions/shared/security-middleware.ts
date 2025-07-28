@@ -9,31 +9,62 @@ const rateLimiter = new RateLimiter(100, 60000); // 100 requests per minute
  */
 export class SecurityMiddleware {
   /**
-   * Validate webhook signature
+   * Validate webhook signature using proper HMAC-SHA256
    */
-  static validateWebhookSignature(
+  static async validateWebhookSignature(
     payload: string,
     signature: string,
     secret: string
-  ): boolean {
+  ): Promise<boolean> {
     if (!signature || !secret) {
       console.error('Missing webhook signature or secret');
       return false;
     }
 
     try {
+      // Import WebCrypto API for secure HMAC validation
       const encoder = new TextEncoder();
-      const data = encoder.encode(payload);
-      const key = encoder.encode(secret);
+      const keyData = encoder.encode(secret);
+      const payloadData = encoder.encode(payload);
+
+      // Import the secret as a cryptographic key
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+
+      // Generate HMAC signature
+      const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, payloadData);
       
-      // This is a simplified HMAC validation
-      // In production, use a proper HMAC library
-      const expectedSignature = `sha256=${secret}`;
-      return signature === expectedSignature;
+      // Convert to hex string
+      const hashArray = Array.from(new Uint8Array(signatureBuffer));
+      const expectedSignature = 'sha256=' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      // Constant-time comparison to prevent timing attacks
+      return this.secureCompare(signature, expectedSignature);
     } catch (error) {
       console.error('Webhook signature validation failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Secure constant-time string comparison
+   */
+  static secureCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    
+    return result === 0;
   }
 
   /**
