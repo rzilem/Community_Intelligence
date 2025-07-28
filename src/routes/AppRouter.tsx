@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';
@@ -12,6 +12,14 @@ import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
 import { aiWorkflowRoutes } from './aiWorkflowRoutes';
 import { enhancedEmailCampaignsRoutes } from './enhancedEmailCampaignsRoutes';
+
+/**
+ * Redirect component for invoice detail pages
+ */
+const InvoiceRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/accounting/invoice-queue/${id}`} replace />;
+};
 
 /**
  * Main application router component that consolidates all routes
@@ -91,7 +99,8 @@ export const AppRouter = () => {
       <Route path="/vendors" element={<Navigate to="/operations/vendors" replace />} />
       <Route path="/documents" element={<Navigate to="/records-reports/documents" replace />} />
       <Route path="/reports" element={<Navigate to="/records-reports/reports" replace />} />
-      <Route path="/invoices" element={<Navigate to="/accounting/invoices" replace />} />
+      <Route path="/invoices" element={<Navigate to="/accounting/invoice-queue" replace />} />
+      <Route path="/invoices/:id" element={<InvoiceRedirect />} />
       <Route path="/accounts-receivable" element={<Navigate to="/accounting/accounts-receivable" replace />} />
       <Route path="/accounts-payable" element={<Navigate to="/accounting/accounts-payable" replace />} />
       <Route path="/general-ledger" element={<Navigate to="/accounting/general-ledger" replace />} />

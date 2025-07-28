@@ -60,7 +60,7 @@ export const mainNavItems: NavItemProps[] = [
     path: '/accounting',
     icon: CreditCard,
     submenu: [
-      { name: 'Invoices', path: '/accounting/invoices', icon: CreditCard },
+      { name: 'Invoices', path: '/accounting/invoice-queue', icon: CreditCard },
       { name: 'Accounts Receivable', path: '/accounting/accounts-receivable', icon: CreditCard },
       { name: 'Accounts Payable', path: '/accounting/accounts-payable', icon: CreditCard },
       { name: 'General Ledger', path: '/accounting/general-ledger', icon: CreditCard },

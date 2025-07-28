@@ -32,6 +32,14 @@ export const accountingRoutes: RouteObject[] = [
     element: <RequireAuth><AccountingDashboard /></RequireAuth>
   },
   {
+    path: "/accounting/invoices",
+    element: <RequireAuth><InvoiceQueue /></RequireAuth>
+  },
+  {
+    path: "/accounting/invoices/:id",
+    element: <RequireAuth><InvoiceDetail /></RequireAuth>
+  },
+  {
     path: "/accounting/bank-accounts",
     element: <RequireAuth><BankAccounts /></RequireAuth>
   },

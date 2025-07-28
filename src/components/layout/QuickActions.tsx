@@ -43,7 +43,7 @@ const QuickActions: React.FC = () => {
       title: 'New Invoice',
       description: 'Create a new invoice',
       icon: <FileText className="h-4 w-4" />,
-      action: () => navigate('/invoices/new'),
+      action: () => navigate('/accounting/invoice-queue/new'),
       category: 'create',
       keywords: ['new', 'invoice', 'bill', 'create']
     },
