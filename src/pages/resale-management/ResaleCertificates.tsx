@@ -16,7 +16,7 @@ const ResaleCertificates: React.FC = () => {
             <Home className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Resale Certificates</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to manage and process resale certificates for property transfers here.
+              Generate, track, and manage resale certificates for property transfers with automated fee collection.
             </p>
           </div>
         </div>

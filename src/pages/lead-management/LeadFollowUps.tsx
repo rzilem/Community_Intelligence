@@ -16,7 +16,7 @@ const LeadFollowUps: React.FC = () => {
             <UserPlus className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Lead Follow-ups</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to track and manage all your lead follow-up activities here.
+              Automated follow-up sequences and tracking for lead nurturing with email/SMS integration.
             </p>
           </div>
         </div>

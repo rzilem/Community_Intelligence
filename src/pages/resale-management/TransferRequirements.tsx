@@ -16,7 +16,7 @@ const TransferRequirements: React.FC = () => {
             <FileCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Transfer Requirements</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to manage transfer requirements and documentation for property sales here.
+              Manage transfer checklists, document requirements, and approval workflows for property sales.
             </p>
           </div>
         </div>

@@ -6341,6 +6341,54 @@ export type Database = {
           },
         ]
       }
+      inspections: {
+        Row: {
+          association_id: string
+          completed_date: string | null
+          created_at: string | null
+          findings: Json | null
+          follow_up_required: boolean | null
+          id: string
+          inspection_type: string
+          inspector_id: string | null
+          photos: Json | null
+          property_id: string | null
+          scheduled_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          completed_date?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          follow_up_required?: boolean | null
+          id?: string
+          inspection_type: string
+          inspector_id?: string | null
+          photos?: Json | null
+          property_id?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          completed_date?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          follow_up_required?: boolean | null
+          id?: string
+          inspection_type?: string
+          inspector_id?: string | null
+          photos?: Json | null
+          property_id?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       integration_configs: {
         Row: {
           config: Json
@@ -9916,6 +9964,63 @@ export type Database = {
           },
         ]
       }
+      resale_certificates: {
+        Row: {
+          association_id: string
+          buyer_name: string | null
+          certificate_number: string
+          closing_date: string | null
+          created_at: string | null
+          created_by: string | null
+          expiry_date: string | null
+          fee_amount: number | null
+          id: string
+          issued_date: string | null
+          paid: boolean | null
+          property_id: string
+          requested_by: string | null
+          seller_name: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          buyer_name?: string | null
+          certificate_number: string
+          closing_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          fee_amount?: number | null
+          id?: string
+          issued_date?: string | null
+          paid?: boolean | null
+          property_id: string
+          requested_by?: string | null
+          seller_name?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          buyer_name?: string | null
+          certificate_number?: string
+          closing_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          fee_amount?: number | null
+          id?: string
+          issued_date?: string | null
+          paid?: boolean | null
+          property_id?: string
+          requested_by?: string | null
+          seller_name?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       resale_events: {
         Row: {
           color: string | null
@@ -10701,6 +10806,39 @@ export type Database = {
           status?: string
           total_transactions?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      transfer_requirements: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_mandatory: boolean | null
+          order_index: number | null
+          requirement_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean | null
+          order_index?: number | null
+          requirement_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean | null
+          order_index?: number | null
+          requirement_name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

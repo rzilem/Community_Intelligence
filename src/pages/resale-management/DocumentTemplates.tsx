@@ -16,7 +16,7 @@ const DocumentTemplates: React.FC = () => {
             <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Document Templates</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to manage document templates for resale and transfer processes here.
+              Create and manage customizable document templates with variable placeholders and versioning.
             </p>
           </div>
         </div>

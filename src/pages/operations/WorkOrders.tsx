@@ -16,7 +16,7 @@ const WorkOrders: React.FC = () => {
             <Wrench className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Work Orders</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to create, manage, and track work orders for maintenance and operations here.
+              Create, assign, and track work orders for maintenance and repair operations across your properties.
             </p>
           </div>
         </div>

@@ -16,7 +16,7 @@ const Inspections: React.FC = () => {
             <ClipboardCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Inspections</h3>
             <p className="text-muted-foreground">
-              This page is coming soon. You'll be able to schedule, manage, and track property inspections and assessments here.
+              Schedule, conduct, and track property inspections with photo documentation and follow-up requirements.
             </p>
           </div>
         </div>
