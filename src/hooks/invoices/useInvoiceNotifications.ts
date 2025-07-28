@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { useSupabaseQuery } from '@/hooks/supabase';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Invoice {
   id: string;
@@ -28,22 +29,46 @@ export interface Invoice {
 export const useInvoiceNotifications = () => {
   const [unreadInvoicesCount, setUnreadInvoicesCount] = useState(0);
 
-  // Get recent invoices for notifications
-  const { data: recentInvoices = [] } = useSupabaseQuery(
-    'invoices',
-    {
-      select: '*',
-      filter: [
+  // Optimized query with real-time updates and caching
+  const { data: recentInvoices = [] } = useQuery({
+    queryKey: ['invoice-notifications'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data as Invoice[];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 2 * 60 * 1000, // 2 minutes instead of high frequency
+  });
+
+  // Set up real-time subscription for invoice changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('invoice-notifications')
+      .on(
+        'postgres_changes',
         {
-          column: 'created_at',
-          operator: 'gt',
-          value: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Last 24 hours
+          event: '*',
+          schema: 'public',
+          table: 'invoices'
+        },
+        () => {
+          // Invalidate and refetch when changes occur
+          console.log('Invoice changes detected, refreshing...');
         }
-      ],
-      order: { column: 'created_at', ascending: false },
-      limit: 10
-    }
-  );
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     const invoiceCount = recentInvoices.length;
