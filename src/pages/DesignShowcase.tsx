@@ -13,6 +13,10 @@ import designConceptDark from '@/assets/design-concept-dark.jpg';
 import designConceptGrid from '@/assets/design-concept-grid.jpg';
 import designConceptAI from '@/assets/design-concept-ai.jpg';
 import designConceptVibrant from '@/assets/design-concept-vibrant.jpg';
+import designConceptGlassmorphism from '@/assets/design-concept-glassmorphism.jpg';
+import designConceptLighterDark from '@/assets/design-concept-lighter-dark.jpg';
+import designConceptGradientHarmony from '@/assets/design-concept-gradient-harmony.jpg';
+import designConceptGlassFusion from '@/assets/design-concept-glass-fusion.jpg';
 
 const DesignShowcase: React.FC = () => {
   const concepts = [
@@ -79,6 +83,38 @@ const DesignShowcase: React.FC = () => {
       image: designConceptVibrant,
       features: ["Bright colors", "Gradient effects", "Engaging visuals", "Energetic design"],
       category: "Colorful"
+    },
+    {
+      id: 9,
+      title: "Glassmorphism Premium",
+      description: "Sophisticated glassmorphism interface with frosted glass panels, blue-to-silver gradients, semi-transparent cards, and green accent highlights.",
+      image: designConceptGlassmorphism,
+      features: ["Frosted glass panels", "Blue-silver gradients", "Semi-transparent cards", "Green accents"],
+      category: "Premium Glass"
+    },
+    {
+      id: 10,
+      title: "Lighter Professional Dark",
+      description: "Refined dark mode with soft navy backgrounds, silver metallic accents, blue gradient headers, and excellent contrast for extended use.",
+      image: designConceptLighterDark,
+      features: ["Soft dark navy", "Silver accents", "Blue gradients", "High contrast"],
+      category: "Refined Dark"
+    },
+    {
+      id: 11,
+      title: "Gradient Harmony",
+      description: "Beautiful multi-directional blue-to-silver-to-green gradients with white content areas and smooth color transitions throughout.",
+      image: designConceptGradientHarmony,
+      features: ["Multi-directional gradients", "Color harmony", "Smooth transitions", "White content areas"],
+      category: "Gradient Rich"
+    },
+    {
+      id: 12,
+      title: "Glass & Gradients Fusion",
+      description: "Advanced combination of glassmorphism with embedded gradient effects, featuring multi-layered depth and professional aesthetics.",
+      image: designConceptGlassFusion,
+      features: ["Glass + gradients", "Multi-layered depth", "Embedded effects", "Professional fusion"],
+      category: "Fusion Design"
     }
   ];
 
