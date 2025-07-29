@@ -21,6 +21,10 @@ import designConceptNeumorphism from '@/assets/design-concept-neumorphism.jpg';
 import designConceptCyberpunk from '@/assets/design-concept-cyberpunk.jpg';
 import designConceptOrganic from '@/assets/design-concept-organic.jpg';
 import designConceptRetroBrutalist from '@/assets/design-concept-retro-brutalist.jpg';
+import designConceptClassicModern from '@/assets/design-concept-classic-modern.jpg';
+import designConceptAccessibility from '@/assets/design-concept-accessibility.jpg';
+import designConceptWarmWelcoming from '@/assets/design-concept-warm-welcoming.jpg';
+import designConceptUniversalSimple from '@/assets/design-concept-universal-simple.jpg';
 
 const DesignShowcase: React.FC = () => {
   const concepts = [
@@ -151,6 +155,38 @@ const DesignShowcase: React.FC = () => {
       image: designConceptRetroBrutalist,
       features: ["Brutalist aesthetics", "Retro-futuristic", "Geometric shapes", "Bold architecture"],
       category: "Architectural"
+    },
+    {
+      id: 17,
+      title: "Classic Modern Hybrid",
+      description: "Timeless design combining traditional elements with modern touches. Appeals to all generations with familiar patterns and contemporary functionality.",
+      image: designConceptClassicModern,
+      features: ["Timeless typography", "Structured layouts", "Classic colors", "Modern touches"],
+      category: "Intergenerational"
+    },
+    {
+      id: 18,
+      title: "Large Text Accessibility First",
+      description: "Prioritizes readability with larger fonts, high contrast, and clear visual hierarchy. Designed for users of all ages and abilities.",
+      image: designConceptAccessibility,
+      features: ["Large typography", "High contrast", "Clear hierarchy", "Touch-friendly"],
+      category: "Accessible"
+    },
+    {
+      id: 19,
+      title: "Warm & Welcoming Interface",
+      description: "Friendly design using warm colors, rounded corners, and approachable elements. Creates comfort and trust across all age groups.",
+      image: designConceptWarmWelcoming,
+      features: ["Warm colors", "Rounded corners", "Friendly imagery", "Approachable design"],
+      category: "Welcoming"
+    },
+    {
+      id: 20,
+      title: "Universal Simplicity",
+      description: "Essential functions with clear navigation and minimal cognitive load. Efficient design that works for everyone regardless of tech experience.",
+      image: designConceptUniversalSimple,
+      features: ["Clear navigation", "Minimal design", "Universal icons", "Logical flow"],
+      category: "Universal"
     }
   ];
 
