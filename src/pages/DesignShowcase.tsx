@@ -17,6 +17,10 @@ import designConceptGlassmorphism from '@/assets/design-concept-glassmorphism.jp
 import designConceptLighterDark from '@/assets/design-concept-lighter-dark.jpg';
 import designConceptGradientHarmony from '@/assets/design-concept-gradient-harmony.jpg';
 import designConceptGlassFusion from '@/assets/design-concept-glass-fusion.jpg';
+import designConceptNeumorphism from '@/assets/design-concept-neumorphism.jpg';
+import designConceptCyberpunk from '@/assets/design-concept-cyberpunk.jpg';
+import designConceptOrganic from '@/assets/design-concept-organic.jpg';
+import designConceptRetroBrutalist from '@/assets/design-concept-retro-brutalist.jpg';
 
 const DesignShowcase: React.FC = () => {
   const concepts = [
@@ -115,6 +119,38 @@ const DesignShowcase: React.FC = () => {
       image: designConceptGlassFusion,
       features: ["Glass + gradients", "Multi-layered depth", "Embedded effects", "Professional fusion"],
       category: "Fusion Design"
+    },
+    {
+      id: 13,
+      title: "Neumorphism & Soft UI",
+      description: "Tactile design using neumorphism principles with subtle shadows, raised elements, and a gentle color palette that feels touchable and intuitive.",
+      image: designConceptNeumorphism,
+      features: ["Subtle shadows", "Raised elements", "Tactile feel", "Gentle palette"],
+      category: "Soft UI"
+    },
+    {
+      id: 14,
+      title: "Cyberpunk Neon Tech",
+      description: "Futuristic interface with neon accents, tech-inspired typography, geometric patterns, and glowing elements for a cutting-edge feel.",
+      image: designConceptCyberpunk,
+      features: ["Neon accents", "Tech typography", "Geometric patterns", "Glowing effects"],
+      category: "Futuristic"
+    },
+    {
+      id: 15,
+      title: "Nature-Inspired Organic",
+      description: "Bio-inspired design with organic shapes, natural textures, earth tones, and flowing layouts that create a calming, sustainable aesthetic.",
+      image: designConceptOrganic,
+      features: ["Organic shapes", "Natural textures", "Earth tones", "Flowing layouts"],
+      category: "Eco-Friendly"
+    },
+    {
+      id: 16,
+      title: "Retro-Futurism Brutalist",
+      description: "Bold architectural approach combining brutalist concrete aesthetics with retro-futuristic elements and strong geometric shapes.",
+      image: designConceptRetroBrutalist,
+      features: ["Brutalist aesthetics", "Retro-futuristic", "Geometric shapes", "Bold architecture"],
+      category: "Architectural"
     }
   ];
 
