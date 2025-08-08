@@ -13175,6 +13175,39 @@ export type Database = {
         }
         Relationships: []
       }
+      v_balance_sheet: {
+        Row: {
+          account_code: string | null
+          account_name: string | null
+          account_type: string | null
+          association_id: string | null
+          balance: number | null
+        }
+        Relationships: []
+      }
+      v_income_statement: {
+        Row: {
+          account_code: string | null
+          account_name: string | null
+          account_type: string | null
+          amount: number | null
+          association_id: string | null
+        }
+        Relationships: []
+      }
+      v_trial_balance: {
+        Row: {
+          account_code: string | null
+          account_name: string | null
+          account_type: string | null
+          association_id: string | null
+          net_balance: number | null
+          normal_balance: string | null
+          total_credits: number | null
+          total_debits: number | null
+        }
+        Relationships: []
+      }
       vendor_learning_progress: {
         Row: {
           association_id: string | null
