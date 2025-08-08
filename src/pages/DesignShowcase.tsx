@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Palette, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Import the generated design concept images
 import designConcept1 from '@/assets/design-concept-1.jpg';
@@ -230,6 +231,11 @@ const DesignShowcase: React.FC = () => {
     script.type = 'application/ld+json';
     script.text = JSON.stringify(jsonLd);
     document.head.appendChild(script);
+
+    // Notify user for visible progress
+    toast.success('SEO updated for Design Showcase', {
+      description: 'Title, meta, canonical, and JSON-LD applied.',
+    });
 
     return () => {
       const s = document.getElementById(scriptId);

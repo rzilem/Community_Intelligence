@@ -1,7 +1,8 @@
 
 export type CalendarEvent = {
   id: string;
-  hoa_id: string;
+  association_id: string;
+  hoa_id?: string; // legacy compatibility
   title: string;
   description?: string;
   event_type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
