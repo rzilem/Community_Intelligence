@@ -1,59 +1,79 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Calendar, Plus, Edit, Trash2, Play, Pause } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, Play, Pause, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import TooltipButton from '@/components/ui/tooltip-button';
-
-// Mock data for assessment schedules
-const mockSchedules = [
-  {
-    id: '1',
-    name: 'Monthly HOA Fees',
-    type: 'Monthly',
-    amount: 350,
-    nextDue: '2025-02-01',
-    status: 'active',
-    lastGenerated: '2025-01-01',
-    properties: 120
-  },
-  {
-    id: '2',
-    name: 'Quarterly Pool Maintenance',
-    type: 'Quarterly',
-    amount: 75,
-    nextDue: '2025-04-01',
-    status: 'active',
-    lastGenerated: '2025-01-01',
-    properties: 120
-  },
-  {
-    id: '3',
-    name: 'Annual Reserve Fund',
-    type: 'Annual',
-    amount: 500,
-    nextDue: '2025-12-01',
-    status: 'active',
-    lastGenerated: '2024-12-01',
-    properties: 120
-  },
-  {
-    id: '4',
-    name: 'Special Roof Repair',
-    type: 'One-time',
-    amount: 1200,
-    nextDue: '2025-03-15',
-    status: 'pending',
-    lastGenerated: null,
-    properties: 120
-  }
-];
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const AssessmentSchedules = () => {
-  const [schedules] = useState(mockSchedules);
+  const { currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id;
+
+  const { data: schedules = [], isLoading, refetch } = useSupabaseQuery<any[]>(
+    'assessment_schedules',
+    {
+      select: 'id, name, schedule_type, amount, next_generation_date, last_generated_at, is_active, association_id',
+      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
+      order: { column: 'created_at', ascending: false },
+    },
+    !!associationId
+  );
+
+  const { data: properties = [] } = useSupabaseQuery<any[]>(
+    'properties',
+    {
+      select: 'id',
+      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
+    },
+    !!associationId
+  );
+
+  const propertiesCount = properties?.length || 0;
+  const activeCount = schedules.filter((s: any) => s.is_active).length;
+
+  const handleGenerateNow = async () => {
+    const { data, error } = await supabase.rpc('generate_scheduled_assessments');
+    if (error) {
+      toast.error('Failed to generate assessments');
+      console.error('generate_scheduled_assessments error:', error);
+      return;
+    }
+    toast.success(`Generated ${data || 0} assessments`);
+    refetch();
+  };
+
+  const toggleActive = async (id: string, isActive: boolean) => {
+    const { error } = await supabase
+      .from('assessment_schedules')
+      .update({ is_active: !isActive })
+      .eq('id', id);
+    if (error) {
+      toast.error('Failed to update schedule');
+      console.error('update schedule error:', error);
+    } else {
+      toast.success(`Schedule ${!isActive ? 'activated' : 'paused'}`);
+      refetch();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('assessment_schedules').delete().eq('id', id);
+    if (error) {
+      toast.error('Failed to delete schedule');
+      console.error('delete schedule error:', error);
+    } else {
+      toast.success('Schedule deleted');
+      refetch();
+    }
+  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
