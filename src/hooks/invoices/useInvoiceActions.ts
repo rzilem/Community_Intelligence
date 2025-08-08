@@ -38,6 +38,20 @@ export const useInvoiceActions = (saveInvoice: () => Promise<any>, updateInvoice
   };
 
   const handleApprove = () => {
+    // Client-side safety checks before approving (AP handoff)
+    const errors: string[] = [];
+    if (!invoice?.vendor || String(invoice.vendor).trim() === '') errors.push('Vendor is required');
+    if (!invoice?.invoiceNumber || String(invoice.invoiceNumber).trim() === '') errors.push('Invoice number is required');
+    if (invoice?.totalAmount === undefined || Number(invoice.totalAmount) <= 0) errors.push('Amount must be greater than 0');
+    if (!invoice?.dueDate) errors.push('Due date is required');
+
+    if (errors.length > 0) {
+      const msg = `Please fix before approval:\n- ${errors.join('\n- ')}`;
+      toast.error(msg);
+      setPreviewError(msg);
+      return;
+    }
+
     updateInvoice({
       id: invoice.id,
       data: {

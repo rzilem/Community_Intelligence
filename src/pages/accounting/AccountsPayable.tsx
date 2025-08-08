@@ -23,6 +23,14 @@ const AccountsPayable = () => {
     },
     !!associationId
   );
+  // Helpers and computed totals
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount || 0));
+
+  const totalOutstanding = apItems.reduce((sum: number, i: any) => sum + Number(i.current_balance ?? 0), 0);
+
+  const readyToPayCount = apItems.filter((i: any) => i.approval_status === 'approved' && (i.status === 'open' || i.status === 'partial')).length;
+  const overdueCount = apItems.filter((i: any) => (i.status === 'open' || i.status === 'partial') && (((i.aging_days || 0) > 0) || (i.due_date && new Date(i.due_date) < new Date()))).length;
 
   const getStatusBadge = (status: string, type: 'ap' | 'approval' | 'po' = 'ap') => {
     if (type === 'approval') {
@@ -82,7 +90,7 @@ const AccountsPayable = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-                  <p className="text-2xl font-bold">$45,750</p>
+                  <p className="text-2xl font-bold">{isLoading ? '—' : formatCurrency(totalOutstanding)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -106,7 +114,7 @@ const AccountsPayable = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Ready to Pay</p>
-                  <p className="text-2xl font-bold">{apItems.filter((i:any)=>i.approval_status==='approved' && i.status==='open').length}</p>
+                  <p className="text-2xl font-bold">{readyToPayCount}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -118,7 +126,7 @@ const AccountsPayable = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Overdue</p>
-                  <p className="text-2xl font-bold">{apItems.filter((i:any)=>i.status==='overdue').length}</p>
+                  <p className="text-2xl font-bold">{overdueCount}</p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -156,13 +164,22 @@ const AccountsPayable = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {apItems.map((item: any) => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={8}>Loading...</TableCell>
+                      </TableRow>
+                    ) : apItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">No vendor invoices found</TableCell>
+                      </TableRow>
+                    ) : (
+                      apItems.map((item: any) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.vendor_name || '-'}</TableCell>
                           <TableCell>{item.invoice_number || '-'}</TableCell>
-                          <TableCell>${Number(item.original_amount || 0).toFixed(2)}</TableCell>
+                          <TableCell>{formatCurrency(Number(item.original_amount || 0))}</TableCell>
                           <TableCell>{item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
+                          <TableCell>{getStatusBadge((item.status === 'open' && (((item.aging_days || 0) > 0) || (item.due_date && new Date(item.due_date) < new Date()))) ? 'overdue' : item.status)}</TableCell>
                           <TableCell>{getStatusBadge(item.approval_status, 'approval')}</TableCell>
                           <TableCell className="text-sm">{item.gl_account_code || '-'}</TableCell>
                           <TableCell>
@@ -174,7 +191,8 @@ const AccountsPayable = () => {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
