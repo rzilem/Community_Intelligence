@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { useAuth } from '@/contexts/auth';
+import ExportUtilities from '@/components/accounting/ExportUtilities';
+import { toast } from 'sonner';
 
 const AccountsPayable = () => {
   const { currentAssociation } = useAuth();
@@ -31,6 +33,24 @@ const AccountsPayable = () => {
 
   const readyToPayCount = apItems.filter((i: any) => i.approval_status === 'approved' && (i.status === 'open' || i.status === 'partial')).length;
   const overdueCount = apItems.filter((i: any) => (i.status === 'open' || i.status === 'partial') && (((i.aging_days || 0) > 0) || (i.due_date && new Date(i.due_date) < new Date()))).length;
+
+  const validateApItem = (item: any): string[] => {
+    const errors: string[] = [];
+    if (!item?.vendor_name || String(item.vendor_name).trim() === '') errors.push('Vendor is required');
+    if (!item?.invoice_number || String(item.invoice_number).trim() === '') errors.push('Invoice number is required');
+    if (item?.original_amount === undefined || Number(item.original_amount) <= 0) errors.push('Amount must be greater than 0');
+    if (!item?.due_date) errors.push('Due date is required');
+    return errors;
+  };
+
+  const handleApproveAp = (item: any) => {
+    const errors = validateApItem(item);
+    if (errors.length > 0) {
+      toast.error(`Please fix before approval:\n- ${errors.join('\n- ')}`);
+      return;
+    }
+    toast.success('All checks passed. Approval flow coming soon.');
+  };
 
   const getStatusBadge = (status: string, type: 'ap' | 'approval' | 'po' = 'ap') => {
     if (type === 'approval') {
@@ -145,9 +165,16 @@ const AccountsPayable = () => {
 
           <TabsContent value="invoices" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Vendor Invoices</CardTitle>
-                <CardDescription>Manage and process vendor invoices</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Vendor Invoices</CardTitle>
+                  <CardDescription>Manage and process vendor invoices</CardDescription>
+                </div>
+                <ExportUtilities
+                  data={apItems}
+                  filename="accounts-payable"
+                  reportType="Accounts Payable - Vendor Invoices"
+                />
               </CardHeader>
               <CardContent>
                 <Table>
@@ -186,7 +213,7 @@ const AccountsPayable = () => {
                             <div className="flex gap-1">
                               <Button size="sm" variant="outline">View</Button>
                               {item.approval_status === 'requires_approval' && (
-                                <Button size="sm">Approve</Button>
+                                <Button size="sm" onClick={() => handleApproveAp(item)}>Approve</Button>
                               )}
                             </div>
                           </TableCell>
@@ -244,7 +271,7 @@ const AccountsPayable = () => {
                           <Button size="sm" variant="destructive">
                             Reject
                           </Button>
-                          <Button size="sm">
+                          <Button size="sm" onClick={() => handleApproveAp(item)}>
                             Approve
                           </Button>
                         </div>

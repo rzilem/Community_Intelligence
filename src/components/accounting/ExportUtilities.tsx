@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, File, Table } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { toCSV } from '@/utils/csv';
 
 interface ExportUtilitiesProps {
   data: any;
@@ -21,47 +22,27 @@ const ExportUtilities: React.FC<ExportUtilitiesProps> = ({ data, filename, repor
 
   const exportToCSV = () => {
     try {
-      let csvContent = `${reportType}\n`;
-      csvContent += `Generated: ${new Date().toLocaleString()}\n\n`;
-      
+      const header = `${reportType}\nGenerated: ${new Date().toLocaleString()}\n\n`;
+      let csvContent = '';
+
       if (Array.isArray(data)) {
-        if (data.length > 0) {
-          // Get headers from first object
-          const headers = Object.keys(data[0]);
-          csvContent += headers.join(',') + '\n';
-          
-          // Add data rows
-          data.forEach(row => {
-            const values = headers.map(header => {
-              const value = row[header];
-              // Escape commas and quotes in values
-              if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                return `"${value.replace(/"/g, '""')}"`;
-              }
-              return value;
-            });
-            csvContent += values.join(',') + '\n';
-          });
-        }
+        csvContent = toCSV(data);
       } else if (data && typeof data === 'object') {
-        // Handle object data structure
+        // Fallback for object data structures (keyed sections)
+        const sections: string[] = [];
         Object.entries(data).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            csvContent += `\n${key}\n`;
-            value.forEach((item: any) => {
-              if (typeof item === 'object') {
-                csvContent += Object.values(item).join(',') + '\n';
-              } else {
-                csvContent += item + '\n';
-              }
-            });
+            const sectionCsv = toCSV(value as any[]);
+            sections.push(`${key}\n${sectionCsv}`);
           } else {
-            csvContent += `${key},${value}\n`;
+            sections.push(`${key},${value}`);
           }
         });
+        csvContent = sections.join('\n\n');
       }
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const finalCsv = header + (csvContent || '');
+      const blob = new Blob([finalCsv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `${filename}.csv`;
@@ -69,14 +50,14 @@ const ExportUtilities: React.FC<ExportUtilitiesProps> = ({ data, filename, repor
       URL.revokeObjectURL(link.href);
 
       toast({
-        title: "Export Successful",
-        description: "CSV file has been downloaded"
+        title: 'Export Successful',
+        description: 'CSV file has been downloaded',
       });
     } catch (error) {
       toast({
-        title: "Export Failed",
-        description: "Failed to export CSV file",
-        variant: "destructive"
+        title: 'Export Failed',
+        description: 'Failed to export CSV file',
+        variant: 'destructive',
       });
     }
   };

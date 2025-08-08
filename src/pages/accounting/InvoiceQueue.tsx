@@ -11,6 +11,7 @@ import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotification
 import InvoiceTable from '@/components/invoices/InvoiceTable';
 import InvoiceToolbar from '@/components/invoices/InvoiceToolbar';
 import BulkAIProcessor from '@/components/common/BulkAIProcessor';
+import { toast } from 'sonner';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
@@ -54,6 +55,26 @@ const InvoiceQueue = () => {
   };
 
   const handleApproveInvoice = (id: string) => {
+    const invoice = invoices.find(i => i.id === id);
+    const errors: string[] = [];
+
+    if (invoice) {
+      const vendor = (invoice as any).vendor || (invoice as any).vendor_name;
+      const invoiceNumber = (invoice as any).invoiceNumber || (invoice as any).invoice_number;
+      const amount = (invoice as any).totalAmount ?? (invoice as any).amount ?? (invoice as any).original_amount;
+      const dueDate = (invoice as any).dueDate || (invoice as any).due_date;
+
+      if (!vendor || String(vendor).trim() === '') errors.push('Vendor is required');
+      if (!invoiceNumber || String(invoiceNumber).trim() === '') errors.push('Invoice number is required');
+      if (amount === undefined || Number(amount) <= 0) errors.push('Amount must be greater than 0');
+      if (!dueDate) errors.push('Due date is required');
+    }
+
+    if (errors.length > 0) {
+      toast.error(`Please fix before approval:\n- ${errors.join('\n- ')}`);
+      return;
+    }
+
     updateInvoiceStatus(id, 'approved');
   };
 
