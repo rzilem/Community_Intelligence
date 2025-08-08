@@ -1,17 +1,23 @@
-
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/utils/role-utils';
 
 export const useAdminAccess = (userId?: string) => {
+  const { userRole, isAuthenticated, loading } = useAuth();
+
   useEffect(() => {
     if (userId) {
       console.log('Admin access check for user:', userId);
-      // This hook would normally check admin permissions
-      // For now, it's a no-op to prevent crashes
     }
   }, [userId]);
 
+  const hasAdminAccess = useMemo(() => {
+    if (!isAuthenticated) return false;
+    return isAdminRole(userRole || undefined);
+  }, [isAuthenticated, userRole]);
+
   return {
-    hasAdminAccess: true, // Temporary fallback
-    loading: false
+    hasAdminAccess,
+    loading
   };
 };
