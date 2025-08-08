@@ -194,6 +194,34 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
 
     result.structure.processedFiles = processedCount;
     
+    // Fallback: deep scan the entire ZIP for any CSV/XLS/XLSX if none were captured above
+    const hasStructured = Object.values(result.files).some((f: any) => f?.type === 'excel' || f?.type === 'csv');
+    if (!hasStructured) {
+      const structuredCandidates = allFiles.filter(fn => {
+        const lower = fn.toLowerCase();
+        return lower.endsWith('.csv') || lower.endsWith('.xlsx') || lower.endsWith('.xls');
+      });
+
+      for (const filename of structuredCandidates) {
+        if ((Object.keys(result.files).length >= 5)) break; // cap additions
+        const zipEntry = zipFile.files[filename];
+        if (!zipEntry || zipEntry.dir) continue;
+        try {
+          const fileData = await processZipEntryOptimized(zipEntry, filename);
+          if (fileData && (fileData.type === 'excel' || fileData.type === 'csv')) {
+            const simplifiedName = filename.replace(/^.*\//, '');
+            if (!result.files[simplifiedName]) {
+              result.files[simplifiedName] = fileData;
+              processedCount++;
+            }
+          }
+        } catch (e) {
+          console.warn('Deep scan failed for', filename, e);
+        }
+      }
+      result.structure.processedFiles = processedCount;
+    }
+    
     // Step 4: Determine primary data type
     const folderTypes = Object.values(result.summary.folderTypes);
     const typeCount = folderTypes.reduce((acc, type) => {
@@ -321,14 +349,14 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
           throw new Error('File too large');
         }
         
-        // Return only essential data for AI analysis
+        // Return only essential data for AI analysis and richer preview
         const lines = text.split('\n');
-        const sampleLines = lines.slice(0, 5); // Only first 5 lines for analysis
+        const sampleLines = lines.slice(0, 200); // Up to 200 lines for better preview
         
         return {
           type: 'csv',
           content: sampleLines.join('\n'),
-          rowCount: lines.length - 1,
+          rowCount: Math.max(0, lines.length - 1),
           folderPath
         };
       } else if (filename.toLowerCase().endsWith('.xlsx') || filename.toLowerCase().endsWith('.xls')) {
@@ -338,10 +366,10 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
-        // Return only sample data for AI analysis
+        // Return only sample data for AI analysis and richer preview
         return {
           type: 'excel',
-          content: jsonData.slice(0, 3), // Only first 3 rows for analysis
+          content: jsonData.slice(0, 200), // Up to 200 rows for better preview
           rowCount: jsonData.length,
           folderPath,
           sheets: workbook.SheetNames
