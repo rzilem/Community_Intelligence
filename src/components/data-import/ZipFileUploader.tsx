@@ -265,7 +265,6 @@ const ZipFileUploader: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              )}
 
               {smartImportResult.errors?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
