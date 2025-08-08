@@ -1,292 +1,175 @@
 
-import { multiFormatProcessor } from './multi-format-processor';
-import { dataImportService } from './data-import-service';
+import { zipParserService } from './zip-parser-service';
+import { aiContentAnalyzer } from './ai-content-analyzer';
+import { aiMappingService } from './ai-mapping-service';
+import { templateService } from './template-service';
+import { enhancedDataImportService } from './enhanced-data-import-service';
 import { devLog } from '@/utils/dev-logger';
-import JSZip from 'jszip';
-import { 
-  ProcessedDocument, 
-  ProcessingOptions, 
-  DetailedValidationResult,
-  SmartImportOptions,
-  ZipFileEntry 
-} from './types';
+import { SmartImportResult, ImportResult } from '@/types/import-types';
+import type { MappingOption } from '@/components/data-import/types/mapping-types';
 
-// Create a SmartImportResult interface
-export interface SmartImportResult {
-  success: boolean;
-  totalFiles: number;
-  processedFiles: number;
-  skippedFiles: number;
-  totalRecords: number;
-  importedRecords: number;
-  totalProcessed: number;
-  successfulImports: number;
-  failedImports: number;
-  errors: string[];
-  warnings: string[];
-  details: Array<{
-    filename?: string;
-    status: 'success' | 'error' | 'warning';
-    recordsProcessed: number;
-    message: string;
-  }>;
+export interface SmartImportOptions {
+  associationId: string;
+  autoImportThreshold?: number; // 0-1, default 0.85
+  batchConfidenceThreshold?: number; // 0-1, default 0.75
+  dryRun?: boolean;
+  userId?: string;
 }
 
-// Export SmartImportOptions for components
-export type { SmartImportOptions };
+function toMappingOptions(template: Record<string, string>): MappingOption[] {
+  return Object.entries(template).map(([value, label]) => ({ label, value }));
+}
 
 export const smartImportService = {
   async processZipFile(zipFile: File, options: SmartImportOptions): Promise<SmartImportResult> {
-    const startTime = Date.now();
-    devLog.info('Starting smart import process for ZIP file:', zipFile.name);
+    const { associationId, autoImportThreshold = 0.85, batchConfidenceThreshold = 0.75, dryRun, userId } = options;
+
+    devLog.info('[SmartImport] Starting ZIP processing', { name: zipFile.name, size: zipFile.size });
+
+    const aggregate: SmartImportResult = {
+      success: false,
+      totalFiles: 0,
+      processedFiles: 0,
+      skippedFiles: 0,
+      totalRecords: 0,
+      importedRecords: 0,
+      totalProcessed: 0,
+      successfulImports: 0,
+      failedImports: 0,
+      details: [],
+      errors: [],
+      warnings: []
+    };
 
     try {
-      // Step 1: Extract ZIP contents
-      const zipEntries = await this.extractZipContents(zipFile);
-      devLog.info('Extracted ZIP contents:', zipEntries.length, 'files');
+      // 1) Parse ZIP
+      const zipAnalysis = await zipParserService.parseZipFile(zipFile);
+      aggregate.totalFiles = zipAnalysis.files.length;
+      aggregate.totalRecords = zipAnalysis.totalRecords;
 
-      // Step 2: Process files with enhanced analysis
-      const processingOptions: ProcessingOptions = {
-        enableOCR: true,
-        enableDuplicateDetection: true,
-        enableQualityAssessment: true,
-        enableAutoFix: true,
-        fallbackToOCR: true,
-        validateData: true,
-        extractStructured: true,
-        classifyDocument: true,
-        includeMetadata: true
-      };
+      if (zipAnalysis.files.length === 0) {
+        aggregate.errors.push('No supported data files found in archive');
+        return aggregate;
+      }
 
-      const files = zipEntries
-        .filter(entry => !entry.isDirectory)
-        .map(entry => new File([entry.data], entry.filename));
+      // 2) AI content analysis
+      const batch = await aiContentAnalyzer.analyzeBatch(zipAnalysis.files);
+      if (batch.overallConfidence < batchConfidenceThreshold) {
+        aggregate.warnings.push('Overall analysis confidence is low; manual review recommended');
+      }
 
-      const processingResult = await multiFormatProcessor.processWithEnhancedAnalysis(files, processingOptions);
+      // 3) For each file: build mappings and optionally auto-import
+      for (const file of zipAnalysis.files) {
+        const dataType = file.detectedType;
+        const data = file.data || [];
+        const columns = Object.keys(data[0] || {});
+        const systemTemplate = templateService.getImportTemplate(dataType);
+        const systemFields = toMappingOptions(systemTemplate);
 
-      // Step 3: Smart validation and mapping
-      let totalImported = 0;
-      let totalFailed = 0;
-      const details = [];
-
-      for (const processedDoc of processingResult.processedDocuments) {
+        // Generate mapping suggestions (AI + enhanced fallback)
+        let suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
         try {
-          // Validate the processed data
-          const validationResult = await this.validateProcessedDocument(processedDoc);
-          
-          // Check confidence threshold
-          const confidence = validationResult.score || 0;
-          
-          if (confidence >= (options.autoImportThreshold || 0.85)) {
-            // Auto-import with high confidence
-            const importResult = await this.autoImportDocument(processedDoc, options.associationId);
-            totalImported += importResult.recordsImported;
-            
-            details.push({
-              filename: processedDoc.filename,
-              status: 'success' as const,
-              recordsProcessed: importResult.recordsImported,
-              message: `Auto-imported ${importResult.recordsImported} records with ${Math.round(confidence * 100)}% confidence`
-            });
-          } else {
-            // Flag for manual review
-            details.push({
-              filename: processedDoc.filename,
-              status: 'warning' as const,
-              recordsProcessed: 0,
-              message: `Flagged for manual review - confidence ${Math.round(confidence * 100)}% below threshold`
-            });
+          suggestions = await aiMappingService.generateMappingSuggestions(
+            columns,
+            systemFields,
+            data.slice(0, 5),
+            dataType,
+            associationId
+          );
+        } catch (e) {
+          devLog.warn('[SmartImport] Mapping suggestion generation failed, continuing with empty suggestions');
+        }
+
+        // Convert to plain mappings the import service expects
+        const mappings: Record<string, string> = {};
+        const confidences: number[] = [];
+        Object.entries(suggestions).forEach(([col, s]) => {
+          if (s.fieldValue) {
+            mappings[col] = s.fieldValue;
+            if (typeof s.confidence === 'number') confidences.push(s.confidence);
           }
-        } catch (error) {
-          totalFailed++;
-          details.push({
-            filename: processedDoc.filename,
-            status: 'error' as const,
-            recordsProcessed: 0,
-            message: error instanceof Error ? error.message : 'Unknown processing error'
-          });
-        }
-      }
+        });
 
-      const result: SmartImportResult = {
-        success: totalImported > 0 || processingResult.processedDocuments.length > 0,
-        totalFiles: files.length,
-        processedFiles: processingResult.processedDocuments.length,
-        skippedFiles: files.length - processingResult.processedDocuments.length,
-        totalRecords: processingResult.processedDocuments.reduce((sum, doc) => sum + doc.data.length, 0),
-        importedRecords: totalImported,
-        totalProcessed: processingResult.processedDocuments.length,
-        successfulImports: totalImported,
-        failedImports: totalFailed,
-        errors: processingResult.errors,
-        warnings: processingResult.warnings,
-        details
-      };
+        // Derive a mapping confidence for decision; fall back to file confidence
+        const avgMappingConf = confidences.length
+          ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+          : file.confidence || 0.5;
 
-      if (result.successfulImports === 0 && result.processedFiles > 0) {
-        result.warnings.push('Manual review required - confidence below threshold');
-      }
+        const readyForAuto = avgMappingConf >= autoImportThreshold;
 
-      devLog.info('Smart import completed:', {
-        totalFiles: result.totalFiles,
-        imported: result.importedRecords,
-        processingTime: Date.now() - startTime
-      });
-
-      return result;
-    } catch (error) {
-      devLog.error('Smart import failed:', error);
-      throw new Error(`Smart import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
-
-  async extractZipContents(zipFile: File): Promise<ZipFileEntry[]> {
-    try {
-      const zip = await JSZip.loadAsync(zipFile);
-      const entries: ZipFileEntry[] = [];
-
-      zip.forEach((relativePath, zipEntry) => {
-        const isDirectory = zipEntry.dir;
-        if (!isDirectory) {
-          entries.push({
-            filename: relativePath,
-            data: null as any, // Will be populated below
-            isDirectory: false
-          });
-        } else {
-          entries.push({
-            filename: relativePath,
-            data: new Uint8Array(),
-            isDirectory: true
-          });
-        }
-      });
-
-      // Load data for file entries
-      for (const entry of entries) {
-        if (!entry.isDirectory) {
-          const zipEntry = zip.file(entry.filename);
-          if (zipEntry) {
-            const data = await zipEntry.async("uint8array");
-            entry.data = data;
-          } else {
-            entry.processingErrors = ['Could not read file from zip'];
-          }
-        }
-      }
-
-      return entries;
-    } catch (error) {
-      devLog.error('Error extracting zip contents:', error);
-      throw new Error(`Error extracting zip contents: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
-
-  async validateProcessedDocument(doc: ProcessedDocument): Promise<DetailedValidationResult> {
-    try {
-      // Basic validation logic
-      const totalRows = doc.data.length;
-      let validRows = 0;
-      const issues = [];
-
-      // Validate each row
-      doc.data.forEach((row, index) => {
-        if (row && typeof row === 'object') {
-          const keys = Object.keys(row);
-          if (keys.length > 0) {
-            validRows++;
-          } else {
-            issues.push({
-              row: index + 1,
-              field: 'general',
-              issue: 'Empty row detected',
-              severity: 'warning' as const
+        if (!dryRun && readyForAuto && data.length > 0) {
+          try {
+            const result: ImportResult = await enhancedDataImportService.importData({
+              associationId,
+              dataType,
+              data,
+              mappings,
+              userId
             });
+
+            // Update aggregates
+            aggregate.totalProcessed += data.length;
+            aggregate.successfulImports += result.successfulImports;
+            aggregate.failedImports += result.failedImports;
+            aggregate.importedRecords += result.successfulImports;
+            aggregate.processedFiles += 1;
+
+            // Merge details/errors/warnings
+            aggregate.details.push(
+              ...result.details.map(d => ({
+                filename: file.filename,
+                status: d.status,
+                recordsProcessed: d.recordsProcessed,
+                message: d.message
+              }))
+            );
+            aggregate.errors.push(...(result.errors || []));
+            aggregate.warnings.push(...(result.warnings || []));
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Unknown import error';
+            aggregate.failedImports += data.length;
+            aggregate.errors.push(`Import failed for ${file.filename}: ${msg}`);
           }
         } else {
-          issues.push({
-            row: index + 1,
-            field: 'general',
-            issue: 'Invalid row format',
-            severity: 'error' as const
-          });
+          // Skip for manual mapping
+          aggregate.skippedFiles += 1;
+          if (!aggregate.warnings.includes('Manual review required - confidence below threshold')) {
+            aggregate.warnings.push('Manual review required - confidence below threshold');
+          }
         }
+      }
+
+      // Determine overall success
+      aggregate.success = aggregate.failedImports === 0 && aggregate.successfulImports > 0;
+
+      devLog.info('[SmartImport] Completed', {
+        files: aggregate.totalFiles,
+        processedFiles: aggregate.processedFiles,
+        skippedFiles: aggregate.skippedFiles,
+        importedRecords: aggregate.importedRecords,
+        warnings: aggregate.warnings.length,
+        errors: aggregate.errors.length
       });
 
-      const score = totalRows > 0 ? validRows / totalRows : 0;
-
-      return {
-        valid: score > 0.5,
-        score: score,
-        totalRows,
-        validRows,
-        invalidRows: totalRows - validRows,
-        warnings: issues.filter(i => i.severity === 'warning').length,
-        issues,
-        qualityMetrics: {
-          completeness: score,
-          consistency: 0.8, // Placeholder
-          accuracy: 0.9 // Placeholder
-        }
-      };
+      return aggregate;
     } catch (error) {
-      devLog.error('Document validation failed:', error);
-      throw new Error(`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
-
-  async autoImportDocument(doc: ProcessedDocument, associationId: string): Promise<{ recordsImported: number }> {
-    try {
-      // Auto-detect import type based on document classification
-      const importType = this.detectImportType(doc);
-      
-      // Create smart field mappings
-      const mappings = this.createSmartMappings(doc, importType);
-      
-      // Import the data using the data import service
-      const importResult = await dataImportService.importData({
-        associationId,
-        dataType: importType,
-        data: doc.data,
-        mappings
-      });
-
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      devLog.error('[SmartImport] Fatal error', error);
       return {
-        recordsImported: importResult.successfulImports
+        success: false,
+        totalFiles: 0,
+        processedFiles: 0,
+        skippedFiles: 0,
+        totalRecords: 0,
+        importedRecords: 0,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: 0,
+        details: [],
+        errors: [errorMessage],
+        warnings: []
       };
-    } catch (error) {
-      devLog.error('Auto-import failed:', error);
-      throw new Error(`Auto-import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  },
-
-  detectImportType(doc: ProcessedDocument): string {
-    // Implement logic to detect import type based on document classification
-    if (doc.classification?.type === 'owner_list') {
-      return 'homeowners';
-    } else if (doc.classification?.type === 'property_list') {
-      return 'properties';
-    } else if (doc.classification?.type === 'invoice') {
-      return 'invoices';
-    }
-    return 'unknown';
-  },
-
-  createSmartMappings(doc: ProcessedDocument, importType: string): Record<string, string> {
-    // Implement logic to create smart field mappings based on document classification
-    const mappings: Record<string, string> = {};
-    
-    if (importType === 'homeowners') {
-      mappings['name'] = 'owner_name';
-      mappings['email'] = 'owner_email';
-    } else if (importType === 'properties') {
-      mappings['address'] = 'property_address';
-      mappings['unit'] = 'unit_number';
-    } else if (importType === 'invoices') {
-      mappings['invoice_number'] = 'invoice_id';
-      mappings['amount'] = 'invoice_amount';
-    }
-    
-    return mappings;
   }
 };
+
