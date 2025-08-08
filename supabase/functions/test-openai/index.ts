@@ -1,7 +1,7 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createLogger } from "../shared/logging.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +9,10 @@ const corsHeaders = {
 }
 
 const logger = createLogger('test-openai')
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 serve(async (req) => {
   const requestId = crypto.randomUUID()
@@ -33,6 +37,21 @@ serve(async (req) => {
       )
     }
 
+    // Read preferred model from system_settings, fallback to gpt-4o
+    let selectedModel = 'gpt-4o'
+    try {
+      const { data: setting, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'integrations')
+        .maybeSingle()
+      if (!error && setting?.value?.integrationSettings?.OpenAI?.model) {
+        selectedModel = setting.value.integrationSettings.OpenAI.model as string
+      }
+    } catch (_) {
+      // ignore and use default
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -40,7 +59,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: selectedModel,
         messages: [
           { 
             role: 'user', 
@@ -72,7 +91,7 @@ serve(async (req) => {
     const generatedText = data.choices[0].message.content.trim()
     
     await logger.info(requestId, 'OpenAI connection successful', {
-      model: data.model,
+      model: data.model || selectedModel,
       response: generatedText
     })
 
@@ -80,7 +99,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         response: generatedText,
-        model: data.model
+        model: data.model || selectedModel
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

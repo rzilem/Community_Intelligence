@@ -153,6 +153,13 @@ const OpenAISetup = () => {
                 >
                   {showLogs ? 'Hide Logs' : 'Show Logs'}
                 </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => { try { (window as any).logger?.clearLogs?.(); } catch {} ; toast.info('Client logs cleared'); }}
+                >
+                  Clear Logs
+                </Button>
               </div>
             </div>
           </form>

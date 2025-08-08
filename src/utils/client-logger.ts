@@ -76,8 +76,8 @@ export class ClientLogger {
    */
   private captureLog(level: LogEntry['level'], args: any[]): void {
     try {
-      // Extract message and data
-      const message = args.map(arg => {
+      // Extract message and data with truncation to avoid huge payloads
+      const rawMessage = args.map(arg => {
         if (typeof arg === 'string') return arg;
         if (arg instanceof Error) return arg.message;
         try {
@@ -86,13 +86,14 @@ export class ClientLogger {
           return String(arg);
         }
       }).join(' ');
+      const message = this.truncateString(rawMessage, 4000);
 
       // Create log entry
       const entry: LogEntry = {
         timestamp: new Date().toISOString(),
         level,
         message,
-        data: args.length > 1 ? this.safeStringify(args.slice(1)) : undefined
+        data: args.length > 1 ? this.truncateString(this.safeStringify(args.slice(1)), 6000) : undefined
       };
 
       // Get existing logs
@@ -106,8 +107,26 @@ export class ClientLogger {
         logs.splice(0, logs.length - this.maxEntries);
       }
       
-      // Save logs
-      localStorage.setItem(this.storageKey, JSON.stringify(logs));
+      // Save logs with quota handling
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(logs));
+      } catch (err: any) {
+        // Handle storage quota exceeded gracefully
+        const msg = (err && (err.name || err.message)) || '';
+        if (msg.includes('QuotaExceeded') || msg.includes('quota') || err?.name === 'QuotaExceededError') {
+          // Prune oldest 20% and retry once
+          const pruneCount = Math.ceil(logs.length * 0.2);
+          const pruned = logs.slice(pruneCount);
+          try {
+            localStorage.setItem(this.storageKey, JSON.stringify(pruned));
+          } catch {
+            // As last resort, clear logs to prevent noisy crashes
+            localStorage.removeItem(this.storageKey);
+          }
+        } else {
+          throw err;
+        }
+      }
     } catch (error) {
       // Use original console to avoid infinite recursion
       this.originalError.call(console, 'Error capturing log:', error);
@@ -142,14 +161,24 @@ export class ClientLogger {
   }
 
   /**
-   * Safely stringify an object
+   * Safely stringify an object and cap length
    */
   private safeStringify(obj: any): string {
     try {
-      return JSON.stringify(obj);
+      const str = JSON.stringify(obj);
+      return this.truncateString(str, 10000);
     } catch (error) {
       return '[Object cannot be stringified]';
     }
+  }
+
+  /**
+   * Truncate strings to a maximum length
+   */
+  private truncateString(str: string, max = 5000): string {
+    if (typeof str !== 'string') return String(str);
+    if (str.length <= max) return str;
+    return str.slice(0, max) + '…';
   }
   
   /**

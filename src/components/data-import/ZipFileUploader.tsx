@@ -240,7 +240,12 @@ const ZipFileUploader: React.FC = () => {
                 <p className="text-xs text-muted-foreground">Job ID: <span className="font-mono">{smartImportResult.job_id}</span></p>
               )}
 
-              {smartImportResult.details?.length > 0 && (
+              {smartImportResult.success && smartImportResult.importedRecords === 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-800 text-sm">
+                  No records were imported. If your ZIP contains mostly documents (PDFs, images), this is expected. Try including CSV/XLSX files with tabular data.
+                </div>
+              )}
+
                 <div className="mt-2">
                   <p className="text-sm font-medium mb-2">Per-file results</p>
                   <div className="space-y-2 max-h-48 overflow-auto pr-1">
