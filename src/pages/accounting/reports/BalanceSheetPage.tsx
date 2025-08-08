@@ -4,17 +4,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { Banknote } from 'lucide-react';
 import { useBalanceSheet } from '@/hooks/accounting/useBalanceSheet';
 import { Button } from '@/components/ui/button';
-
-function toCSV(rows: any[]): string {
-  if (!rows || rows.length === 0) return '';
-  const headers = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
-  const escape = (v: any) => {
-    const s = v === null || v === undefined ? '' : String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const lines = [headers.join(',')].concat(rows.map((r) => headers.map((h) => escape((r as any)[h])).join(',')));
-  return lines.join('\n');
-}
+import { toCSV } from '@/utils/csv';
 
 const BalanceSheetPage: React.FC = () => {
   const { data, isLoading } = useBalanceSheet();
