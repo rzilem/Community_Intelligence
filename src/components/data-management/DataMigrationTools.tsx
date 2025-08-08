@@ -39,16 +39,24 @@ const DataMigrationTools: React.FC<DataMigrationToolsProps> = ({ associationId }
 
       if (error) throw error;
 
-      const misassignedProperties = properties?.filter(p => 
-        // Look for properties that were likely meant for this association
-        // This is a simple heuristic - in practice, you'd need more sophisticated logic
-        p.associations?.name?.toLowerCase().includes('test') || 
-        p.address?.toLowerCase().includes('imported')
-      ) || [];
+      const misassignedProperties = (properties || []).filter((p: any) => {
+        const assocName = Array.isArray(p.associations)
+          ? p.associations[0]?.name
+          : p.associations?.name;
+        const assocNameStr = (assocName || '').toString().toLowerCase();
+        const addressStr = (p.address || '').toString().toLowerCase();
+        // Simple heuristic; adjust as needed
+        return assocNameStr.includes('test') || addressStr.includes('imported');
+      });
 
       setMigrationResults({
         misassignedCount: misassignedProperties.length,
-        details: misassignedProperties.map(p => `${p.address} (currently in ${p.associations?.name || 'Unknown'})`)
+        details: misassignedProperties.map((p: any) => {
+          const assocName = Array.isArray(p.associations)
+            ? p.associations[0]?.name
+            : p.associations?.name;
+          return `${p.address} (currently in ${assocName || 'Unknown'})`;
+        })
       });
 
       if (misassignedProperties.length > 0) {

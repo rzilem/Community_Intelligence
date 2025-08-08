@@ -133,7 +133,7 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
 
       if (error) throw error;
 
-      setVendorBids((data || []) as VendorBid[]);
+      setVendorBids(((data || []) as unknown) as VendorBid[]);
     } catch (err) {
       console.error('Error loading vendor bids:', err);
       setVendorBidsError('Failed to load vendor bids');
