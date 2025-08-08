@@ -2351,6 +2351,7 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount: number
+          association_id: string | null
           batch_id: string | null
           category: string | null
           created_at: string
@@ -2368,6 +2369,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          association_id?: string | null
           batch_id?: string | null
           category?: string | null
           created_at?: string
@@ -2385,6 +2387,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          association_id?: string | null
           batch_id?: string | null
           category?: string | null
           created_at?: string

@@ -4,6 +4,7 @@ import { Database } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import GLAccountsTable from './GLAccountsTable';
 import type { Database as DatabaseType } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/auth';
 
 type GLAccount = DatabaseType['public']['Tables']['gl_accounts_enhanced']['Row'];
 
@@ -30,6 +31,8 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
   onAccountTypeChange,
   onColumnChange
 }) => {
+  const { currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id || 'placeholder-association-id';
   return (
     <Tabs defaultValue="master" className="w-full" value={activeTab} onValueChange={onTabChange}>
       <TabsList className="mb-6">
@@ -47,7 +50,7 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
         <GLAccountsTable
           searchTerm={searchTerm}
           accountType={accountType}
-          associationId={'placeholder-association-id'}
+          associationId={associationId}
           onEditAccount={() => {}}
         />
       </TabsContent>

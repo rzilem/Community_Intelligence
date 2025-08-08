@@ -4,9 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Zap } from 'lucide-react';
 import AutomationDashboard from '@/components/accounting/AutomationDashboard';
 import AppLayout from '@/components/layout/AppLayout';
+import { useAuth } from '@/contexts/auth';
 
 const AutomationWorkflows: React.FC = () => {
-  const associationId = 'demo-association-id'; // Replace with actual association ID
+const { currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id;
 
   return (
     <AppLayout>
@@ -23,7 +25,13 @@ const AutomationWorkflows: React.FC = () => {
           </div>
         </div>
 
-        <AutomationDashboard associationId={associationId} />
+        {associationId ? (
+          <AutomationDashboard associationId={associationId} />
+        ) : (
+          <div className="p-6 text-center text-muted-foreground">
+            Select an association to view automation workflows.
+          </div>
+        )}
       </div>
     </AppLayout>
   );
