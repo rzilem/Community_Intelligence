@@ -1,51 +1,132 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileArchive, Loader2 } from 'lucide-react';
 import { SmartImportErrorBoundary } from './SmartImportErrorBoundary';
+import { toast } from 'sonner';
+import { useSmartImport } from '@/hooks/import-export/useSmartImport';
+import { zipParserService } from '@/services/import-export/zip-parser-service';
+import { enhancedDataImportService } from '@/services/import-export/enhanced-data-import-service';
+import { supabase } from '@/integrations/supabase/client';
 
 const ZipFileUploader: React.FC = () => {
+  // Local helper types
+  type ZipFileEntry = { filename: string; detectedType: string; data: any[]; confidence?: number };
+  type Association = { id: string; name: string };
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [associationId, setAssociationId] = useState<string>('');
+
+  const [zipFiles, setZipFiles] = useState<ZipFileEntry[]>([]);
+
+  const { isProcessing, smartImportResult, processZipFile, resetSmartImport } = useSmartImport();
+  const MappingModal = React.lazy(() => import('./ImportDataMappingModal'));
+
+  const [manualFiles, setManualFiles] = useState<ZipFileEntry[]>([]);
+  const [mappingOpen, setMappingOpen] = useState(false);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [isManualImporting, setIsManualImporting] = useState(false);
+
+  useEffect(() => {
+    // Load associations current user can access
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_user_associations');
+        if (error) throw error;
+        if (data && Array.isArray(data)) {
+          setAssociations(data.map((a: any) => ({ id: a.id, name: a.name })));
+        }
+      } catch (e) {
+        console.error('Failed to load associations', e);
+        toast.error('Unable to load associations');
+      }
+    })();
+  }, []);
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.name.toLowerCase().endsWith('.zip')) {
       setSelectedFile(file);
+      resetSmartImport();
+      try {
+        const analysis = await zipParserService.parseZipFile(file);
+        setZipFiles(analysis.files as ZipFileEntry[]);
+        toast.success(`Loaded ${analysis.files.length} files from archive`);
+      } catch (err) {
+        console.error('ZIP parse failed', err);
+        toast.error('Could not read ZIP contents');
+      }
+    } else if (file) {
+      toast.error('Please select a .zip file');
     }
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
-
   const handleSmartImport = async () => {
     if (!selectedFile) return;
-    
-    setIsProcessing(true);
-    try {
-      const { smartImportService } = await import('@/services/import-export/smart-import-service');
-      
-      const result = await smartImportService.processZipFile(selectedFile, {
-        associationId: 'default', // This should be passed as prop
-        autoImportThreshold: 0.85
-      });
-      
-      if (result.success) {
-        alert(`Smart import completed! Processed ${result.processedFiles} files with ${result.importedRecords} records imported.`);
-      } else {
-        alert(`Smart import completed with warnings. ${result.processedFiles} files processed, but manual review may be required.`);
-      }
-    } catch (error) {
-      console.error('Smart import failed:', error);
-      alert(`Smart import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsProcessing(false);
+    if (!associationId) {
+      toast.error('Please select an association');
+      return;
+    }
+
+    const result = await processZipFile(selectedFile, {
+      associationId,
+      autoImportThreshold: 0.85,
+      batchConfidenceThreshold: 0.75
+    });
+
+    if (result && result.skippedFiles > 0) {
+      const candidates = zipFiles.filter((f) => (f.data?.length ?? 0) > 0);
+      setManualFiles(candidates);
+      setCurrentFileIndex(0);
+      setMappingOpen(true);
+      toast.info(`Manual mapping required for ${candidates.length} file(s)`);
     }
   };
 
+  const handleConfirmMapping = async (mappings: Record<string, string>) => {
+    const file = manualFiles[currentFileIndex];
+    if (!file) return;
+    if (!associationId) {
+      toast.error('Missing association');
+      return;
+    }
+
+    setIsManualImporting(true);
+    try {
+      const res = await enhancedDataImportService.importData({
+        associationId,
+        dataType: file.detectedType,
+        data: file.data,
+        mappings
+      });
+
+      if (res.success) {
+        toast.success(`Imported ${res.successfulImports}/${res.totalProcessed} from ${file.filename}`);
+      } else {
+        toast.warning(`Completed with issues for ${file.filename}`);
+      }
+
+      const next = currentFileIndex + 1;
+      if (next < manualFiles.length) {
+        setCurrentFileIndex(next);
+      } else {
+        setMappingOpen(false);
+        toast.success('Manual mapping complete');
+      }
+    } catch (err) {
+      console.error('Manual import failed', err);
+      toast.error(err instanceof Error ? err.message : 'Manual import failed');
+    } finally {
+      setIsManualImporting(false);
+    }
+  };
   return (
     <SmartImportErrorBoundary fallbackMessage="Error loading ZIP file uploader">
       <Card>
