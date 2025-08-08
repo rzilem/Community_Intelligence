@@ -3014,6 +3014,7 @@ export type Database = {
       calendar_events: {
         Row: {
           amenity_id: string | null
+          association_id: string | null
           booked_by: string | null
           color: string | null
           created_at: string
@@ -3030,6 +3031,7 @@ export type Database = {
         }
         Insert: {
           amenity_id?: string | null
+          association_id?: string | null
           booked_by?: string | null
           color?: string | null
           created_at?: string
@@ -3046,6 +3048,7 @@ export type Database = {
         }
         Update: {
           amenity_id?: string | null
+          association_id?: string | null
           booked_by?: string | null
           color?: string | null
           created_at?: string
@@ -3061,6 +3064,13 @@ export type Database = {
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "calendar_events_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "calendar_events_hoa_id_fkey"
             columns: ["hoa_id"]
