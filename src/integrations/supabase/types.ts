@@ -879,10 +879,13 @@ export type Database = {
         Row: {
           association_id: string
           booking_fee: number | null
+          booking_settings: Json
           capacity: number | null
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
+          is_active: boolean
           name: string
           requires_approval: boolean | null
           updated_at: string
@@ -890,10 +893,13 @@ export type Database = {
         Insert: {
           association_id: string
           booking_fee?: number | null
+          booking_settings?: Json
           capacity?: number | null
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean
           name: string
           requires_approval?: boolean | null
           updated_at?: string
@@ -901,10 +907,13 @@ export type Database = {
         Update: {
           association_id?: string
           booking_fee?: number | null
+          booking_settings?: Json
           capacity?: number | null
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean
           name?: string
           requires_approval?: boolean | null
           updated_at?: string
@@ -915,6 +924,47 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      amenity_blackouts: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          reason: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          reason?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          reason?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_blackouts_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
             referencedColumns: ["id"]
           },
         ]
