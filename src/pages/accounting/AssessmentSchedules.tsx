@@ -151,7 +151,19 @@ const AssessmentSchedules = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Next Generation</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{(() => { try { return (schedules.length ? new Date(Math.min(...schedules.filter((s:any)=>s.next_generation_date).map((s:any)=>new Date(s.next_generation_date).getTime()))).toLocaleDateString(); } catch { return '—'; } })()}</div>
+                <div className="text-2xl font-bold">
+                  {(() => {
+                    try {
+                      const dates = schedules
+                        .filter((s: any) => s.next_generation_date)
+                        .map((s: any) => new Date(s.next_generation_date).getTime());
+                      if (!dates.length) return '—';
+                      return new Date(Math.min(...dates)).toLocaleDateString();
+                    } catch (_e) {
+                      return '—';
+                    }
+                  })()}
+                </div>
                 <p className="text-xs text-muted-foreground">Next scheduled</p>
               </CardContent>
             </Card>
