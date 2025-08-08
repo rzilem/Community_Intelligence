@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt, Filter, Download, Mail } from 'lucide-react';
@@ -8,66 +8,40 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { useAuth } from '@/contexts/auth';
 
-// Mock data for accounts receivable
-const mockReceivables = [
-  {
-    id: '1',
-    propertyId: 'PROP-001',
-    propertyAddress: '123 Oak Street, Unit 204',
-    ownerName: 'John Smith',
-    invoiceNumber: 'INV-2025-001',
-    amount: 350,
-    dueDate: '2025-01-15',
-    daysPastDue: 15,
-    status: 'overdue',
-    type: 'Monthly Assessment'
-  },
-  {
-    id: '2',
-    propertyId: 'PROP-002',
-    propertyAddress: '456 Pine Avenue, Unit 108',
-    ownerName: 'Sarah Johnson',
-    invoiceNumber: 'INV-2025-002',
-    amount: 425,
-    dueDate: '2025-01-30',
-    daysPastDue: 0,
-    status: 'current',
-    type: 'Monthly Assessment'
-  },
-  {
-    id: '3',
-    propertyId: 'PROP-003',
-    propertyAddress: '789 Maple Drive, Unit 312',
-    ownerName: 'Mike Wilson',
-    invoiceNumber: 'INV-2025-003',
-    amount: 75,
-    dueDate: '2025-01-10',
-    daysPastDue: 20,
-    status: 'overdue',
-    type: 'Late Fee'
-  },
-  {
-    id: '4',
-    propertyId: 'PROP-004',
-    propertyAddress: '321 Elm Street, Unit 506',
-    ownerName: 'Lisa Davis',
-    invoiceNumber: 'INV-2025-004',
-    amount: 1200,
-    dueDate: '2025-02-15',
-    daysPastDue: 0,
-    status: 'current',
-    type: 'Special Assessment'
-  }
-];
+const toCSV = (rows: any[]): string => {
+  if (!rows || rows.length === 0) return '';
+  const headers = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
+  const escape = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [headers.join(',')].concat(rows.map((r) => headers.map((h) => escape((r as any)[h])).join(',')));
+  return lines.join('\n');
+};
 
 const AccountsReceivable = () => {
-  const [receivables] = useState(mockReceivables);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id;
 
-  const filteredReceivables = receivables.filter(item => 
-    statusFilter === 'all' || item.status === statusFilter
+  const { data: receivables = [], isLoading } = useSupabaseQuery<any[]>(
+    'accounts_receivable',
+    {
+      select: '*',
+      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
+      order: { column: 'due_date', ascending: true },
+    },
+    !!associationId
   );
+
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
+
+  const filteredReceivables = receivables.filter((item: any) => {
+    const displayStatus = item.status === 'open' ? (item.aging_days > 0 ? 'overdue' : 'current') : item.status;
+    return statusFilter === 'all' || displayStatus === statusFilter;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,14 +63,13 @@ const AccountsReceivable = () => {
     }).format(amount);
   };
 
-  // Calculate summary stats
-  const totalOutstanding = receivables.reduce((sum, item) => sum + item.amount, 0);
+  const totalOutstanding = receivables.reduce((sum: number, item: any) => sum + Number(item.original_amount || 0), 0);
   const overdueAmount = receivables
-    .filter(item => item.status === 'overdue')
-    .reduce((sum, item) => sum + item.amount, 0);
+    .filter((item: any) => (item.status === 'open' && item.aging_days > 0))
+    .reduce((sum: number, item: any) => sum + Number(item.original_amount || 0), 0);
   const currentAmount = receivables
-    .filter(item => item.status === 'current')
-    .reduce((sum, item) => sum + item.amount, 0);
+    .filter((item: any) => (item.status === 'open' && (item.aging_days || 0) === 0))
+    .reduce((sum: number, item: any) => sum + Number(item.original_amount || 0), 0);
 
   return (
     <AppLayout>
@@ -104,28 +77,38 @@ const AccountsReceivable = () => {
         title="Accounts Receivable"
         icon={<Receipt className="h-8 w-8" />}
         description="Track outstanding assessments and payments from property owners."
-        actions={
-          <div className="flex items-center gap-2">
-            <TooltipButton
-              tooltip="Download AR report"
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </TooltipButton>
-            <TooltipButton
-              tooltip="Send payment reminders"
-              variant="default"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Send Reminders
-            </TooltipButton>
-          </div>
-        }
+          actions={
+            <div className="flex items-center gap-2">
+              <TooltipButton
+                tooltip="Download AR report"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  const csv = toCSV(receivables);
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'accounts-receivable.csv';
+                  link.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </TooltipButton>
+              <TooltipButton
+                tooltip="Send payment reminders"
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                Send Reminders
+              </TooltipButton>
+            </div>
+          }
       >
         <div className="space-y-6">
           {/* Summary Cards */}
@@ -205,51 +188,53 @@ const AccountsReceivable = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredReceivables.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{item.propertyId}</div>
-                          <div className="text-sm text-muted-foreground">{item.propertyAddress}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.ownerName}</TableCell>
-                      <TableCell className="font-mono">{item.invoiceNumber}</TableCell>
-                      <TableCell>{item.type}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(item.amount)}</TableCell>
-                      <TableCell>{item.dueDate}</TableCell>
-                      <TableCell>
-                        {item.daysPastDue > 0 ? (
-                          <span className="text-red-600 font-medium">{item.daysPastDue} days</span>
-                        ) : (
-                          <span className="text-green-600">Current</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(item.status)}>
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <TooltipButton
-                            tooltip="Send payment reminder"
-                            variant="ghost"
-                            size="sm"
-                          >
-                            <Mail className="h-4 w-4" />
-                          </TooltipButton>
-                          <TooltipButton
-                            tooltip="View details"
-                            variant="ghost"
-                            size="sm"
-                          >
-                            View
-                          </TooltipButton>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredReceivables.map((item: any) => {
+                    const displayStatus = item.status === 'open' ? ((item.aging_days || 0) > 0 ? 'overdue' : 'current') : item.status;
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{item.property_id}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell className="font-mono">{item.invoice_number || '-'}</TableCell>
+                        <TableCell>{item.invoice_type || '-'}</TableCell>
+                        <TableCell className="font-medium">{formatCurrency(Number(item.original_amount || 0))}</TableCell>
+                        <TableCell>{item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell>
+                          {(item.aging_days || 0) > 0 ? (
+                            <span className="text-red-600 font-medium">{item.aging_days} days</span>
+                          ) : (
+                            <span className="text-green-600">Current</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(displayStatus)}>
+                            {displayStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <TooltipButton
+                              tooltip="Send payment reminder"
+                              variant="ghost"
+                              size="sm"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </TooltipButton>
+                            <TooltipButton
+                              tooltip="View details"
+                              variant="ghost"
+                              size="sm"
+                            >
+                              View
+                            </TooltipButton>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

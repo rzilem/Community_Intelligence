@@ -102,15 +102,27 @@ const AssessmentSchedules = () => {
         icon={<Calendar className="h-8 w-8" />}
         description="Manage recurring assessment schedules and billing cycles."
         actions={
-          <TooltipButton
-            tooltip="Create a new assessment schedule"
-            variant="default"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New Schedule
-          </TooltipButton>
+          <div className="flex items-center gap-2">
+            <TooltipButton
+              tooltip="Generate assessments for due schedules now"
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={handleGenerateNow}
+            >
+              <Zap className="h-4 w-4" />
+              Generate Now
+            </TooltipButton>
+            <TooltipButton
+              tooltip="Create a new assessment schedule"
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New Schedule
+            </TooltipButton>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -121,7 +133,7 @@ const AssessmentSchedules = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Active Schedules</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{activeCount}</div>
                 <p className="text-xs text-muted-foreground">Currently running</p>
               </CardContent>
             </Card>
@@ -139,8 +151,8 @@ const AssessmentSchedules = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Next Generation</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">Feb 1</div>
-                <p className="text-xs text-muted-foreground">Monthly assessments</p>
+                <div className="text-2xl font-bold">{(() => { try { return (schedules.length ? new Date(Math.min(...schedules.filter((s:any)=>s.next_generation_date).map((s:any)=>new Date(s.next_generation_date).getTime()))).toLocaleDateString(); } catch { return '—'; } })()}</div>
+                <p className="text-xs text-muted-foreground">Next scheduled</p>
               </CardContent>
             </Card>
             <Card>
@@ -148,7 +160,7 @@ const AssessmentSchedules = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Properties</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">120</div>
+                <div className="text-2xl font-bold">{propertiesCount}</div>
                 <p className="text-xs text-muted-foreground">Receiving assessments</p>
               </CardContent>
             </Card>
@@ -174,19 +186,19 @@ const AssessmentSchedules = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {schedules.map((schedule) => (
+                  {schedules.map((schedule: any) => (
                     <TableRow key={schedule.id}>
                       <TableCell className="font-medium">{schedule.name}</TableCell>
-                      <TableCell>{schedule.type}</TableCell>
-                      <TableCell>{formatCurrency(schedule.amount)}</TableCell>
-                      <TableCell>{schedule.nextDue}</TableCell>
+                      <TableCell>{schedule.schedule_type}</TableCell>
+                      <TableCell>{formatCurrency(Number(schedule.amount || 0))}</TableCell>
+                      <TableCell>{schedule.next_generation_date ? new Date(schedule.next_generation_date).toLocaleDateString() : '—'}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(schedule.status)}>
-                          {schedule.status}
+                        <Badge className={getStatusColor(schedule.is_active ? 'active' : 'paused')}>
+                          {schedule.is_active ? 'active' : 'paused'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{schedule.lastGenerated || 'Never'}</TableCell>
-                      <TableCell>{schedule.properties}</TableCell>
+                      <TableCell>{schedule.last_generated_at ? new Date(schedule.last_generated_at).toLocaleDateString() : 'Never'}</TableCell>
+                      <TableCell>{propertiesCount}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <TooltipButton
@@ -197,11 +209,12 @@ const AssessmentSchedules = () => {
                             <Edit className="h-4 w-4" />
                           </TooltipButton>
                           <TooltipButton
-                            tooltip={schedule.status === 'active' ? 'Pause schedule' : 'Resume schedule'}
+                            tooltip={schedule.is_active ? 'Pause schedule' : 'Resume schedule'}
                             variant="ghost"
                             size="sm"
+                            onClick={() => toggleActive(schedule.id, schedule.is_active)}
                           >
-                            {schedule.status === 'active' ? 
+                            {schedule.is_active ? 
                               <Pause className="h-4 w-4" /> : 
                               <Play className="h-4 w-4" />
                             }
@@ -211,6 +224,7 @@ const AssessmentSchedules = () => {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(schedule.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </TooltipButton>
