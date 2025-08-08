@@ -9,6 +9,9 @@ import { useSmartImport } from '@/hooks/import-export/useSmartImport';
 import { zipParserService } from '@/services/import-export/zip-parser-service';
 import { enhancedDataImportService } from '@/services/import-export/enhanced-data-import-service';
 import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const ZipFileUploader: React.FC = () => {
   // Local helper types
@@ -140,6 +143,24 @@ const ZipFileUploader: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="association">Association</Label>
+              <Select value={associationId} onValueChange={setAssociationId}>
+                <SelectTrigger id="association">
+                  <SelectValue placeholder="Select association" />
+                </SelectTrigger>
+                <SelectContent>
+                  {associations.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <p className="text-sm text-muted-foreground">Choose the target association to route imported data correctly.</p>
+            </div>
+          </div>
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
             <input
               ref={fileInputRef}
@@ -194,14 +215,60 @@ const ZipFileUploader: React.FC = () => {
             )}
           </div>
 
+          {smartImportResult && (
+            <div className="rounded-lg border p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Files Processed</p>
+                  <p className="text-lg font-medium">{smartImportResult.processedFiles}/{smartImportResult.totalFiles}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Records Imported</p>
+                  <p className="text-lg font-medium">{smartImportResult.importedRecords}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Skipped Files</p>
+                  <p className="text-lg font-medium">{smartImportResult.skippedFiles}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Warnings</p>
+                  <p className="text-lg font-medium">{smartImportResult.warnings?.length ?? 0}</p>
+                </div>
+              </div>
+              {smartImportResult.errors?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {smartImportResult.errors.slice(0, 4).map((e, idx) => (
+                    <Badge key={idx} variant="destructive">{e}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-800">
               <strong>Coming Soon:</strong> AI-powered analysis of mixed data files, automatic format detection, and intelligent import routing.
             </p>
           </div>
         </CardContent>
-      </Card>
-    </SmartImportErrorBoundary>
+    </Card>
+
+      {mappingOpen && manualFiles[currentFileIndex] && (
+        <React.Suspense fallback={null}>
+          <MappingModal
+            open={mappingOpen}
+            onOpenChange={setMappingOpen}
+            validationResults={null}
+            fileData={manualFiles[currentFileIndex].data || []}
+            importType={manualFiles[currentFileIndex].detectedType || ''}
+            associationId={associationId}
+            associations={associations}
+            onConfirmMapping={handleConfirmMapping}
+            isImporting={isManualImporting}
+          />
+        </React.Suspense>
+      )}
+  </SmartImportErrorBoundary>
   );
 };
 
