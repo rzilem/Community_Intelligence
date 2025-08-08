@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
+import Papa from 'papaparse';
 import { aiImportExecutor, type ImportExecutionResult } from '@/services/ai-import/ai-import-executor';
 import { ImportErrorBoundary } from './ImportErrorBoundary';
 import ImportPreviewModal from './ImportPreviewModal';
@@ -566,57 +567,82 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
 
     try {
       setCurrentStep('Preparing preview...');
-      
-      // Parse file content for preview
-      const fileContents: any[] = [];
-      
+
+      const MAX_PREVIEW_ROWS = 200;
+      const aggregatedRows: any[] = [];
+      let zipHadStructured = false;
+
+      // Parse file content for preview, including ZIP archives
       for (const file of files) {
         const content = await parseFileContent(file);
-        
-        if (Array.isArray(content)) {
-          fileContents.push(...content);
+
+        if (content && typeof content === 'object' && content.type === 'zip_archive') {
+          const filesMap = (content.files || {}) as Record<string, any>;
+          for (const entry of Object.values(filesMap)) {
+            if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+
+            if (entry?.type === 'excel' && Array.isArray(entry.content)) {
+              zipHadStructured = true;
+              const rows = entry.content as any[];
+              for (const row of rows) {
+                aggregatedRows.push(row);
+                if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+              }
+            } else if (entry?.type === 'csv' && typeof entry.content === 'string') {
+              zipHadStructured = true;
+              const parsed = Papa.parse(entry.content, { header: true, skipEmptyLines: true });
+              const rows = (parsed.data as any[]).filter(Boolean);
+              for (const row of rows) {
+                aggregatedRows.push(row);
+                if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+              }
+            }
+          }
+        } else if (Array.isArray(content)) {
+          for (const row of content) {
+            aggregatedRows.push(row);
+            if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+          }
         } else if (typeof content === 'string') {
-          // Convert CSV string to array
-          const lines = content.split('\n').filter(line => line.trim());
-          if (lines.length === 0) continue;
-          
-          const headers = lines[0].split(',').map(h => h.trim());
-          const data = lines.slice(1).map(line => {
-            const values = line.split(',');
-            const row: Record<string, string> = {};
-            headers.forEach((header, index) => {
-              row[header] = values[index]?.trim() || '';
-            });
-            return row;
-          });
-          fileContents.push(...data);
+          const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+          const rows = (parsed.data as any[]).filter(Boolean);
+          for (const row of rows) {
+            aggregatedRows.push(row);
+            if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+          }
         }
+
+        if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
       }
 
-      if (fileContents.length === 0) {
-        toast.error('No data found to preview');
+      if (aggregatedRows.length === 0) {
+        const hasZip = files.some(f => f.name.toLowerCase().endsWith('.zip'));
+        if (hasZip && !zipHadStructured) {
+          toast.error('ZIP analyzed but no CSV/Excel tables were found to preview. Please include CSV/XLSX files or select a ZIP with tabular data.');
+        } else {
+          toast.error('No data found to preview');
+        }
         return;
       }
 
-      setPreviewData(fileContents);
-      
+      setPreviewData(aggregatedRows);
+
       // Run validation to get errors and warnings
       const validationResult = await aiImportExecutor.executeImport(
         analysisResults,
-        fileContents,
+        aggregatedRows,
         associationId
       );
 
       setValidationErrors(validationResult.validationErrors || []);
       setValidationWarnings(validationResult.warnings || []);
       setShowPreviewModal(true);
-      
+
     } catch (error) {
       console.error('Preview error:', error);
       toast.error(`Failed to prepare preview: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-
   const confirmImport = async (userDefaults: Record<string, any>) => {
     if (!analysisResults) return;
 
