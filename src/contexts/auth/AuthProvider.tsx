@@ -1,9 +1,10 @@
-
 import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
 import { isAdminRole } from '@/utils/role-utils';
+import { ensurePasswordNotLeaked } from '@/utils/security/password-utils';
+import { toast } from 'sonner';
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -202,6 +203,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
     try {
+      // New: prevent sign-up with leaked/breached passwords
+      try {
+        await ensurePasswordNotLeaked(password);
+      } catch (err: any) {
+        console.warn('[AuthProvider] Blocked leaked password during sign-up:', err);
+        toast.error(err?.message || 'This password appears in known breaches. Please choose a different password.');
+        throw err;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

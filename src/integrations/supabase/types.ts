@@ -13291,6 +13291,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_ai_processing_stats: {
+        Args: { p_association_id: string }
+        Returns: {
+          ai_processed: number | null
+          association_id: string | null
+          avg_confidence: number | null
+          high_confidence: number | null
+          low_confidence: number | null
+          needs_review: number | null
+          total_invoices: number | null
+        }[]
+      }
       get_ai_suggestions: {
         Args: {
           p_association_id: string

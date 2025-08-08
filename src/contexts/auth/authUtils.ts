@@ -1,8 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
 import { toast } from 'sonner';
+import { ensurePasswordNotLeaked } from '@/utils/security/password-utils';
 
 export const signInWithEmail = async (email: string, password: string) => {
   try {
@@ -29,6 +29,15 @@ export const signUpWithEmail = async (
   userData: { first_name: string; last_name: string }
 ) => {
   try {
+    // New: prevent sign-up with leaked/breached passwords
+    try {
+      await ensurePasswordNotLeaked(password);
+    } catch (err: any) {
+      console.warn('[authUtils] Blocked leaked password during sign-up:', err);
+      toast.error(err?.message || 'This password appears in known breaches. Please choose a different password.');
+      throw err;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
