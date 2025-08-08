@@ -48,7 +48,7 @@ serve(async (req) => {
     try {
       await logger.info(requestId, "Updating system_settings with OpenAI configuration");
       
-      const selectedModel = model || "gpt-4o-mini";
+      const selectedModel = model || "gpt-4o";
       
       // Update the system_settings table with OpenAI configuration
       const { error } = await supabase

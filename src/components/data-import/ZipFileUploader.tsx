@@ -216,7 +216,7 @@ const ZipFileUploader: React.FC = () => {
           </div>
 
           {smartImportResult && (
-            <div className="rounded-lg border p-4">
+            <div className="rounded-lg border p-4 space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Files Processed</p>
@@ -235,6 +235,33 @@ const ZipFileUploader: React.FC = () => {
                   <p className="text-lg font-medium">{smartImportResult.warnings?.length ?? 0}</p>
                 </div>
               </div>
+
+              {smartImportResult.job_id && (
+                <p className="text-xs text-muted-foreground">Job ID: <span className="font-mono">{smartImportResult.job_id}</span></p>
+              )}
+
+              {smartImportResult.details?.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium mb-2">Per-file results</p>
+                  <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                    {smartImportResult.details.map((d, idx) => (
+                      <div key={idx} className="flex items-start justify-between text-sm border rounded-md p-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{d.filename || `Item ${idx+1}`}</p>
+                          <p className="text-xs text-muted-foreground truncate">{d.message}</p>
+                        </div>
+                        <div className="flex items-center gap-2 pl-2 shrink-0">
+                          <Badge variant={d.status === 'success' ? 'default' : d.status === 'warning' ? 'secondary' : d.status === 'skipped' ? 'outline' : 'destructive'}>
+                            {d.status}
+                          </Badge>
+                          <span className="text-xs tabular-nums text-muted-foreground">{d.recordsProcessed}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {smartImportResult.errors?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {smartImportResult.errors.slice(0, 4).map((e, idx) => (

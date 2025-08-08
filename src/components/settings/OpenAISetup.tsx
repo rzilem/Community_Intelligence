@@ -9,10 +9,10 @@ import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import LogViewer from './LogViewer';
-
+import TestOpenAIButton from './TestOpenAIButton';
 const OpenAISetup = () => {
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('gpt-4o-mini');
+  const [model, setModel] = useState('gpt-4o');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState(false);
@@ -142,15 +142,18 @@ const OpenAISetup = () => {
                   'Save OpenAI Configuration'
                 )}
               </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowLogs(!showLogs)}
-              >
-                {showLogs ? 'Hide Logs' : 'Show Logs'}
-              </Button>
+
+              <div className="flex gap-2">
+                <TestOpenAIButton />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowLogs(!showLogs)}
+                >
+                  {showLogs ? 'Hide Logs' : 'Show Logs'}
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>
