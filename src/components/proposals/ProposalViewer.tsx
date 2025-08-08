@@ -27,6 +27,7 @@ import ClientPortalLinkGenerator from './ClientPortalLinkGenerator';
 import CostCalculator from './interactive-calculator/CostCalculator';
 import ProposalVideoSection from './video-integration/ProposalVideoSection';
 import FollowUpManager from './follow-ups/FollowUpManager';
+import { SafeHtml } from '@/components/security/SafeHtml';
 import { toast } from 'sonner';
 
 interface ProposalViewerProps {
@@ -306,9 +307,9 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
           </TabsList>
           
           <TabsContent value="preview" className="mt-0">
-            <div 
+            <SafeHtml 
+              html={proposal.content}
               className="border rounded-md p-8 bg-white min-h-[500px]"
-              dangerouslySetInnerHTML={{ __html: proposal.content }}
             />
           </TabsContent>
           

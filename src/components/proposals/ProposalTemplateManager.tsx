@@ -36,6 +36,7 @@ import {
 import { useProposalTemplates } from '@/hooks/proposals/useProposalTemplates';
 import { ProposalTemplate, ProposalAttachment, ProposalFolder } from '@/types/proposal-types';
 import { toast } from 'sonner';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 const demoFolders: ProposalFolder[] = [
   { id: '1', name: 'Welcome to PS Property Management Company', parent_id: undefined, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -329,7 +330,7 @@ const ProposalTemplateManager: React.FC = () => {
                 <h2 className="text-xl font-bold mb-4">{templateName || "Untitled Template"}</h2>
                 <div className="prose max-w-none">
                   {templateContent ? (
-                    <div dangerouslySetInnerHTML={{ __html: templateContent.replace(/\n/g, '<br>') }} />
+                    <SafeHtml html={templateContent.replace(/\n/g, '<br>')} />
                   ) : (
                     <p className="text-gray-500">No content available for preview.</p>
                   )}

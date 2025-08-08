@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useParams, Link } from 'react-router-dom';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';
@@ -12,6 +12,8 @@ import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
 import { aiWorkflowRoutes } from './aiWorkflowRoutes';
 import { enhancedEmailCampaignsRoutes } from './enhancedEmailCampaignsRoutes';
+import { SimpleRequireAuth } from '@/components/auth/SimpleRequireAuth';
+import { logger } from '@/utils/logger';
 
 /**
  * Redirect component for invoice detail pages
@@ -29,7 +31,7 @@ export const AppRouter = () => {
   
   // Log routing for debugging purposes
   useEffect(() => {
-    console.log('Route changed:', location.pathname);
+    logger.info('Route changed', { path: location.pathname });
   }, [location.pathname]);
 
   const renderRoute = (route: any, index: number, prefix: string) => {
@@ -42,7 +44,7 @@ export const AppRouter = () => {
         />
       );
     } catch (error) {
-      console.error(`Error rendering route ${route.path}:`, error);
+      logger.error(`Error rendering route ${route.path}:`, { error });
       return (
         <Route 
           key={`${prefix}-error-route-${index}`} 
@@ -75,8 +77,14 @@ export const AppRouter = () => {
       {/* Lead Management routes */}
       {leadManagementRoutes.map((route, index) => renderRoute(route, index, 'lead-mgmt'))}
       
-      {/* Operations routes */}
-      {operationsRoutes.map((route, index) => renderRoute(route, index, 'operations'))}
+      {/* Operations routes (protected) */}
+      {operationsRoutes.map((route, index) => (
+        <Route 
+          key={`operations-route-${index}`} 
+          path={route.path} 
+          element={<SimpleRequireAuth>{route.element}</SimpleRequireAuth>} 
+        />
+      ))}
       
       {/* Records & Reports routes */}
       {recordsReportsRoutes.map((route, index) => renderRoute(route, index, 'records-reports'))}
@@ -120,12 +128,12 @@ export const AppRouter = () => {
           <div className="p-8 text-center">
             <h2 className="text-xl font-bold mb-4">Page Not Found</h2>
             <p className="mb-4">The page you're looking for doesn't exist.</p>
-            <button
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              onClick={() => window.location.href = '/dashboard'}
+            <Link
+              to="/dashboard"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded inline-block"
             >
               Go to Dashboard
-            </button>
+            </Link>
           </div>
         } 
       />

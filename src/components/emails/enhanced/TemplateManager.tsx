@@ -11,6 +11,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { useEmailTemplates } from '@/hooks/emails/useEmailTemplates';
 import { Plus, Edit, Copy, Trash2, FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 export const TemplateManager: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
@@ -242,7 +243,7 @@ export const TemplateManager: React.FC = () => {
                   </div>
                   <div className="p-4 min-h-[300px] bg-white">
                     {formData.body ? (
-                      <div dangerouslySetInnerHTML={{ __html: formData.body }} />
+                      <SafeHtml html={formData.body} />
                     ) : (
                       <div className="text-muted-foreground italic">
                         Content preview will appear here...

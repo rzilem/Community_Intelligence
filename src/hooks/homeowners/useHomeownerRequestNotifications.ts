@@ -3,10 +3,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export const useHomeownerRequestNotifications = () => {
   const [unreadRequestsCount, setUnreadRequestsCount] = useState<number>(0);
   const hasShownToast = useRef(false);
+  const navigate = useNavigate();
   
   // Use localStorage for persistence but keep a ref to the value to avoid re-renders
   const lastCheckedRef = useRef<string>(
@@ -44,7 +46,7 @@ export const useHomeownerRequestNotifications = () => {
         action: {
           label: "View",
           onClick: () => {
-            window.location.href = '/community-management/homeowner-requests';
+            navigate('/community-management/homeowner-requests');
             markAllAsRead();
           },
         },

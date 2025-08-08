@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Invoice } from '@/types/invoice-types';
+import { useSupabaseUpdate } from '@/hooks/supabase';
 
 interface UseInvoiceActionsProps {
   invoice: Invoice;
@@ -10,11 +11,12 @@ interface UseInvoiceActionsProps {
 
 export const useInvoiceActions = ({ invoice, onInvoiceUpdate }: UseInvoiceActionsProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const updateInvoice = useSupabaseUpdate<Invoice>('invoices');
 
   const handleApprove = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual approval logic
+      await updateInvoice.mutateAsync({ id: invoice.id, data: { status: 'approved' } as Partial<Invoice> });
       toast.success('Invoice approved successfully');
       onInvoiceUpdate?.({ ...invoice, status: 'approved' });
     } catch (error) {
@@ -28,7 +30,7 @@ export const useInvoiceActions = ({ invoice, onInvoiceUpdate }: UseInvoiceAction
   const handleReject = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual rejection logic
+      await updateInvoice.mutateAsync({ id: invoice.id, data: { status: 'rejected' } as Partial<Invoice> });
       toast.success('Invoice rejected');
       onInvoiceUpdate?.({ ...invoice, status: 'rejected' });
     } catch (error) {

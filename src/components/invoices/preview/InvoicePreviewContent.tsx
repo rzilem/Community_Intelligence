@@ -3,6 +3,8 @@ import React from 'react';
 import { EnhancedStoragePdfViewer } from './viewers/EnhancedStoragePdfViewer';
 import { EmailPreview } from './EmailPreview';
 import { NoPreviewState } from './NoPreviewState';
+import { SafeHtml } from '@/components/security/SafeHtml';
+import { logger } from '@/utils/logger';
 
 interface InvoicePreviewContentProps {
   currentView: 'pdf' | 'html' | 'email';
@@ -27,13 +29,13 @@ export const InvoicePreviewContent: React.FC<InvoicePreviewContentProps> = React
   onExternalOpen,
   onFallbackToHtml
 }) => {
-  console.log('InvoicePreviewContent: Rendering content for view:', currentView);
+  logger.debug('InvoicePreviewContent: Rendering content for view:', { currentView });
 
   switch (currentView) {
     case 'html':
       return hasHtml ? (
         <div className="p-6 overflow-auto h-full bg-white">
-          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          <SafeHtml html={htmlContent} />
         </div>
       ) : (
         <NoPreviewState message="Processed content not available" />

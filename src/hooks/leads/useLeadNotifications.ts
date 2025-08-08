@@ -3,10 +3,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lead } from '@/types/lead-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export const useLeadNotifications = () => {
   const [unreadLeadsCount, setUnreadLeadsCount] = useState<number>(0);
   const hasShownToast = useRef(false);
+  const navigate = useNavigate();
   
   // Use localStorage for persistence but keep a ref to the value to avoid re-renders
   const lastCheckedRef = useRef<string>(
@@ -42,7 +44,7 @@ export const useLeadNotifications = () => {
         action: {
           label: "View",
           onClick: () => {
-            window.location.href = '/lead-management/leads';
+            navigate('/lead-management/leads');
             markAllAsRead();
           },
         },

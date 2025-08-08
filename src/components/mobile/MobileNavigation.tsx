@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -19,6 +19,7 @@ interface MobileNavigationProps {
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ onQuickAction }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { 
@@ -89,7 +90,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ onQuickAction }) =>
               variant={isActive ? "default" : "ghost"}
               size="sm"
               className="flex-col h-auto py-2 px-1 relative"
-              onClick={() => window.location.href = item.path}
+              onClick={() => navigate(item.path)}
             >
               <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
               <span className={`text-xs mt-1 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>

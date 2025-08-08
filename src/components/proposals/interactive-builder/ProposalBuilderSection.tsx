@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Grip, Trash2, Edit, ChevronDown, ChevronUp, Image, Video, FileText } from 'lucide-react';
 import { ProposalSection } from '@/types/proposal-types';
 import RichTextEditor from './RichTextEditor';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 interface ProposalBuilderSectionProps {
   section: ProposalSection;
@@ -46,7 +47,7 @@ const ProposalBuilderSection: React.FC<ProposalBuilderSectionProps> = ({
           <CardTitle className="text-xl">{section.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div dangerouslySetInnerHTML={{ __html: section.content }} />
+          <SafeHtml html={section.content} />
           
           {section.attachments && section.attachments.length > 0 && (
             <div className="mt-4 border-t pt-4">
@@ -124,7 +125,7 @@ const ProposalBuilderSection: React.FC<ProposalBuilderSectionProps> = ({
               </div>
             </>
           ) : (
-            <div dangerouslySetInnerHTML={{ __html: content }} />
+            <SafeHtml html={content} />
           )}
         </CardContent>
       )}

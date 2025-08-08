@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Users, Mail } from 'lucide-react';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 interface CampaignPreviewProps {
   subject: string;
@@ -62,10 +63,8 @@ export const CampaignPreview: React.FC<CampaignPreviewProps> = ({
               {/* Email Body */}
               <div className="p-6 bg-white min-h-[400px]">
                 {body ? (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: renderBodyWithMergeTags(body)
-                    }}
+                  <SafeHtml 
+                    html={renderBodyWithMergeTags(body)} 
                     className="prose max-w-none"
                   />
                 ) : (

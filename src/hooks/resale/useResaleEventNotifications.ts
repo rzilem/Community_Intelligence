@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export interface ResaleEvent {
   id: string;
@@ -14,6 +15,7 @@ export interface ResaleEvent {
 export const useResaleEventNotifications = () => {
   const [unreadEventsCount, setUnreadEventsCount] = useState<number>(0);
   const hasShownToast = useRef(false);
+  const navigate = useNavigate();
   
   // Use localStorage for persistence but keep a ref to the value to avoid re-renders
   const lastCheckedRef = useRef<string>(
@@ -49,7 +51,7 @@ export const useResaleEventNotifications = () => {
         action: {
           label: "View",
           onClick: () => {
-            window.location.href = '/resale-management/calendar';
+            navigate('/resale-management/calendar');
             markAllAsRead();
           },
         },

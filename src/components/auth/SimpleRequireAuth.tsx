@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface SimpleRequireAuthProps {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ export const SimpleRequireAuth: React.FC<SimpleRequireAuthProps> = ({ children }
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log('[SimpleRequireAuth] State:', { 
+  logger.debug('[SimpleRequireAuth] State', { 
     loading, 
     isAuthenticated, 
     userExists: !!user, 
@@ -23,13 +24,13 @@ export const SimpleRequireAuth: React.FC<SimpleRequireAuthProps> = ({ children }
   useEffect(() => {
     // Don't do anything while still loading
     if (loading) {
-      console.log('[SimpleRequireAuth] Still loading auth state');
+      logger.debug('[SimpleRequireAuth] Still loading auth state');
       return;
     }
     
     // If not authenticated, redirect to login
     if (!isAuthenticated || !user) {
-      console.log('[SimpleRequireAuth] User not authenticated, redirecting to login');
+      logger.info('[SimpleRequireAuth] User not authenticated, redirecting to login');
       navigate('/auth?tab=login', { 
         state: { from: location.pathname },
         replace: true
@@ -37,7 +38,7 @@ export const SimpleRequireAuth: React.FC<SimpleRequireAuthProps> = ({ children }
       return;
     }
 
-    console.log('[SimpleRequireAuth] User authenticated, allowing access');
+    logger.debug('[SimpleRequireAuth] User authenticated, allowing access');
   }, [user, loading, isAuthenticated, navigate, location.pathname]);
 
   // Show loading state while checking authentication

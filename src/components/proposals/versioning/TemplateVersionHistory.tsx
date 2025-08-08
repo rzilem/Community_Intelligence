@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Clock, History, ArrowLeft, ArrowRight, Check, X, Save } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 interface TemplateVersionHistoryProps {
   template: ProposalTemplate;
@@ -307,7 +308,7 @@ const TemplateVersionHistory: React.FC<TemplateVersionHistoryProps> = ({
                       )}
                       
                       <div className="border rounded-md p-4 bg-white overflow-auto max-h-[calc(100vh-380px)]">
-                        <div dangerouslySetInnerHTML={{ __html: selectedVersion.content }} />
+                        <SafeHtml html={selectedVersion.content} />
                       </div>
                       
                       <div className="flex space-x-2 justify-end">

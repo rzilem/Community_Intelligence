@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
 import CostCalculator from './interactive-calculator/CostCalculator';
 import ProposalVideoSection from './video-integration/ProposalVideoSection';
+import { SafeHtml } from '@/components/security/SafeHtml';
 
 interface ClientPortalViewerProps {
   proposal: Proposal;
@@ -264,9 +265,9 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
             
             <CardContent className="pt-4">
               <TabsContent value="proposal" className="mt-0">
-                <div 
+                <SafeHtml 
+                  html={proposal.content}
                   className="border rounded-md p-8 bg-white min-h-[60vh]"
-                  dangerouslySetInnerHTML={{ __html: proposal.content }}
                 />
               </TabsContent>
               
