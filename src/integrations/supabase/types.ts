@@ -13177,21 +13177,21 @@ export type Database = {
       }
       v_balance_sheet: {
         Row: {
-          account_code: string | null
-          account_name: string | null
-          account_type: string | null
+          as_of_date: string | null
+          assets_total: number | null
           association_id: string | null
-          balance: number | null
+          equity_total: number | null
+          liabilities_total: number | null
         }
         Relationships: []
       }
       v_income_statement: {
         Row: {
-          account_code: string | null
-          account_name: string | null
-          account_type: string | null
-          amount: number | null
+          as_of_date: string | null
           association_id: string | null
+          expense_total: number | null
+          net_income: number | null
+          revenue_total: number | null
         }
         Relationships: []
       }
@@ -13199,12 +13199,11 @@ export type Database = {
         Row: {
           account_code: string | null
           account_name: string | null
-          account_type: string | null
+          as_of_date: string | null
           association_id: string | null
-          net_balance: number | null
-          normal_balance: string | null
-          total_credits: number | null
-          total_debits: number | null
+          balance: number | null
+          credit: number | null
+          debit: number | null
         }
         Relationships: []
       }
