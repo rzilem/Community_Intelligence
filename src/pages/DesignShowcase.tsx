@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -189,6 +189,53 @@ const DesignShowcase: React.FC = () => {
       category: "Universal"
     }
   ];
+  
+  useEffect(() => {
+    const title = 'Community Intelligence Design Showcase';
+    const description = 'Explore Community Intelligence design concepts, AI-powered HOA UI themes, and modern layouts.';
+    document.title = title;
+
+    // meta description
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = description;
+
+    // canonical link
+    const canonicalHref = `${window.location.origin}/design-showcase`;
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'canonical';
+      document.head.appendChild(link);
+    }
+    link.href = canonicalHref;
+
+    // JSON-LD structured data
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: title,
+      description,
+      url: canonicalHref
+    };
+    const scriptId = 'ld-json-design-showcase';
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (script) script.remove();
+    script = document.createElement('script');
+    script.id = scriptId;
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+
+    return () => {
+      const s = document.getElementById(scriptId);
+      if (s) s.remove();
+    };
+  }, []);
 
   return (
     <AppLayout>
@@ -196,7 +243,7 @@ const DesignShowcase: React.FC = () => {
         <div className="flex items-center gap-3">
           <Palette className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Design Showcase</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Community Intelligence Design Showcase</h1>
             <p className="text-muted-foreground">
               Explore different design concepts and visual directions for Community Intelligence
             </p>
@@ -209,7 +256,7 @@ const DesignShowcase: React.FC = () => {
               <div className="aspect-video bg-muted relative overflow-hidden">
                 <img 
                   src={concept.image} 
-                  alt={concept.title}
+                  alt={`Community Intelligence design concept: ${concept.title}`}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
                 <Badge className="absolute top-4 left-4 bg-primary/90 text-primary-foreground">

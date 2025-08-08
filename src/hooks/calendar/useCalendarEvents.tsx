@@ -31,7 +31,7 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     'calendar_events',
     {
       select: '*',
-      filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : [],
+      filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : [],
     },
     !!currentAssociation
   );

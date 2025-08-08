@@ -47,7 +47,7 @@ export const useCalendarEventMutations = () => {
 
     // Create the event object to save to Supabase
     const eventToSave = {
-      hoa_id: currentAssociation.id,
+      association_id: currentAssociation.id,
       title: newEvent.title,
       description: newEvent.description || null,
       location: newEvent.location || null,
