@@ -11,6 +11,7 @@ import { FileText, Download, Calendar, TrendingUp } from 'lucide-react';
 import { AdvancedGLService } from '@/services/accounting/advanced-gl-service';
 import { useToast } from '@/hooks/use-toast';
 import AdvancedFinancialReports from '@/components/accounting/AdvancedFinancialReports';
+import { useNavigate } from 'react-router-dom';
 
 const FinancialReports: React.FC = () => {
   const [reportType, setReportType] = useState('trial_balance');
@@ -18,6 +19,7 @@ const FinancialReports: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // For demo purposes
   const associationId = 'demo-association-id';
@@ -158,7 +160,11 @@ const FinancialReports: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {reportTypes.map((type) => (
-                  <Card key={type.value} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <Card key={type.value} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => {
+                    if (type.value === 'trial_balance') navigate('/accounting/financial-reports/trial-balance');
+                    if (type.value === 'balance_sheet') navigate('/accounting/financial-reports/balance-sheet');
+                    if (type.value === 'income_statement') navigate('/accounting/financial-reports/income-statement');
+                  }}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <type.icon className="h-8 w-8 text-primary" />

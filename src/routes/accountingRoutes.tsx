@@ -24,6 +24,9 @@ import AssessmentSchedules from "@/pages/accounting/AssessmentSchedules";
 import AccountsReceivable from "@/pages/accounting/AccountsReceivable";
 import GeneralLedger from "@/pages/accounting/GeneralLedger";
 import ChartOfAccounts from "@/pages/accounting/ChartOfAccounts";
+import TrialBalancePage from "@/pages/accounting/reports/TrialBalancePage";
+import IncomeStatementPage from "@/pages/accounting/reports/IncomeStatementPage";
+import BalanceSheetPage from "@/pages/accounting/reports/BalanceSheetPage";
 
 // Accounting Routes
 export const accountingRoutes: RouteObject[] = [
@@ -124,7 +127,15 @@ export const accountingRoutes: RouteObject[] = [
     element: <RequireAuth><GeneralLedger /></RequireAuth>
   },
   {
-    path: "/accounting/chart-of-accounts",
-    element: <RequireAuth><ChartOfAccounts /></RequireAuth>
+    path: "/accounting/financial-reports/trial-balance",
+    element: <RequireAuth><TrialBalancePage /></RequireAuth>
+  },
+  {
+    path: "/accounting/financial-reports/income-statement",
+    element: <RequireAuth><IncomeStatementPage /></RequireAuth>
+  },
+  {
+    path: "/accounting/financial-reports/balance-sheet",
+    element: <RequireAuth><BalanceSheetPage /></RequireAuth>
   }
 ];

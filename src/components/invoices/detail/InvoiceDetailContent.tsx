@@ -5,6 +5,7 @@ import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
 import { InvoicePreview } from '@/components/invoices/InvoicePreview';
+import { Button } from '@/components/ui/button';
 
 interface InvoiceDetailContentProps {
   invoice: any;
@@ -16,6 +17,7 @@ interface InvoiceDetailContentProps {
   showPreview: boolean;
   handleSave: () => void;
   handleApprove: () => void;
+  handleApproveAndNext?: () => void;
   isSaving: boolean;
 }
 
@@ -29,6 +31,7 @@ export const InvoiceDetailContent: React.FC<InvoiceDetailContentProps> = ({
   showPreview,
   handleSave,
   handleApprove,
+  handleApproveAndNext,
   isSaving
 }) => {
   return (
@@ -57,6 +60,14 @@ export const InvoiceDetailContent: React.FC<InvoiceDetailContentProps> = ({
             onApprove={handleApprove}
             isSaving={isSaving}
           />
+
+          {handleApproveAndNext && (
+            <div className="flex justify-end">
+              <Button onClick={handleApproveAndNext} disabled={isSaving}>
+                Approve & Next
+              </Button>
+            </div>
+          )}
         </div>
       </ResizablePanel>
       

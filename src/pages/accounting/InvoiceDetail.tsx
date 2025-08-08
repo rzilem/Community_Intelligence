@@ -9,6 +9,7 @@ import { InvoiceErrorAlert } from '@/components/invoices/detail/InvoiceErrorAler
 import { InvoiceNavigationManager } from '@/components/invoices/detail/InvoiceNavigationManager';
 import { InvoiceDetailContent } from '@/components/invoices/detail/InvoiceDetailContent';
 import { useInvoiceActions } from '@/hooks/invoices/useInvoiceActions';
+import { toast } from 'sonner';
 
 const InvoiceDetail = () => {
   const { id } = useParams();
@@ -75,6 +76,32 @@ const InvoiceDetail = () => {
     navigate(`/accounting/invoice-queue/${invoiceId}`);
   };
 
+  const handleApproveAndNext = () => {
+    if (!id || !allInvoices || allInvoices.length === 0) return;
+    const pending = allInvoices.filter((inv: any) => inv.status === 'pending');
+    if (pending.length === 0) {
+      toast.info('No pending invoices left');
+      navigate('/accounting/invoice-queue');
+      return;
+    }
+    const currentIndex = pending.findIndex((inv: any) => inv.id === id);
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % pending.length;
+    const nextId = pending[nextIndex].id;
+
+    updateInvoice({
+      id: id as string,
+      data: { status: 'approved' }
+    }, {
+      onSuccess: () => {
+        toast.success('Invoice approved');
+        navigate(`/accounting/invoice-queue/${nextId}`);
+      },
+      onError: (error: Error) => {
+        toast.error(`Error approving invoice: ${error.message}`);
+      }
+    });
+  };
+
   return (
     <AppLayout>
       <PageTemplate 
@@ -103,6 +130,7 @@ const InvoiceDetail = () => {
             showPreview={true}
             handleSave={handleSave}
             handleApprove={handleApprove}
+            handleApproveAndNext={handleApproveAndNext}
             isSaving={isSaving}
           />
         </div>

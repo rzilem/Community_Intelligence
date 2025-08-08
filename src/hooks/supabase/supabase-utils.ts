@@ -26,7 +26,10 @@ export type KnownTables =
   | 'amenities'
   | 'onboarding_projects'
   | 'onboarding_templates'
-  | 'comments';
+  | 'comments'
+  | 'v_trial_balance'
+  | 'v_income_statement'
+  | 'v_balance_sheet';
 
 // Filter operators
 export type FilterOperator = 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte' | 'like' | 'ilike' | 'is';
