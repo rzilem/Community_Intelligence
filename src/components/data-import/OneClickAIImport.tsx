@@ -88,11 +88,12 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     maxSize: 250 * 1024 * 1024, // 250MB
     accept: {
       'text/csv': ['.csv'],
+      'text/tab-separated-values': ['.tsv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls'],
       'application/zip': ['.zip'],
       'application/pdf': ['.pdf'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt', '.tsv']
     }
   });
 
@@ -362,8 +363,9 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     try {
       if (filename.toLowerCase().endsWith('.csv')) {
         const text = await zipEntry.async('text');
-        if (text.length > 2 * 1024 * 1024) { // 2MB limit for ZIP files
-          throw new Error('File too large');
+        // Soft limit: if very large, still sample without throwing
+        if (text.length > 15 * 1024 * 1024) {
+          console.warn('Large CSV inside ZIP detected, sampling first 200 lines');
         }
         
         // Return only essential data for AI analysis and richer preview
@@ -391,14 +393,15 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
           folderPath,
           sheets: workbook.SheetNames
         };
-      } else if (filename.toLowerCase().endsWith('.txt')) {
+      } else if (filename.toLowerCase().endsWith('.txt') || filename.toLowerCase().endsWith('.tsv')) {
         const text = await zipEntry.async('text');
-        if (text.length > 1 * 1024 * 1024) { // 1MB limit for text files
-          throw new Error('File too large');
+        // Soft limit: allow big files, just sample
+        if (text.length > 10 * 1024 * 1024) {
+          console.warn('Large TXT/TSV inside ZIP detected, sampling first 200 lines');
         }
         const lines = text.split('\n');
         const sample = lines.slice(0, 200).join('\n');
-        const delim = detectDelimiter(sample);
+        const delim = detectDelimiter(sample) || '\t';
         if (delim) {
           return {
             type: 'delimited',
@@ -491,7 +494,7 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   };
 
   const isSupportedFileType = (filename: string): boolean => {
-    const supportedExtensions = ['.csv', '.xlsx', '.xls', '.txt'];
+    const supportedExtensions = ['.csv', '.tsv', '.xlsx', '.xls', '.txt'];
     const lowerFilename = filename.toLowerCase();
     
     // Skip system files and unsupported types
