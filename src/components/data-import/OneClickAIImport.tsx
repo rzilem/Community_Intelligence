@@ -195,11 +195,11 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     result.structure.processedFiles = processedCount;
     
     // Fallback: deep scan the entire ZIP for any CSV/XLS/XLSX if none were captured above
-    const hasStructured = Object.values(result.files).some((f: any) => f?.type === 'excel' || f?.type === 'csv');
+    const hasStructured = Object.values(result.files).some((f: any) => f?.type === 'excel' || f?.type === 'csv' || f?.type === 'delimited');
     if (!hasStructured) {
       const structuredCandidates = allFiles.filter(fn => {
         const lower = fn.toLowerCase();
-        return lower.endsWith('.csv') || lower.endsWith('.xlsx') || lower.endsWith('.xls');
+        return lower.endsWith('.csv') || lower.endsWith('.xlsx') || lower.endsWith('.xls') || lower.endsWith('.txt');
       });
 
       for (const filename of structuredCandidates) {
@@ -208,7 +208,7 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         if (!zipEntry || zipEntry.dir) continue;
         try {
           const fileData = await processZipEntryOptimized(zipEntry, filename);
-          if (fileData && (fileData.type === 'excel' || fileData.type === 'csv')) {
+          if (fileData && (fileData.type === 'excel' || fileData.type === 'csv' || fileData.type === 'delimited')) {
             const simplifiedName = filename.replace(/^.*\//, '');
             if (!result.files[simplifiedName]) {
               result.files[simplifiedName] = fileData;
@@ -339,6 +339,23 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
     return score;
   };
 
+  // Detect delimiter for delimited text files
+  const detectDelimiter = (sample: string): string | null => {
+    const first = sample.split('\n').slice(0, 5).join('\n');
+    const candidates = [',', '\t', '|', ';'];
+    let bestDelim: string | null = null;
+    let bestCount = 0;
+    for (const d of candidates) {
+      const re = new RegExp(`\\${d}`, 'g');
+      const count = (first.match(re) || []).length;
+      if (count > bestCount) {
+        bestCount = count;
+        bestDelim = d;
+      }
+    }
+    return bestCount >= 2 ? bestDelim : null;
+  };
+
   const processZipEntryOptimized = async (zipEntry: any, filename: string): Promise<any> => {
     const folderPath = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : 'root';
     
@@ -379,10 +396,21 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         if (text.length > 1 * 1024 * 1024) { // 1MB limit for text files
           throw new Error('File too large');
         }
-        
+        const lines = text.split('\n');
+        const sample = lines.slice(0, 200).join('\n');
+        const delim = detectDelimiter(sample);
+        if (delim) {
+          return {
+            type: 'delimited',
+            content: sample,
+            delimiter: delim,
+            rowCount: Math.max(0, lines.length - 1),
+            folderPath
+          };
+        }
         return {
           type: 'text',
-          content: text.substring(0, 500), // Only first 500 chars for analysis
+          content: text.substring(0, 500), // fallback: only first 500 chars
           folderPath
         };
       }
@@ -624,6 +652,14 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
                 aggregatedRows.push(row);
                 if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
               }
+            } else if (entry?.type === 'delimited' && typeof entry.content === 'string') {
+              zipHadStructured = true;
+              const parsed = Papa.parse(entry.content, { header: true, skipEmptyLines: true, delimiter: entry.delimiter });
+              const rows = (parsed.data as any[]).filter(Boolean);
+              for (const row of rows) {
+                aggregatedRows.push(row);
+                if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+              }
             }
           }
         } else if (Array.isArray(content)) {
@@ -632,7 +668,8 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
             if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
           }
         } else if (typeof content === 'string') {
-          const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+          const delim = detectDelimiter(content) || undefined;
+          const parsed = Papa.parse(content, { header: true, skipEmptyLines: true, delimiter: delim });
           const rows = (parsed.data as any[]).filter(Boolean);
           for (const row of rows) {
             aggregatedRows.push(row);
