@@ -12,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { zipParserService } from '@/services/import-export/zip-parser-service';
 import type { ZipAnalysisResult } from '@/services/import-export/zip-parser-service';
 import { ZipContentSummary } from './ZipContentSummary';
+import CreateOnboardingProjectModal from '@/components/onboarding/CreateOnboardingProjectModal';
+import { useNavigate } from 'react-router-dom';
 interface SmartImportWorkflowProps {
   onImportComplete?: (data: any) => void;
 }
@@ -24,6 +26,8 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
   const [zipSummary, setZipSummary] = useState<ZipAnalysisResult | null>(null);
   const [attemptPdfTableExtraction, setAttemptPdfTableExtraction] = useState(false);
   const [showZipSummary, setShowZipSummary] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileSelected = async (selectedFile: File) => {
     setFiles([selectedFile]);
@@ -207,9 +211,23 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
                     </ul>
                   </div>
                 )}
+
+                <div className="pt-2">
+                  <Button onClick={() => setIsCreateModalOpen(true)} className="w-full">
+                    Create Onboarding Project
+                  </Button>
+                </div>
+
+                <CreateOnboardingProjectModal
+                  open={isCreateModalOpen}
+                  onOpenChange={setIsCreateModalOpen}
+                  defaultName={(files[0]?.name || 'Imported Project').replace(/\.[^/.]+$/, '')}
+                  onCreated={(id) => navigate(`/lead-management/onboarding/${id}`)}
+                />
               </CardContent>
             </Card>
           )}
+
         </CardContent>
       </Card>
     </div>
