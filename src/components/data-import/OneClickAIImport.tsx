@@ -29,6 +29,8 @@ import { aiImportExecutor, type ImportExecutionResult } from '@/services/ai-impo
 import { ImportErrorBoundary } from './ImportErrorBoundary';
 import ImportPreviewModal from './ImportPreviewModal';
 import { advancedOCRService } from '@/services/import-export/advanced-ocr-service';
+import CreateOnboardingProjectModal from '@/components/onboarding/CreateOnboardingProjectModal';
+import { useNavigate } from 'react-router-dom';
 
 interface OneClickAIImportProps {
   associationId: string;
@@ -77,8 +79,10 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   const [importResults, setImportResults] = useState<ImportExecutionResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
-  const [enablePdfTableExtraction, setEnablePdfTableExtraction] = useState(false);
-  const [zipSummaries, setZipSummaries] = useState<Record<string, any>>({});
+const [enablePdfTableExtraction, setEnablePdfTableExtraction] = useState(false);
+const [zipSummaries, setZipSummaries] = useState<Record<string, any>>({});
+const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+const navigate = useNavigate();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -1182,6 +1186,9 @@ if (aggregatedRows.length === 0) {
               <Button variant="outline" onClick={() => setAnalysisResults(null)}>
                 Analyze Again
               </Button>
+              <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
+                Create Onboarding Project
+              </Button>
               <Button 
                 onClick={showImportPreview} 
                 disabled={isImporting || analysisResults.confidence < 50}
@@ -1259,6 +1266,9 @@ if (aggregatedRows.length === 0) {
             )}
 
             <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button onClick={() => setIsCreateModalOpen(true)}>
+                Create Onboarding Project
+              </Button>
               <Button variant="outline" onClick={handleReset} className="gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Start New Import
@@ -1277,6 +1287,13 @@ if (aggregatedRows.length === 0) {
         previewData={previewData}
         requiredFieldsErrors={validationErrors}
         warnings={validationWarnings}
+      />
+
+      <CreateOnboardingProjectModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        defaultName={(files[0]?.name || 'Imported Project').replace(/\.[^/.]+$/, '')}
+        onCreated={(id) => navigate(`/lead-management/onboarding/${id}`)}
       />
     </div>
     </ImportErrorBoundary>
