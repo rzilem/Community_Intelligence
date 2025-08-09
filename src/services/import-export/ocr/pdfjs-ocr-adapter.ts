@@ -167,7 +167,7 @@ export class PDFJSOCRAdapter implements OCRAdapter {
       return { text: '', pages: [] };
     }
 
-    const worker = await createWorker();
+    const worker: any = await createWorker();
     try {
       await worker.loadLanguage(language);
       await worker.initialize(language);
@@ -196,7 +196,7 @@ export class PDFJSOCRAdapter implements OCRAdapter {
           const { data } = await worker.recognize(dataUrl);
           const pageText = (data?.text || '').trim();
 
-          pages.push({ pageNumber, text: pageText });
+          pages.push({ pageNumber: pageNum, text: pageText });
           fullText += (pageText ? pageText + '\n\n' : '');
         } catch (pageErr) {
           devLog.error(`Tesseract OCR error on page ${pageNum}:`, pageErr);
