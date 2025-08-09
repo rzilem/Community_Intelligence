@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ import Papa from 'papaparse';
 import { aiImportExecutor, type ImportExecutionResult } from '@/services/ai-import/ai-import-executor';
 import { ImportErrorBoundary } from './ImportErrorBoundary';
 import ImportPreviewModal from './ImportPreviewModal';
+import { advancedOCRService } from '@/services/import-export/advanced-ocr-service';
 
 interface OneClickAIImportProps {
   associationId: string;
@@ -75,7 +76,9 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [importResults, setImportResults] = useState<ImportExecutionResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [enablePdfTableExtraction, setEnablePdfTableExtraction] = useState(false);
+  const [zipSummaries, setZipSummaries] = useState<Record<string, any>>({});
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -95,7 +98,28 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
       'application/pdf': ['.pdf'],
       'text/plain': ['.txt', '.tsv']
     }
-  });
+});
+
+  useEffect(() => {
+    const computeSummaries = async () => {
+      const summaries: Record<string, any> = {};
+      for (const f of files) {
+        if (f.name.toLowerCase().endsWith('.zip')) {
+          try {
+            summaries[f.name] = await quickZipSummary(f);
+          } catch (e) {
+            console.warn('ZIP summary failed for', f.name, e);
+          }
+        }
+      }
+      setZipSummaries(summaries);
+    };
+    if (files.some(f => f.name.toLowerCase().endsWith('.zip'))) {
+      computeSummaries();
+    } else {
+      setZipSummaries({});
+    }
+  }, [files]);
 
   const parseFileContent = async (file: File): Promise<any> => {
     if (file.name.endsWith('.csv')) {
@@ -355,6 +379,70 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
       }
     }
     return bestCount >= 2 ? bestDelim : null;
+};
+
+  // Quick, lightweight ZIP content summary (no file data parsing)
+  const quickZipSummary = async (zipFile: File) => {
+    const buffer = await zipFile.arrayBuffer();
+    const zip = new JSZip();
+    const z = await zip.loadAsync(buffer);
+    const fileTypeCounts: Record<string, number> = {};
+    const folders = new Set<string>();
+    const pdfFiles: string[] = [];
+
+    for (const [name, entry] of Object.entries(z.files)) {
+      if (entry.dir) continue;
+      const lower = name.toLowerCase();
+      const ext = lower.slice(lower.lastIndexOf('.'));
+      folders.add(name.includes('/') ? name.substring(0, name.lastIndexOf('/')) : 'root');
+      const key = ext || 'unknown';
+      fileTypeCounts[key] = (fileTypeCounts[key] || 0) + 1;
+      if (lower.endsWith('.pdf')) pdfFiles.push(name);
+    }
+
+    return {
+      totalFiles: Object.values(z.files).filter((e: any) => !e.dir).length,
+      folderCount: folders.size,
+      fileTypeCounts,
+      pdfFiles
+    };
+  };
+
+  // Extract PDFs from ZIP as File objects
+  const extractPdfsFromZip = async (zipFile: File): Promise<File[]> => {
+    const buffer = await zipFile.arrayBuffer();
+    const zip = new JSZip();
+    const z = await zip.loadAsync(buffer);
+    const pdfFiles: File[] = [];
+    for (const [name, entry] of Object.entries(z.files)) {
+      if (entry.dir || !name.toLowerCase().endsWith('.pdf')) continue;
+      const ab = await (entry as any).async('arraybuffer');
+      const blob = new Blob([ab], { type: 'application/pdf' });
+      const fileName = name.split('/').pop() || 'document.pdf';
+      pdfFiles.push(new File([blob], fileName, { type: 'application/pdf' }));
+    }
+    return pdfFiles;
+  };
+
+  // Parse simple table-like text into rows
+  const parseTableLikeText = (text: string): any[] => {
+    if (!text) return [];
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) return [];
+    const sample = lines.slice(0, 200).join('\n');
+    let delim = detectDelimiter(sample);
+    if (!delim) {
+      // Try whitespace columns
+      const normalized = lines.map(l => l.trim().replace(/\s{2,}/g, '\t'));
+      delim = '\t';
+      const header = normalized[0].split('\t');
+      if (header.length < 2) return [];
+      const rows = normalized.slice(1).map(l => l.split('\t'));
+      return rows.map(r => Object.fromEntries(header.map((h, i) => [h.trim(), (r[i] || '').trim()])));
+    }
+    // Use Papa for robust parsing when delimiter is known
+    const parsed = Papa.parse(sample, { header: true, skipEmptyLines: true, delimiter: delim });
+    return (parsed.data as any[]).filter(Boolean);
   };
 
   const processZipEntryOptimized = async (zipEntry: any, filename: string): Promise<any> => {
@@ -683,14 +771,53 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
         if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
       }
 
-      if (aggregatedRows.length === 0) {
+if (aggregatedRows.length === 0) {
         const hasZip = files.some(f => f.name.toLowerCase().endsWith('.zip'));
-        if (hasZip && !zipHadStructured) {
-          toast.error('ZIP analyzed but no CSV/Excel tables were found to preview. Please include CSV/XLSX files or select a ZIP with tabular data.');
-        } else {
-          toast.error('No data found to preview');
+        // Gather PDFs from uploads and zips
+        let pdfFiles: File[] = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+        if (hasZip) {
+          for (const f of files) {
+            if (f.name.toLowerCase().endsWith('.zip')) {
+              try {
+                const extracted = await extractPdfsFromZip(f);
+                pdfFiles.push(...extracted);
+              } catch (e) {
+                console.warn('Failed to extract PDFs from ZIP', f.name, e);
+              }
+            }
+          }
         }
-        return;
+
+        if (pdfFiles.length > 0) {
+          if (!enablePdfTableExtraction) {
+            toast.info('PDFs detected. Enable "Attempt PDF table extraction (beta)" to try extracting tables from PDFs.');
+            return;
+          }
+          for (const pdf of pdfFiles.slice(0, 3)) {
+            try {
+              const { text } = await advancedOCRService.extractFromPDF(pdf);
+              const rows = parseTableLikeText(text);
+              for (const r of rows) {
+                aggregatedRows.push(r);
+                if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+              }
+              if (aggregatedRows.length >= MAX_PREVIEW_ROWS) break;
+            } catch (e) {
+              console.warn('PDF extraction failed for', pdf.name, e);
+            }
+          }
+          if (aggregatedRows.length === 0) {
+            toast.warning('PDFs scanned but no table-like data was detected. Please include CSV/Excel files or ensure PDFs contain selectable, tabular text.');
+            return;
+          }
+        } else {
+          if (hasZip && !zipHadStructured) {
+            toast.error('ZIP analyzed but no CSV/Excel tables were found to preview. Please include CSV/XLSX files or select a ZIP with tabular data.');
+          } else {
+            toast.error('No data found to preview');
+          }
+          return;
+        }
       }
 
       setPreviewData(aggregatedRows);
@@ -872,6 +999,28 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
             </div>
           )}
 
+          {Object.keys(zipSummaries).length > 0 && (
+            <div className="mt-4 space-y-3">
+              <h4 className="font-medium">ZIP Content Summary</h4>
+              {Object.entries(zipSummaries).map(([name, sum]: any) => (
+                <div key={name} className="p-3 bg-muted rounded">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{name}</span>
+                    <Badge variant="outline">{sum.totalFiles} files • {sum.folderCount} folders</Badge>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                    {Object.entries(sum.fileTypeCounts || {}).slice(0,8).map(([ext, count]: any) => (
+                      <div key={ext}>
+                        <span className="font-medium">{ext}</span>: {count}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+
           <div className="mt-4">
             <label className="block text-sm font-medium mb-2">
               Describe your data (optional)
@@ -884,6 +1033,19 @@ const OneClickAIImport: React.FC<OneClickAIImportProps> = ({
               rows={3}
             />
           </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              id="pdf-extract"
+              type="checkbox"
+              checked={enablePdfTableExtraction}
+              onChange={(e) => setEnablePdfTableExtraction(e.target.checked)}
+            />
+            <label htmlFor="pdf-extract" className="text-sm text-muted-foreground">
+              Attempt PDF table extraction (beta)
+            </label>
+          </div>
+
 
           <div className="mt-4 flex justify-end">
             <Button 
