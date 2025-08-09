@@ -11,6 +11,7 @@ import FileUploader from './FileUploader';
 import { Switch } from '@/components/ui/switch';
 import { zipParserService } from '@/services/import-export/zip-parser-service';
 import type { ZipAnalysisResult } from '@/services/import-export/zip-parser-service';
+import { ZipContentSummary } from './ZipContentSummary';
 interface SmartImportWorkflowProps {
   onImportComplete?: (data: any) => void;
 }
@@ -29,7 +30,7 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
     setZipSummary(null);
     if (selectedFile.name.toLowerCase().endsWith('.zip')) {
       try {
-        const summary = await zipParserService.parseZipFile(selectedFile);
+        const summary = await zipParserService.parseZipFile(selectedFile, { enablePdfOcr: attemptPdfTableExtraction });
         setZipSummary(summary);
         toast.message('ZIP analyzed', {
           description: `Found ${summary.files.length} files, ${summary.totalRecords} total rows`
@@ -135,6 +136,10 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
               >
                 {processing ? 'Processing...' : 'Start Smart Import'}
               </Button>
+
+              {zipSummary && (
+                <ZipContentSummary summary={zipSummary} />
+              )}
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { parseService } from './parse-service';
 import * as XLSX from 'xlsx';
 import { devLog } from '@/utils/dev-logger';
 import Papa from 'papaparse';
+import { advancedOCRService } from './advanced-ocr-service';
 
 export interface ZipFileEntry {
   filename: string;
@@ -12,6 +13,11 @@ export interface ZipFileEntry {
   detectedType: string;
   associationHint?: string;
   confidence: number;
+  rawText?: string;
+  ocrSummary?: {
+    pageCount: number;
+    textPreview: string;
+  };
 }
 
 export interface ZipAnalysisResult {
@@ -21,8 +27,13 @@ export interface ZipAnalysisResult {
   fileTypes: Record<string, number>;
 }
 
+export interface ZipParseOptions {
+  enablePdfOcr?: boolean;
+  ocrLanguages?: string[];
+}
+
 export const zipParserService = {
-  async parseZipFile(zipFile: File): Promise<ZipAnalysisResult> {
+  async parseZipFile(zipFile: File, options: ZipParseOptions = {}): Promise<ZipAnalysisResult> {
     try {
       devLog.info('Starting zip file analysis:', zipFile.name);
       
@@ -65,23 +76,82 @@ export const zipParserService = {
 
             devLog.info(`Processed file: ${filename}, Type: ${detectedType}, Records: ${fileData.length}`);
           } else if (filename.toLowerCase().endsWith('.pdf')) {
-            // Record PDF files even if we can't extract rows here (OCR may handle later)
-            const detectedType = 'pdf_document';
+            const baseType = 'pdf_document';
             const associationHint = this.extractAssociationHint(filename);
-            const entry: ZipFileEntry = {
-              filename: filename.split('/').pop() || filename,
-              path: filename,
-              data: [],
-              detectedType,
-              associationHint,
-              confidence: 0.6
-            };
-            files.push(entry);
-            fileTypes[detectedType] = (fileTypes[detectedType] || 0) + 1;
-            if (associationHint) {
-              suggestedAssociations.add(associationHint);
+
+            if (options.enablePdfOcr) {
+              try {
+                const buffer = await zipObject.async('arraybuffer');
+                const blob = new Blob([buffer], { type: 'application/pdf' });
+                const fileForOcr = new File([blob], filename.split('/')?.pop() || filename, { type: 'application/pdf' });
+
+                const ocr = await advancedOCRService.extractFromPDF(fileForOcr);
+                let derivedData: any[] = [];
+                if (ocr.text) {
+                  const parsed = Papa.parse(ocr.text, {
+                    header: true,
+                    skipEmptyLines: 'greedy',
+                    dynamicTyping: true,
+                    delimiter: ''
+                  });
+                  const arr = Array.isArray(parsed.data) ? (parsed.data as any[]) : [];
+                  if (arr.length > 0 && Object.keys(arr[0] || {}).length >= 2) {
+                    derivedData = arr;
+                  }
+                }
+
+                const detectedType = derivedData.length > 0 ? this.detectDataType(filename, derivedData) : baseType;
+                const entry: ZipFileEntry = {
+                  filename: filename.split('/').pop() || filename,
+                  path: filename,
+                  data: derivedData,
+                  detectedType,
+                  associationHint,
+                  confidence: derivedData.length > 0 ? 0.7 : 0.6,
+                  rawText: ocr.text,
+                  ocrSummary: {
+                    pageCount: ocr.pages?.length || 0,
+                    textPreview: (ocr.text || '').slice(0, 200)
+                  }
+                };
+                files.push(entry);
+                fileTypes[detectedType] = (fileTypes[detectedType] || 0) + 1;
+                if (associationHint) {
+                  suggestedAssociations.add(associationHint);
+                }
+                devLog.info(`Recorded PDF with OCR ${derivedData.length > 0 ? '(derived table rows)' : '(text only)'}: ${filename}`);
+              } catch (e) {
+                devLog.error('PDF OCR failed, recording as document only', e);
+                const entry: ZipFileEntry = {
+                  filename: filename.split('/').pop() || filename,
+                  path: filename,
+                  data: [],
+                  detectedType: baseType,
+                  associationHint,
+                  confidence: 0.6
+                };
+                files.push(entry);
+                fileTypes[baseType] = (fileTypes[baseType] || 0) + 1;
+                if (associationHint) {
+                  suggestedAssociations.add(associationHint);
+                }
+              }
+            } else {
+              const entry: ZipFileEntry = {
+                filename: filename.split('/').pop() || filename,
+                path: filename,
+                data: [],
+                detectedType: baseType,
+                associationHint,
+                confidence: 0.6
+              };
+              files.push(entry);
+              fileTypes[baseType] = (fileTypes[baseType] || 0) + 1;
+              if (associationHint) {
+                suggestedAssociations.add(associationHint);
+              }
+              devLog.info(`Recorded PDF file (no OCR): ${filename}`);
             }
-            devLog.info(`Recorded PDF file (no tabular data extracted): ${filename}`);
           }
         } catch (error) {
           devLog.error(`Error processing file ${filename}:`, error);
