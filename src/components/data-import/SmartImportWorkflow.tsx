@@ -8,7 +8,9 @@ import { enhancedDuplicateDetectionService } from '@/services/import-export/enha
 import { dataQualityService } from '@/services/import-export/data-quality-service';
 import { toast } from 'sonner';
 import FileUploader from './FileUploader';
-
+import { Switch } from '@/components/ui/switch';
+import { zipParserService } from '@/services/import-export/zip-parser-service';
+import type { ZipAnalysisResult } from '@/services/import-export/zip-parser-service';
 interface SmartImportWorkflowProps {
   onImportComplete?: (data: any) => void;
 }
@@ -18,12 +20,26 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<any>(null);
+  const [zipSummary, setZipSummary] = useState<ZipAnalysisResult | null>(null);
+  const [attemptPdfTableExtraction, setAttemptPdfTableExtraction] = useState(false);
 
-  const handleFileSelected = (selectedFile: File) => {
+  const handleFileSelected = async (selectedFile: File) => {
     setFiles([selectedFile]);
     setResults(null);
+    setZipSummary(null);
+    if (selectedFile.name.toLowerCase().endsWith('.zip')) {
+      try {
+        const summary = await zipParserService.parseZipFile(selectedFile);
+        setZipSummary(summary);
+        toast.message('ZIP analyzed', {
+          description: `Found ${summary.files.length} files, ${summary.totalRecords} total rows`
+        });
+      } catch (err: any) {
+        toast.error('Failed to analyze ZIP');
+        console.error('ZIP analysis error:', err);
+      }
+    }
   };
-
   const processFiles = async () => {
     if (files.length === 0) return;
 
@@ -34,11 +50,11 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
       // Step 1: Process files
       setProgress(30);
       const processedData = await multiFormatProcessor.processWithEnhancedAnalysis(files, {
-        enableOCR: true,
+        enableOCR: attemptPdfTableExtraction,
         enableDuplicateDetection: true,
         enableQualityAssessment: true,
         enableAutoFix: true,
-        fallbackToOCR: true
+        fallbackToOCR: attemptPdfTableExtraction
       });
 
       // Step 2: Enhanced duplicate detection
@@ -101,10 +117,17 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
           />
 
           {files.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 {files.length} file(s) selected
               </p>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <p className="text-sm font-medium">Attempt PDF table extraction (beta)</p>
+                  <p className="text-xs text-muted-foreground">Tries to extract simple tables from PDFs when possible.</p>
+                </div>
+                <Switch checked={attemptPdfTableExtraction} onCheckedChange={setAttemptPdfTableExtraction} />
+              </div>
               <Button 
                 onClick={processFiles} 
                 disabled={processing}

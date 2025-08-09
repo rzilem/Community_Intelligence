@@ -64,6 +64,24 @@ export const zipParserService = {
             }
 
             devLog.info(`Processed file: ${filename}, Type: ${detectedType}, Records: ${fileData.length}`);
+          } else if (filename.toLowerCase().endsWith('.pdf')) {
+            // Record PDF files even if we can't extract rows here (OCR may handle later)
+            const detectedType = 'pdf_document';
+            const associationHint = this.extractAssociationHint(filename);
+            const entry: ZipFileEntry = {
+              filename: filename.split('/').pop() || filename,
+              path: filename,
+              data: [],
+              detectedType,
+              associationHint,
+              confidence: 0.6
+            };
+            files.push(entry);
+            fileTypes[detectedType] = (fileTypes[detectedType] || 0) + 1;
+            if (associationHint) {
+              suggestedAssociations.add(associationHint);
+            }
+            devLog.info(`Recorded PDF file (no tabular data extracted): ${filename}`);
           }
         } catch (error) {
           devLog.error(`Error processing file ${filename}:`, error);
@@ -88,9 +106,16 @@ export const zipParserService = {
   async extractFileData(zipObject: JSZip.JSZipObject): Promise<any[]> {
     const filename = zipObject.name.toLowerCase();
     
-    if (filename.endsWith('.csv')) {
+    // Text-based files: auto-detect delimiter (CSV/TSV/TXT)
+    if (filename.endsWith('.csv') || filename.endsWith('.tsv') || filename.endsWith('.txt')) {
       const text = await zipObject.async('text');
-      return parseService.parseCSV(text);
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: 'greedy',
+        dynamicTyping: true,
+        delimiter: '' // auto-detects comma, tab, semicolon, etc.
+      });
+      return Array.isArray(parsed.data) ? (parsed.data as any[]) : [];
     } else if (filename.endsWith('.xlsx') || filename.endsWith('.xls')) {
       const buffer = await zipObject.async('arraybuffer');
       const workbook = XLSX.read(buffer, { type: 'array' });
@@ -186,10 +211,10 @@ export const zipParserService = {
     const name = filename.toLowerCase();
     return name.startsWith('__macosx') || 
            name.includes('.ds_store') || 
-           name.endsWith('.txt') ||
-           name.endsWith('.pdf') ||
            name.endsWith('.jpg') ||
+           name.endsWith('.jpeg') ||
            name.endsWith('.png') ||
+           name.endsWith('.gif') ||
            name.endsWith('.doc') ||
            name.endsWith('.docx');
   }
