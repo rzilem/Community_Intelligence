@@ -55,17 +55,25 @@ export const ZipContentSummary: React.FC<ZipContentSummaryProps> = ({ summary })
           <p className="text-sm font-medium mb-2">Files detected</p>
           <div className="space-y-2 max-h-64 overflow-auto pr-1">
             {files.map((f: ZipFileEntry, idx: number) => (
-              <div key={idx} className="flex items-start justify-between border rounded-md p-2">
-                <div className="min-w-0">
-                  <p className="truncate font-medium" title={f.path || f.filename}>{f.filename}</p>
-                  <p className="text-xs text-muted-foreground truncate">{f.path}</p>
+              <div key={idx} className="border rounded-md p-2 space-y-1">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium" title={f.path || f.filename}>{f.filename}</p>
+                    <p className="text-xs text-muted-foreground truncate">{f.path}</p>
+                  </div>
+                  <div className="flex items-center gap-2 pl-2 shrink-0">
+                    {f.ocrSummary && <Badge variant="outline">OCR</Badge>}
+                    <Badge variant="secondary">{f.detectedType}</Badge>
+                    <Badge variant="outline">rows: {f.data?.length || 0}</Badge>
+                    <Badge variant="outline">conf: {Math.round((f.confidence || 0) * 100)}%</Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 pl-2 shrink-0">
-                  {f.ocrSummary && <Badge variant="outline">OCR</Badge>}
-                  <Badge variant="secondary">{f.detectedType}</Badge>
-                  <Badge variant="outline">rows: {f.data?.length || 0}</Badge>
-                  <Badge variant="outline">conf: {Math.round((f.confidence || 0) * 100)}%</Badge>
-                </div>
+                {f.ocrSummary && (
+                  <div className="text-xs text-muted-foreground">
+                    <span className="mr-2">pages: {f.ocrSummary.pageCount}</span>
+                    <span className="block truncate" title={f.ocrSummary.textPreview}>“{f.ocrSummary.textPreview}”</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

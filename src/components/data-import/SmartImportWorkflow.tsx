@@ -23,18 +23,20 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
   const [results, setResults] = useState<any>(null);
   const [zipSummary, setZipSummary] = useState<ZipAnalysisResult | null>(null);
   const [attemptPdfTableExtraction, setAttemptPdfTableExtraction] = useState(false);
+  const [showZipSummary, setShowZipSummary] = useState(false);
 
   const handleFileSelected = async (selectedFile: File) => {
     setFiles([selectedFile]);
     setResults(null);
     setZipSummary(null);
+    setShowZipSummary(false);
     if (selectedFile.name.toLowerCase().endsWith('.zip')) {
       try {
         const summary = await zipParserService.parseZipFile(selectedFile, { enablePdfOcr: attemptPdfTableExtraction });
         setZipSummary(summary);
-        toast.message('ZIP analyzed', {
-          description: `Found ${summary.files.length} files, ${summary.totalRecords} total rows`
-        });
+        const pdfsWithoutRows = summary.files.filter(f => f.detectedType === 'pdf_document' && (f.data?.length || 0) === 0).length;
+        const hint = pdfsWithoutRows > 0 ? ` • ${pdfsWithoutRows} PDF(s) without table-like text` : '';
+        toast.success(`ZIP analyzed: ${summary.files.length} files, ${summary.totalRecords} rows${hint}`);
       } catch (err: any) {
         toast.error('Failed to analyze ZIP');
         console.error('ZIP analysis error:', err);
@@ -138,7 +140,19 @@ const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onImportCompl
               </Button>
 
               {zipSummary && (
-                <ZipContentSummary summary={zipSummary} />
+                <div className="space-y-2">
+                  {zipSummary.files.some(f => f.detectedType === 'pdf_document' && (f.data?.length || 0) === 0) && (
+                    <p className="text-xs text-muted-foreground">
+                      Some PDFs don’t contain selectable table-like text. Enable the toggle above to attempt extraction.
+                    </p>
+                  )}
+                  <Button variant="secondary" onClick={() => setShowZipSummary(v => !v)}>
+                    {showZipSummary ? 'Hide ZIP Content Summary' : 'View ZIP Content Summary'}
+                  </Button>
+                  {showZipSummary && (
+                    <ZipContentSummary summary={zipSummary} />
+                  )}
+                </div>
               )}
             </div>
           )}

@@ -10,7 +10,8 @@ export class PDFJSOCRAdapter implements OCRAdapter {
   }
 
   canProcess(file: File): boolean {
-    return file.type === 'application/pdf';
+    const name = (file.name || '').toLowerCase();
+    return file.type.includes('pdf') || name.endsWith('.pdf');
   }
 
   async processDocument(file: File, options?: OCROptions): Promise<ProcessedDocument> {
@@ -69,11 +70,19 @@ export class PDFJSOCRAdapter implements OCRAdapter {
     if (!this.pdfjs && typeof window !== 'undefined') {
       try {
         const pdfjsModule = await import('pdfjs-dist');
-        
+
         if (pdfjsModule.GlobalWorkerOptions) {
-          pdfjsModule.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          try {
+            // Prefer locally bundled worker when available
+            // Some bundlers (like Vite) can resolve this URL at build time
+            const workerUrl = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+            pdfjsModule.GlobalWorkerOptions.workerSrc = workerUrl;
+          } catch (_) {
+            // Fallback to a reliable CDN
+            pdfjsModule.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          }
         }
-        
+
         this.pdfjs = pdfjsModule;
         devLog.info('PDF.js initialized successfully');
       } catch (error) {
