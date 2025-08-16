@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -13247,7 +13247,7 @@ export type Database = {
     }
     Functions: {
       assign_user_to_association: {
-        Args: { p_association_id: string; p_user_id: string; p_role?: string }
+        Args: { p_association_id: string; p_role?: string; p_user_id: string }
         Returns: undefined
       }
       auto_allocate_payment: {
@@ -13256,8 +13256,8 @@ export type Database = {
       }
       bulk_import_documents: {
         Args: {
-          p_documents: Json
           p_association_id: string
+          p_documents: Json
           p_session_id?: string
         }
         Returns: Json
@@ -13265,15 +13265,15 @@ export type Database = {
       calculate_campaign_metrics: {
         Args: { campaign_uuid: string }
         Returns: {
-          total_recipients: number
-          delivered_count: number
-          opened_count: number
-          clicked_count: number
-          bounced_count: number
-          unsubscribed_count: number
-          open_rate: number
-          click_rate: number
           bounce_rate: number
+          bounced_count: number
+          click_rate: number
+          clicked_count: number
+          delivered_count: number
+          open_rate: number
+          opened_count: number
+          total_recipients: number
+          unsubscribed_count: number
         }[]
       }
       check_association_admin: {
@@ -13298,15 +13298,15 @@ export type Database = {
       }
       create_association_with_admin: {
         Args: {
-          p_name: string
           p_address?: string
-          p_contact_email?: string
           p_city?: string
-          p_state?: string
-          p_zip?: string
+          p_contact_email?: string
+          p_name: string
           p_phone?: string
           p_property_type?: string
+          p_state?: string
           p_total_units?: number
+          p_zip?: string
         }
         Returns: string
       }
@@ -13341,8 +13341,8 @@ export type Database = {
       get_ai_suggestions: {
         Args: {
           p_association_id: string
-          p_vendor_name?: string
           p_description?: string
+          p_vendor_name?: string
         }
         Returns: Json
       }
@@ -13552,19 +13552,19 @@ export type Database = {
       }
       global_search: {
         Args: {
-          search_query: string
           result_limit?: number
           result_offset?: number
+          search_query: string
           search_types?: string[]
         }
         Returns: {
+          created_at: string
           id: string
-          type: string
-          title: string
-          subtitle: string
           path: string
           rank: number
-          created_at: string
+          subtitle: string
+          title: string
+          type: string
         }[]
       }
       set_secret: {
@@ -13585,34 +13585,34 @@ export type Database = {
       }
       update_user_ai_settings: {
         Args: {
-          p_model?: string
-          p_temperature?: number
           p_max_tokens?: number
+          p_model?: string
           p_prompt_templates?: Json
+          p_temperature?: number
         }
         Returns: undefined
       }
       update_user_settings: {
         Args: {
-          user_id_param: string
-          theme_param?: string
-          notifications_param?: boolean
           column_preferences_param?: Json
+          notifications_param?: boolean
+          theme_param?: string
+          user_id_param: string
         }
         Returns: undefined
       }
       update_vendor_pattern: {
         Args: {
-          p_vendor_name: string
           p_association_id: string
-          p_gl_account: string
           p_category: string
           p_description: string
+          p_gl_account: string
+          p_vendor_name: string
         }
         Returns: undefined
       }
       upsert_totp_secret: {
-        Args: { p_user_id: string; p_totp_secret: string; p_verified?: boolean }
+        Args: { p_totp_secret: string; p_user_id: string; p_verified?: boolean }
         Returns: undefined
       }
       user_has_association_access: {
@@ -13636,11 +13636,11 @@ export type Database = {
         Returns: boolean
       }
       validate_webhook_signature: {
-        Args: { payload: string; signature: string; secret: string }
+        Args: { payload: string; secret: string; signature: string }
         Returns: boolean
       }
       verify_totp: {
-        Args: { p_user_id: string; p_token: string }
+        Args: { p_token: string; p_user_id: string }
         Returns: Json
       }
     }
