@@ -623,6 +623,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_predictions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_processing_queue: {
@@ -677,6 +684,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_processing_queue_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -834,6 +848,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_vendor_patterns_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_vision_analysis_results: {
@@ -926,6 +947,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "amenities_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       amenity_blackouts: {
@@ -1014,6 +1042,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "analytics_dashboards_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       analytics_metrics: {
@@ -1056,6 +1091,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_metrics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1109,6 +1151,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -1166,6 +1215,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1397,6 +1453,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "assessment_schedules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       assessment_types: {
@@ -1436,6 +1499,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_types_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1628,6 +1698,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "association_member_roles_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       association_portal_widgets: {
@@ -1669,6 +1746,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "association_portal_widgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       association_users: {
@@ -1702,6 +1786,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "association_users_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -2109,6 +2200,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "automation_rules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bank_accounts: {
@@ -2157,6 +2255,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2472,6 +2577,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bi_reports_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2860,6 +2972,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bid_requests_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bid_requests_maintenance_request_id_fkey"
             columns: ["maintenance_request_id"]
             isOneToOne: false
@@ -2940,6 +3059,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_entries_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -3125,10 +3251,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "calendar_events_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "calendar_events_hoa_id_fkey"
             columns: ["hoa_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3268,6 +3408,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_flow_forecasts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -3422,6 +3569,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_cases_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -3617,6 +3771,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -3958,6 +4119,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "collections_steps_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       comments: {
@@ -4082,6 +4250,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "communication_intelligence_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       communications_log: {
@@ -4176,6 +4351,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "community_polls_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       compliance_issues: {
@@ -4230,6 +4412,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compliance_issues_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "compliance_issues_resident_id_fkey"
             columns: ["resident_id"]
             isOneToOne: false
@@ -4272,6 +4461,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4367,6 +4563,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_import_progress_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4564,6 +4767,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4990,6 +5200,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "financial_audit_logs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       financial_periods: {
@@ -5041,6 +5258,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_periods_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -5107,6 +5331,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "financial_reports_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "financial_reports_generated_by_fkey"
             columns: ["generated_by"]
             isOneToOne: false
@@ -5157,6 +5388,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "financial_statements_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       form_conversion_jobs: {
@@ -5199,6 +5437,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_conversion_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -5261,6 +5506,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "form_submissions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "form_submissions_form_template_id_fkey"
             columns: ["form_template_id"]
             isOneToOne: false
@@ -5297,6 +5549,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_template_associations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -5357,6 +5616,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -5502,6 +5768,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_discussions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -5677,6 +5950,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "gl_account_balances_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "gl_account_balances_gl_account_id_fkey"
             columns: ["gl_account_id"]
             isOneToOne: false
@@ -5722,6 +6002,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gl_account_usage_stats_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -5775,6 +6062,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gl_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -5955,6 +6249,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gl_budgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       history: {
@@ -5994,6 +6295,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "history_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -6294,6 +6602,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "import_export_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       import_jobs: {
@@ -6351,6 +6666,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "import_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "import_jobs_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -6393,6 +6715,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_mappings_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -6808,6 +7137,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "iot_devices_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       iot_sensor_data: {
@@ -7101,6 +7437,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_definitions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -7515,6 +7858,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "meeting_minutes_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       message_history: {
@@ -7557,6 +7907,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_history_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -7604,6 +7961,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -7692,6 +8056,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ml_training_pipelines_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       mobile_app_configs: {
@@ -7743,6 +8114,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mobile_app_configs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -7912,6 +8290,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -8283,6 +8668,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_allocation_rules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -8699,6 +9091,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payment_transactions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payment_transactions_resident_id_fkey"
             columns: ["resident_id"]
             isOneToOne: false
@@ -8854,6 +9253,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_notifications_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -9060,6 +9466,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_hoa_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -9859,6 +10272,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recipient_groups_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       recurring_transactions: {
@@ -9922,6 +10342,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "recurring_transactions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "recurring_transactions_gl_account_id_fkey"
             columns: ["gl_account_id"]
             isOneToOne: false
@@ -9982,6 +10409,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_definitions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -10241,6 +10675,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_invitations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -10733,6 +11174,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "three_way_matches_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "three_way_matches_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
@@ -11163,6 +11611,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendor_1099_records_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendor_1099_records_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -11272,6 +11727,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_applications_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -11552,6 +12014,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendor_categories_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendor_categories_parent_category_id_fkey"
             columns: ["parent_category_id"]
             isOneToOne: false
@@ -11681,6 +12150,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_compliance_items_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -11831,6 +12307,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendor_contract_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendor_contract_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -11919,6 +12402,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -12216,6 +12706,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendor_performance_metrics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendor_performance_metrics_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -12365,6 +12862,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_reviews_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -12812,6 +13316,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "workflow_analytics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "workflow_analytics_workflow_execution_id_fkey"
             columns: ["workflow_execution_id"]
             isOneToOne: false
@@ -12913,6 +13424,13 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workflow_events_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workflow_executions: {
@@ -12961,6 +13479,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_executions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
           {
@@ -13024,6 +13549,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_schedules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -13164,7 +13696,6 @@ export type Database = {
       }
       global_search_view: {
         Row: {
-          association_id: string | null
           created_at: string | null
           id: string | null
           path: string | null
@@ -13172,6 +13703,24 @@ export type Database = {
           subtitle: string | null
           title: string | null
           type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          path?: never
+          search_vector?: never
+          subtitle?: never
+          title?: string | null
+          type?: never
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          path?: never
+          search_vector?: never
+          subtitle?: never
+          title?: string | null
+          type?: never
         }
         Relationships: []
       }
@@ -13222,6 +13771,13 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_vendor_patterns_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "global_search_view"
             referencedColumns: ["id"]
           },
         ]
