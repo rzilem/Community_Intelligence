@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Event {
   id: string;
@@ -21,66 +22,82 @@ export interface Event {
   updated_at: string;
 }
 
-// Mock data for demonstration
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    association_id: '1',
-    title: 'Annual HOA Meeting',
-    description: 'Annual meeting to discuss community matters and vote on important issues.',
-    event_type: 'meeting',
-    start_date: '2024-03-15T19:00:00',
-    end_date: '2024-03-15T21:00:00',
-    location: 'Community Center',
-    max_attendees: 50,
-    current_attendees: 0,
-    requires_rsvp: true,
-    rsvp_deadline: '2024-03-13T23:59:59',
-    event_status: 'scheduled',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    association_id: '1',
-    title: 'Pool Opening Celebration',
-    description: 'Join us for the official pool opening with refreshments and activities.',
-    event_type: 'community',
-    start_date: '2024-05-01T14:00:00',
-    end_date: '2024-05-01T18:00:00',
-    location: 'Community Pool',
-    max_attendees: 100,
-    current_attendees: 0,
-    requires_rsvp: false,
-    event_status: 'scheduled',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-export const useEvents = () => {
+export const useEvents = (associationId?: string) => {
   const { toast } = useToast();
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch events from Supabase
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase.from('events').select('*');
+      
+      if (associationId) {
+        query = query.eq('association_id', associationId);
+      }
+      
+      const { data, error } = await query.order('start_date', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setEvents(data.map(event => ({
+          ...event,
+          current_attendees: event.current_attendees || 0
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, [associationId]);
 
   const createEvent = {
     mutateAsync: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at' | 'current_attendees'>) => {
       setIsLoading(true);
       try {
-        const newEvent: Event = {
-          ...eventData,
-          id: Date.now().toString(),
-          current_attendees: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setEvents(prev => [newEvent, ...prev]);
+        const { data, error } = await supabase
+          .from('events')
+          .insert([{
+            ...eventData,
+            current_attendees: 0,
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const newEvent: Event = {
+            ...data,
+            current_attendees: 0
+          };
+          setEvents(prev => [newEvent, ...prev]);
+          toast({
+            title: "Success",
+            description: "Event created successfully."
+          });
+          return newEvent;
+        }
+      } catch (error) {
+        console.error('Error creating event:', error);
         toast({
-          title: "Success",
-          description: "Event created successfully."
+          title: "Error",
+          description: "Failed to create event",
+          variant: "destructive"
         });
-        return newEvent;
+        throw error;
       } finally {
         setIsLoading(false);
       }
@@ -91,15 +108,33 @@ export const useEvents = () => {
     mutateAsync: async ({ id, ...updates }: Partial<Event> & { id: string }) => {
       setIsLoading(true);
       try {
-        setEvents(prev => prev.map(event => 
-          event.id === id 
-            ? { ...event, ...updates, updated_at: new Date().toISOString() }
-            : event
-        ));
+        const { data, error } = await supabase
+          .from('events')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setEvents(prev => prev.map(event => 
+            event.id === id ? { ...event, ...data } : event
+          ));
+          toast({
+            title: "Success",
+            description: "Event updated successfully."
+          });
+          return data;
+        }
+      } catch (error) {
+        console.error('Error updating event:', error);
         toast({
-          title: "Success",
-          description: "Event updated successfully."
+          title: "Error",
+          description: "Failed to update event",
+          variant: "destructive"
         });
+        throw error;
       } finally {
         setIsLoading(false);
       }
@@ -110,11 +145,26 @@ export const useEvents = () => {
     mutateAsync: async (id: string) => {
       setIsLoading(true);
       try {
+        const { error } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
         setEvents(prev => prev.filter(event => event.id !== id));
         toast({
           title: "Success",
           description: "Event deleted successfully."
         });
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete event",
+          variant: "destructive"
+        });
+        throw error;
       } finally {
         setIsLoading(false);
       }
@@ -126,6 +176,7 @@ export const useEvents = () => {
     isLoading,
     createEvent,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    refetch: fetchEvents
   };
 };
