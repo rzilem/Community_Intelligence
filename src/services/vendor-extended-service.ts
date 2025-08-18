@@ -13,6 +13,7 @@ import {
   VendorEmergencyContactFormData,
   VendorStatus
 } from "@/types/vendor-extended-types";
+import { workflowEventEmitter } from '@/services/ai-workflow/workflow-event-emitter';
 
 // Helper function to transform database vendor to typed ExtendedVendor
 const transformDatabaseVendor = (dbVendor: any): ExtendedVendor => {
@@ -173,6 +174,31 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
+    
+    // Get vendor info to determine association_id
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('association_id, hoa_id')
+        .eq('id', vendorId)
+        .single();
+        
+      if (vendor) {
+        const associationId = vendor.association_id || vendor.hoa_id;
+        if (associationId) {
+          await workflowEventEmitter.emit('vendor_document_uploaded', {
+            document: data,
+            vendor_id: vendorId,
+            document_type: data.document_type,
+            file_name: data.file_name,
+            file_size: data.file_size
+          }, associationId);
+        }
+      }
+    } catch (eventError) {
+      console.warn('Failed to emit vendor document uploaded event:', eventError);
+    }
+    
     return {
       ...data,
       document_type: data.document_type as VendorDocument['document_type']
@@ -234,6 +260,31 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
+    
+    // Get vendor info to determine association_id  
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('association_id, hoa_id')
+        .eq('id', vendorId)
+        .single();
+        
+      if (vendor) {
+        const associationId = vendor.association_id || vendor.hoa_id;
+        if (associationId) {
+          await workflowEventEmitter.emit('vendor_certification_created', {
+            certification: data,
+            vendor_id: vendorId,
+            certification_name: data.certification_name,
+            status: data.status,
+            expiry_date: data.expiry_date
+          }, associationId);
+        }
+      }
+    } catch (eventError) {
+      console.warn('Failed to emit vendor certification created event:', eventError);
+    }
+    
     return {
       ...data,
       status: data.status as VendorCertification['status']
@@ -249,6 +300,33 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
+    
+    // Get vendor info to determine association_id and emit appropriate event
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('association_id, hoa_id')
+        .eq('id', data.vendor_id)
+        .single();
+        
+      if (vendor) {
+        const associationId = vendor.association_id || vendor.hoa_id;
+        if (associationId) {
+          const eventType = data.status === 'expired' ? 'vendor_certification_expired' : 'vendor_certification_updated';
+          await workflowEventEmitter.emit(eventType, {
+            certification: data,
+            vendor_id: data.vendor_id,
+            certification_name: data.certification_name,
+            previous_status: certData.status ? 'updated' : data.status,
+            new_status: data.status,
+            expiry_date: data.expiry_date
+          }, associationId);
+        }
+      }
+    } catch (eventError) {
+      console.warn('Failed to emit vendor certification updated event:', eventError);
+    }
+    
     return {
       ...data,
       status: data.status as VendorCertification['status']

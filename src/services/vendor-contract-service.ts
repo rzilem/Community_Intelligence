@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { VendorContract, VendorContractTemplate, VendorContractAmendment } from '@/types/contract-types';
+import { workflowEventEmitter } from '@/services/ai-workflow/workflow-event-emitter';
 
 export const vendorContractService = {
   // Contract Templates
@@ -69,6 +70,22 @@ export const vendorContractService = {
       .single();
 
     if (error) throw error;
+    
+    // Emit workflow event for contract creation
+    try {
+      await workflowEventEmitter.emit('contract_created', {
+        contract: data,
+        vendor_id: data.vendor_id,
+        contract_type: data.contract_type,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        contract_value: data.contract_value,
+        status: data.status
+      }, data.association_id);
+    } catch (eventError) {
+      console.warn('Failed to emit contract created event:', eventError);
+    }
+    
     return data as VendorContract;
   },
 
@@ -81,6 +98,40 @@ export const vendorContractService = {
       .single();
 
     if (error) throw error;
+    
+    // Emit workflow event for contract update/expiration
+    try {
+      let eventType = 'contract_updated';
+      if (updates.status === 'expired') {
+        eventType = 'contract_expired';
+      } else if (updates.status === 'terminated') {
+        eventType = 'contract_terminated';
+      } else if (updates.status === 'renewed') {
+        eventType = 'contract_renewed';
+      }
+      
+      // Check if contract is expiring soon (within 30 days)
+      const endDate = new Date(data.end_date);
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      
+      if (endDate <= thirtyDaysFromNow && data.status === 'active') {
+        eventType = 'contract_expiring';
+      }
+      
+      await workflowEventEmitter.emit(eventType, {
+        contract: data,
+        vendor_id: data.vendor_id,
+        contract_type: data.contract_type,
+        previous_status: updates.status ? 'updated' : data.status,
+        new_status: data.status,
+        end_date: data.end_date,
+        days_until_expiry: Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      }, data.association_id);
+    } catch (eventError) {
+      console.warn('Failed to emit contract updated event:', eventError);
+    }
+    
     return data as VendorContract;
   },
 

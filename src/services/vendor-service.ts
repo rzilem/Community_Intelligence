@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Vendor, VendorStats, VendorStatus, InsuranceInfo, VendorCategory } from "@/types/vendor-types";
+import { workflowEventEmitter } from '@/services/ai-workflow/workflow-event-emitter';
 
 // Create a type that matches what we send to the database for creation
 interface VendorInsert {
@@ -145,6 +146,27 @@ export const vendorService = {
       throw error;
     }
 
+    // Emit workflow event for vendor creation
+    try {
+      const associationId = data.association_id || data.hoa_id;
+      if (associationId) {
+        await workflowEventEmitter.emit('vendor_created', {
+          vendor: data,
+          vendor_name: data.name,
+          specialties: data.specialties,
+          contact_info: {
+            email: data.email,
+            phone: data.phone,
+            contact_person: data.contact_person
+          },
+          license_number: data.license_number,
+          insurance_info: data.insurance_info
+        }, associationId);
+      }
+    } catch (eventError) {
+      console.warn('Failed to emit vendor created event:', eventError);
+    }
+
     return transformDatabaseVendor(data);
   },
 
@@ -182,6 +204,32 @@ export const vendorService = {
     if (error) {
       console.error('Error updating vendor:', error);
       throw error;
+    }
+
+    // Emit workflow event for vendor update
+    try {
+      const associationId = data.association_id || data.hoa_id;
+      if (associationId) {
+        let eventType = 'vendor_updated';
+        if (vendorData.status === 'suspended') {
+          eventType = 'vendor_suspended';
+        } else if (vendorData.is_active === false) {
+          eventType = 'vendor_deactivated';
+        } else if (vendorData.is_active === true && cleanUpdateData.is_active !== undefined) {
+          eventType = 'vendor_activated';
+        }
+        
+        await workflowEventEmitter.emit(eventType, {
+          vendor: data,
+          vendor_id: id,
+          updated_fields: Object.keys(cleanUpdateData),
+          previous_status: vendorData.status ? 'updated' : data.status,
+          new_status: data.status,
+          specialties: data.specialties
+        }, associationId);
+      }
+    } catch (eventError) {
+      console.warn('Failed to emit vendor updated event:', eventError);
     }
 
     console.log('Vendor updated successfully:', data);
