@@ -13007,6 +13007,148 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_workflow_action_logs: {
+        Row: {
+          action_config: Json
+          action_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          execution_id: string
+          id: string
+          result: Json | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_id: string
+          id?: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_id?: string
+          id?: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_workflow_action_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_workflow_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_workflow_automations: {
+        Row: {
+          actions: Json
+          association_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          association_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          trigger_conditions?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          association_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          trigger_conditions?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vendor_workflow_executions: {
+        Row: {
+          association_id: string
+          automation_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          id: string
+          result: Json | null
+          started_at: string | null
+          trigger_data: Json
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          association_id: string
+          automation_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          result?: Json | null
+          started_at?: string | null
+          trigger_data?: Json
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          association_id?: string
+          automation_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          result?: Json | null
+          started_at?: string | null
+          trigger_data?: Json
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_workflow_executions_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_workflow_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string | null

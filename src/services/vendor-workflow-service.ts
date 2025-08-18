@@ -4,110 +4,141 @@ import { VendorWorkflowAutomation, VendorWorkflowExecution, WorkflowTriggerData 
 
 export const vendorWorkflowService = {
   async getWorkflowAutomations(associationId: string): Promise<VendorWorkflowAutomation[]> {
-    // Mock implementation since vendor_workflow_automations table doesn't exist yet
-    console.log('Getting workflow automations for association:', associationId);
-    return [];
+    const { data, error } = await supabase
+      .from('vendor_workflow_automations')
+      .select('*')
+      .eq('association_id', associationId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching workflow automations:', error);
+      throw error;
+    }
+
+    return data || [];
   },
 
   async createWorkflowAutomation(workflow: Omit<VendorWorkflowAutomation, 'id' | 'created_at' | 'updated_at'>): Promise<VendorWorkflowAutomation> {
-    // Mock implementation - would need actual table
-    console.log('Creating workflow automation:', workflow);
-    return {
-      ...workflow,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+    const { data, error } = await supabase
+      .from('vendor_workflow_automations')
+      .insert(workflow)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating workflow automation:', error);
+      throw error;
+    }
+
+    return data;
   },
 
   async updateWorkflowAutomation(id: string, updates: Partial<Omit<VendorWorkflowAutomation, 'id' | 'created_at' | 'updated_at'>>): Promise<VendorWorkflowAutomation> {
-    // Mock implementation - would need actual table
-    console.log('Updating workflow automation:', id, updates);
-    return {
-      id,
-      association_id: '',
-      name: 'Mock Workflow',
-      description: 'Mock workflow description',
-      trigger_type: 'contract_expiry',
-      trigger_conditions: {},
-      actions: [],
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ...updates
-    } as VendorWorkflowAutomation;
+    const { data, error } = await supabase
+      .from('vendor_workflow_automations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating workflow automation:', error);
+      throw error;
+    }
+
+    return data;
   },
 
   async deleteWorkflowAutomation(id: string): Promise<void> {
-    // Mock implementation - would need actual table
-    console.log('Deleting workflow automation:', id);
-  },
+    const { error } = await supabase
+      .from('vendor_workflow_automations')
+      .delete()
+      .eq('id', id);
 
-  async getWorkflowExecutions(workflowId: string): Promise<VendorWorkflowExecution[]> {
-    // Mock implementation since vendor_workflow_executions table doesn't exist yet
-    console.log('Getting workflow executions for workflow:', workflowId);
-    return [];
-  },
-
-  async executeWorkflow(workflowId: string, triggerData: WorkflowTriggerData): Promise<VendorWorkflowExecution> {
-    // Mock implementation - would need actual tables
-    console.log('Executing workflow:', workflowId, 'with trigger data:', triggerData);
-    
-    const execution: VendorWorkflowExecution = {
-      id: crypto.randomUUID(),
-      workflow_id: workflowId,
-      vendor_id: triggerData.vendor_id,
-      trigger_data: triggerData,
-      execution_status: 'completed',
-      created_at: new Date().toISOString(),
-      completed_at: new Date().toISOString()
-    };
-
-    // Process workflow actions (mock implementation)
-    await this.processWorkflowActions(execution.id, []);
-
-    return execution;
-  },
-
-  async processWorkflowActions(executionId: string, actions: Array<{ type: string; config: Record<string, any> }>): Promise<void> {
-    // Mock implementation for processing workflow actions
-    console.log('Processing workflow actions for execution:', executionId, 'actions:', actions);
-
-    try {
-      // Process each action
-      for (const action of actions) {
-        switch (action.type) {
-          case 'send_notification':
-            await this.sendNotificationAction(action.config);
-            break;
-          case 'create_maintenance_request':
-            await this.createMaintenanceRequestAction(action.config);
-            break;
-          case 'update_vendor_status':
-            await this.updateVendorStatusAction(action.config);
-            break;
-          default:
-            console.warn(`Unknown action type: ${action.type}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error processing workflow actions:', error);
+    if (error) {
+      console.error('Error deleting workflow automation:', error);
       throw error;
     }
   },
 
-  async sendNotificationAction(config: Record<string, any>): Promise<void> {
-    // Implementation for sending notifications
-    console.log('Sending notification:', config);
+  async getWorkflowExecutions(workflowId: string): Promise<VendorWorkflowExecution[]> {
+    const { data, error } = await supabase
+      .from('vendor_workflow_executions')
+      .select(`
+        *,
+        vendor_workflow_action_logs (*)
+      `)
+      .eq('automation_id', workflowId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching workflow executions:', error);
+      throw error;
+    }
+
+    return data || [];
   },
 
-  async createMaintenanceRequestAction(config: Record<string, any>): Promise<void> {
-    // Implementation for creating maintenance requests
-    console.log('Creating maintenance request:', config);
+  async executeWorkflow(workflowId: string, triggerData: WorkflowTriggerData): Promise<VendorWorkflowExecution> {
+    // Call the workflow automation executor edge function
+    const { data, error } = await supabase.functions.invoke('workflow-automation-executor', {
+      body: {
+        event: {
+          type: 'manual',
+          vendor_id: triggerData.vendor_id,
+          association_id: triggerData.association_id,
+          data: triggerData
+        }
+      }
+    });
+
+    if (error) {
+      console.error('Error executing workflow:', error);
+      throw error;
+    }
+
+    // Get the latest execution for this workflow
+    const { data: executions } = await supabase
+      .from('vendor_workflow_executions')
+      .select('*')
+      .eq('automation_id', workflowId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    return executions?.[0] || data;
   },
 
-  async updateVendorStatusAction(config: Record<string, any>): Promise<void> {
-    // Implementation for updating vendor status
-    console.log('Updating vendor status:', config);
+  async triggerWorkflowEvent(eventType: string, eventData: WorkflowTriggerData): Promise<void> {
+    // Call the workflow automation executor edge function
+    const { error } = await supabase.functions.invoke('workflow-automation-executor', {
+      body: {
+        event: {
+          type: eventType,
+          vendor_id: eventData.vendor_id,
+          association_id: eventData.association_id,
+          data: eventData
+        }
+      }
+    });
+
+    if (error) {
+      console.error('Error triggering workflow event:', error);
+      throw error;
+    }
+  },
+
+  async getWorkflowActionLogs(executionId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('vendor_workflow_action_logs')
+      .select('*')
+      .eq('execution_id', executionId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching workflow action logs:', error);
+      throw error;
+    }
+
+    return data || [];
   }
 };

@@ -38,15 +38,17 @@ export interface VendorWorkflowAutomation {
 
 export interface VendorWorkflowExecution {
   id: string;
-  workflow_id: string;
+  automation_id: string;
   vendor_id?: string;
+  association_id: string;
   trigger_data?: Record<string, any>;
-  execution_status: 'pending' | 'running' | 'completed' | 'failed';
+  execution_status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  result?: Record<string, any>;
+  error_message?: string;
   started_at?: string;
   completed_at?: string;
-  error_message?: string;
-  results?: Record<string, any>;
   created_at: string;
+  updated_at: string;
 }
 
 export interface VendorIntegration {
@@ -126,6 +128,7 @@ export interface VendorAnalyticsData {
 
 export interface WorkflowTriggerData {
   vendor_id?: string;
+  association_id: string;
   contract_id?: string;
   compliance_item_id?: string;
   performance_metric?: VendorPerformanceMetrics;
