@@ -7,17 +7,39 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { vendorWorkflowService } from "@/services/vendor-workflow-service";
 import { useAuth } from "@/contexts/auth";
-import { Plus, Play, Pause, Settings, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Play, Pause, Settings, Clock, CheckCircle, XCircle, TestTube } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 import WorkflowAutomationDialog from "./WorkflowAutomationDialog";
+import WorkflowTestingPanel from "./WorkflowTestingPanel";
 
 const WorkflowAutomationTab: React.FC = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { currentAssociation } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showTesting, setShowTesting] = useState(false);
 
   const { data: workflows, isLoading } = useQuery({
     queryKey: ['workflow-automations', currentAssociation?.id],
     queryFn: () => vendorWorkflowService.getWorkflowAutomations(currentAssociation!.id),
     enabled: !!currentAssociation?.id,
+  });
+
+  const toggleWorkflowMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      vendorWorkflowService.updateWorkflowAutomation(id, { is_active: isActive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-automations'] });
+      toast({ title: "Workflow updated successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error updating workflow", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
   });
 
   const getTriggerTypeLabel = (type: string) => {
@@ -70,10 +92,19 @@ const WorkflowAutomationTab: React.FC = () => {
             Automate vendor management tasks and notifications
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Workflow
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={showTesting ? "secondary" : "outline"}
+            onClick={() => setShowTesting(!showTesting)}
+          >
+            <TestTube className="mr-2 h-4 w-4" />
+            {showTesting ? 'Hide Testing' : 'Show Testing'}
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Workflow
+          </Button>
+        </div>
       </div>
 
       {/* Workflows List */}
@@ -90,9 +121,9 @@ const WorkflowAutomationTab: React.FC = () => {
                   <Switch 
                     checked={workflow.is_active}
                     onCheckedChange={(checked) => {
-                      // Handle workflow activation/deactivation
-                      console.log('Toggle workflow:', workflow.id, checked);
+                      toggleWorkflowMutation.mutate({ id: workflow.id, isActive: checked });
                     }}
+                    disabled={toggleWorkflowMutation.isPending}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -187,6 +218,13 @@ const WorkflowAutomationTab: React.FC = () => {
           </Card>
         )}
       </div>
+
+      {/* Testing Panel */}
+      {showTesting && (
+        <div className="mt-8">
+          <WorkflowTestingPanel />
+        </div>
+      )}
 
       <WorkflowAutomationDialog 
         open={isDialogOpen}
