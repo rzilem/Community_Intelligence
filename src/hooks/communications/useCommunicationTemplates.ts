@@ -5,13 +5,11 @@ export interface CommunicationTemplate {
   id: string;
   name: string;
   description?: string;
-  template_type: string;
+  category?: string;
   subject?: string;
   content: string;
-  variables?: string[];
-  is_active: boolean;
-  association_id?: string;
-  created_by?: string;
+  is_public?: boolean;
+  user_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,14 +32,7 @@ export const useCommunicationTemplates = (associationId?: string) => {
         .from('communication_templates')
         .select('*');
 
-      if (associationId) {
-        query = query.or(`association_id.eq.${associationId},association_id.is.null`);
-      } else {
-        query = query.is('association_id', null);
-      }
-
       const { data, error: fetchError } = await query
-        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (fetchError) throw fetchError;

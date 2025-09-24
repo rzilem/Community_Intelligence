@@ -15,8 +15,7 @@ export const useEmailTemplates = () => {
       const { data, error: fetchError } = await supabase
         .from('email_templates')
         .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('createdat', { ascending: false });
 
       if (fetchError) {
         console.error('Error fetching templates:', fetchError);
@@ -25,7 +24,21 @@ export const useEmailTemplates = () => {
         return;
       }
 
-      setTemplates((data || []) as EmailTemplate[]);
+      // Map database fields to EmailTemplate interface
+      const mappedTemplates = (data || []).map(template => ({
+        id: template.id,
+        name: template.name,
+        subject: template.subject,
+        body: template.body,
+        category: template.category as any,
+        created_at: template.createdat,
+        updated_at: template.updatedat,
+        created_by: template.createdby,
+        merge_tags: [],
+        is_active: true,
+        version: 1
+      }));
+      setTemplates(mappedTemplates);
     } catch (err) {
       console.error('Unexpected error:', err);
       setError('An unexpected error occurred');
@@ -45,10 +58,8 @@ export const useEmailTemplates = () => {
         name: template.name || 'New Template',
         subject: template.subject || '',
         body: template.body || '',
-        category: template.category || 'custom',
-        description: template.description,
-        preview_text: template.preview_text,
-        created_by: user.user.id
+        category: (template.category as any) || 'custom',
+        createdby: user.user.id
       })
       .select()
       .single();
@@ -58,7 +69,20 @@ export const useEmailTemplates = () => {
       throw createError;
     }
 
-    const newTemplate = data as EmailTemplate;
+    const newTemplate: EmailTemplate = {
+      id: data.id,
+      name: data.name,
+      subject: data.subject,
+      body: data.body,
+      category: data.category as any,
+      created_at: data.createdat,
+      updated_at: data.updatedat,
+      created_by: data.createdby,
+      merge_tags: [],
+      is_active: true,
+      version: 1
+    };
+    
     setTemplates(prev => [newTemplate, ...prev]);
     return newTemplate;
   };
@@ -66,7 +90,13 @@ export const useEmailTemplates = () => {
   const updateTemplate = async ({ id, data }: { id: string; data: Partial<EmailTemplate> }) => {
     const { data: updated, error: updateError } = await supabase
       .from('email_templates')
-      .update(data)
+      .update({
+        name: data.name,
+        subject: data.subject,
+        body: data.body,
+      category: data.category as any,
+        updatedat: new Date().toISOString()
+      })
       .eq('id', id)
       .select()
       .single();
@@ -76,7 +106,20 @@ export const useEmailTemplates = () => {
       throw updateError;
     }
 
-    const updatedTemplate = updated as EmailTemplate;
+    const updatedTemplate: EmailTemplate = {
+      id: updated.id,
+      name: updated.name,
+      subject: updated.subject,
+      body: updated.body,
+      category: updated.category as any,
+      created_at: updated.createdat,
+      updated_at: updated.updatedat,
+      created_by: updated.createdby,
+      merge_tags: [],
+      is_active: true,
+      version: 1
+    };
+    
     setTemplates(prev => prev.map(t => (t.id === id ? updatedTemplate : t)));
     return updatedTemplate;
   };
@@ -84,7 +127,7 @@ export const useEmailTemplates = () => {
   const deleteTemplate = async (templateId: string) => {
     const { error: deleteError } = await supabase
       .from('email_templates')
-      .update({ is_active: false })
+      .delete()
       .eq('id', templateId);
 
     if (deleteError) {

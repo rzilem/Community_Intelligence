@@ -107,11 +107,11 @@ export function useDocumentOperations() {
         is_public: data.is_public,
         is_archived: data.is_archived,
         uploaded_by: data.uploaded_by,
-        // Use created_at field from the database as uploaded_at in our Document type
-        uploaded_at: data.created_at,
+        // Use uploaded_date field from the database as uploaded_at in our Document type
+        uploaded_at: data.uploaded_date,
         // Add default values for fields that might not be present in the database
         last_accessed: null,
-        current_version: data.current_version || 1
+        current_version: data.version || 1
       };
       
       return document;
