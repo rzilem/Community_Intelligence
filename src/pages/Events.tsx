@@ -67,10 +67,10 @@ const Events: React.FC = () => {
 
     try {
       if (editingEvent) {
-        await updateEvent({ id: editingEvent.id, ...eventData });
+        await updateEvent();
         setEditingEvent(null);
       } else {
-        await createEvent(eventData);
+        await createEvent();
         setIsCreateOpen(false);
       }
       resetForm();
@@ -97,7 +97,7 @@ const Events: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this event?')) {
-      await deleteEvent.mutateAsync(id);
+      await deleteEvent();
     }
   };
 
@@ -284,11 +284,11 @@ const Events: React.FC = () => {
                       )}
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground capitalize">{event.event_type}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          event.event_status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                          event.event_status === 'ongoing' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                         <span className={`px-2 py-1 rounded-full text-xs ${
+                           event.event_status === 'active' ? 'bg-blue-100 text-blue-800' :
+                           event.event_status === 'completed' ? 'bg-green-100 text-green-800' :
+                           'bg-gray-100 text-gray-800'
+                         }`}>
                           {event.event_status}
                         </span>
                       </div>

@@ -1,4 +1,4 @@
-export type EventStatus = 'active' | 'cancelled' | 'completed' | 'draft';
+export type EventStatus = 'active' | 'cancelled' | 'completed' | 'draft' | 'scheduled' | 'ongoing';
 export type EventType = 'meeting' | 'social' | 'maintenance' | 'emergency' | 'other';
 
 export interface Event {
@@ -15,6 +15,8 @@ export interface Event {
   event_status: EventStatus;
   registration_required?: boolean;
   registration_deadline?: string;
+  requires_rsvp?: boolean;
+  rsvp_deadline?: string;
   created_at: string;
   created_by?: string;
   updated_at?: string;
