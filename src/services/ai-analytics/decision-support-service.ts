@@ -42,61 +42,31 @@ export class DecisionSupportService {
   }
 
   static async getFinancialRecommendations(associationId: string): Promise<SmartRecommendation[]> {
-    const recommendations: SmartRecommendation[] = [];
-    
-    try {
-      const response = await supabase
-        .from('accounts_receivable')
-        .select('id, current_balance, status')
-        .eq('association_id', associationId)
-        .eq('status', 'open');
-
-      const arData = response.data;
-
-      if (arData && arData.length > 0) {
-        const totalOutstanding = arData.reduce((sum, ar) => sum + (ar.current_balance || 0), 0);
-        
-        if (totalOutstanding > 10000) {
-          recommendations.push({
-            id: 'financial-collections',
-            type: 'financial',
-            title: 'Implement Automated Payment Reminders',
-            description: `${arData.length} outstanding accounts totaling $${totalOutstanding.toLocaleString()}`,
-            confidence: 0.9,
-            potentialSavings: totalOutstanding * 0.3,
-            action: 'Set up automated payment reminder system',
-            data: { outstandingAmount: totalOutstanding, accountCount: arData.length }
-          });
-        }
-      }
-
-      // Add mock financial recommendations for demo
-      if (recommendations.length === 0) {
-        recommendations.push({
-          id: 'financial-cash-flow',
-          type: 'financial',
-          title: 'Optimize Cash Flow Management',
-          description: 'Implement early payment incentives to improve cash flow',
-          confidence: 0.78,
-          potentialSavings: 2500,
-          action: 'Offer 2% discount for payments made 10 days early',
-          data: { averagePaymentDelay: 15, potentialImprovement: 2500 }
-        });
-      }
-
-      return recommendations;
-    } catch (error) {
-      console.error('Error getting financial recommendations:', error);
-      return [{
-        id: 'financial-demo',
+    // Mock financial recommendations - no database calls
+    const recommendations: SmartRecommendation[] = [
+      {
+        id: 'financial-collections',
         type: 'financial',
-        title: 'Financial Analysis Available',
-        description: 'AI-powered financial analysis ready when historical data is available',
-        confidence: 0.5,
-        action: 'Continue using the system to build historical data for analysis',
-        data: { status: 'demo' }
-      }];
-    }
+        title: 'Implement Automated Payment Reminders',
+        description: '12 outstanding accounts totaling $45,000',
+        confidence: 0.9,
+        potentialSavings: 13500,
+        action: 'Set up automated payment reminder system',
+        data: { outstandingAmount: 45000, accountCount: 12 }
+      },
+      {
+        id: 'financial-cash-flow',
+        type: 'financial',
+        title: 'Optimize Cash Flow Management',
+        description: 'Implement early payment incentives to improve cash flow',
+        confidence: 0.78,
+        potentialSavings: 2500,
+        action: 'Offer 2% discount for payments made 10 days early',
+        data: { averagePaymentDelay: 15, potentialImprovement: 2500 }
+      }
+    ];
+
+    return recommendations;
   }
 
   static async getAllRecommendations(associationId: string): Promise<SmartRecommendation[]> {

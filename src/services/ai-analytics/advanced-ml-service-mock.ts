@@ -5,56 +5,28 @@ import {
   PLACEHOLDER_AI_MODEL_PERFORMANCE 
 } from '@/data/extended-placeholder-data';
 
-export interface DelinquencyPrediction {
-  id: string;
-  property_id: string;
-  risk_score: number;
-  risk_level: 'low' | 'medium' | 'high';
-  predicted_delinquency_date: string;
-  confidence: number;
-  factors: string[];
-  created_at: string;
-}
-
-export interface MaintenancePrediction {
-  id: string;
-  property_id: string;
-  asset_type: string;
-  predicted_failure_date: string;
-  confidence: number;
-  estimated_cost: number;
-  priority: 'low' | 'medium' | 'high';
-  recommendations: string[];
-  created_at: string;
-}
-
-export interface ComplianceRisk {
-  id: string;
-  property_id: string;
-  risk_type: string;
-  risk_score: number;
-  risk_level: 'low' | 'medium' | 'high';
-  predicted_violation_date: string;
-  confidence: number;
-  mitigating_actions: string[];
-  created_at: string;
-}
-
 export interface AutomatedInsight {
   id: string;
-  type: string;
+  type: 'cost_optimization' | 'risk_assessment' | 'performance_improvement';
   title: string;
   description: string;
   confidence: number;
+  impact: 'low' | 'medium' | 'high';
   priority: 'low' | 'medium' | 'high';
+  recommendations: string[];
+  data_sources: string[];
+  actionable: boolean;
   created_at: string;
 }
 
 export interface IntelligentAlert {
   id: string;
-  type: string;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  title: string;
   message: string;
-  severity: 'info' | 'warning' | 'error';
+  category: string;
+  confidence: number;
+  alertType: string;
   created_at: string;
 }
 
@@ -68,39 +40,74 @@ export interface MLModelMetrics {
   modelVersion: string;
 }
 
-export interface ModelPerformance {
-  model_name: string;
-  accuracy: number;
-  precision: number;
-  recall: number;
-  f1_score: number;
-  last_updated: string;
-  training_data_size: number;
-}
-
 export class AdvancedMLService {
-  static async predictDelinquency(associationId: string): Promise<DelinquencyPrediction[]> {
-    // Simulate ML prediction based on placeholder data
+  static async generateAutomatedInsights(associationId: string): Promise<AutomatedInsight[]> {
+    // Mock automated insights
+    return [
+      {
+        id: 'insight-1',
+        type: 'cost_optimization',
+        title: 'Maintenance Cost Optimization Opportunity',
+        description: 'Analysis indicates potential 20% reduction in maintenance costs through vendor consolidation',
+        confidence: 0.89,
+        impact: 'high',
+        priority: 'high',
+        recommendations: ['Review maintenance contracts', 'Implement preventive measures'],
+        data_sources: ['maintenance_requests', 'vendor_performance'],
+        actionable: true,
+        created_at: new Date().toISOString()
+      }
+    ];
+  }
+
+  static async generateIntelligentAlerts(associationId: string): Promise<IntelligentAlert[]> {
+    // Mock intelligent alerts
+    return [
+      {
+        id: 'alert-1',
+        severity: 'critical',
+        title: 'Budget Variance Detected',
+        message: 'Monthly spending exceeds budget by 15%',
+        category: 'financial',
+        confidence: 0.92,
+        alertType: 'Budget Overrun',
+        created_at: new Date().toISOString()
+      }
+    ];
+  }
+
+  static async getMLModelMetrics(): Promise<MLModelMetrics[]> {
+    // Mock ML model metrics
+    return [
+      {
+        accuracy: 0.85,
+        precision: 0.82,
+        recall: 0.88,
+        f1Score: 0.85,
+        lastTrained: new Date(Date.now() - 604800000).toISOString(),
+        trainingDataSize: 1000,
+        modelVersion: '1.0.0'
+      }
+    ];
+  }
+
+  // Additional mock methods
+  static async predictDelinquency(associationId: string): Promise<any[]> {
     const arData = PLACEHOLDER_ACCOUNTS_RECEIVABLE.filter(ar => ar.current_balance > 0);
     
     return arData.map(ar => ({
       id: crypto.randomUUID(),
       property_id: ar.property_id,
       risk_score: ar.current_balance > 500 ? 0.8 : 0.3,
-      risk_level: ar.current_balance > 500 ? 'high' as const : 'medium' as const,
+      risk_level: ar.current_balance > 500 ? 'high' : 'medium',
       predicted_delinquency_date: new Date(Date.now() + 2592000000).toISOString(),
       confidence: 0.85,
-      factors: [
-        'Past payment history',
-        'Current balance amount',
-        'Property type'
-      ],
+      factors: ['Past payment history', 'Current balance amount', 'Property type'],
       created_at: new Date().toISOString()
     }));
   }
 
-  static async predictMaintenance(associationId: string): Promise<MaintenancePrediction[]> {
-    // Simulate maintenance predictions
+  static async predictMaintenance(associationId: string): Promise<any[]> {
     return PLACEHOLDER_MAINTENANCE_REQUESTS.map(req => ({
       id: crypto.randomUUID(),
       property_id: req.property_id || 'common-area',
@@ -108,18 +115,13 @@ export class AdvancedMLService {
       predicted_failure_date: new Date(Date.now() + 7776000000).toISOString(),
       confidence: 0.75,
       estimated_cost: req.estimated_cost || 500,
-      priority: req.priority as 'low' | 'medium' | 'high',
-      recommendations: [
-        'Schedule preventive maintenance',
-        'Inspect related components',
-        'Budget for replacement'
-      ],
+      priority: req.priority,
+      recommendations: ['Schedule preventive maintenance', 'Inspect related components', 'Budget for replacement'],
       created_at: new Date().toISOString()
     }));
   }
 
-  static async assessComplianceRisk(associationId: string): Promise<ComplianceRisk[]> {
-    // Simulate compliance risk assessment
+  static async assessComplianceRisk(associationId: string): Promise<any[]> {
     return [
       {
         id: crypto.randomUUID(),
@@ -129,26 +131,10 @@ export class AdvancedMLService {
         risk_level: 'medium',
         predicted_violation_date: new Date(Date.now() + 1209600000).toISOString(),
         confidence: 0.7,
-        mitigating_actions: [
-          'Send reminder notice',
-          'Schedule inspection',
-          'Offer assistance program'
-        ],
+        mitigating_actions: ['Send reminder notice', 'Schedule inspection', 'Offer assistance program'],
         created_at: new Date().toISOString()
       }
     ];
-  }
-
-  static async getModelPerformance(): Promise<ModelPerformance[]> {
-    return PLACEHOLDER_AI_MODEL_PERFORMANCE.map(model => ({
-      model_name: model.model_name,
-      accuracy: model.accuracy_score,
-      precision: model.performance_metrics.precision,
-      recall: model.performance_metrics.recall,
-      f1_score: model.performance_metrics.f1_score,
-      last_updated: model.last_trained,
-      training_data_size: 1000
-    }));
   }
 
   static async generateInsights(associationId: string): Promise<any> {
@@ -170,12 +156,6 @@ export class AdvancedMLService {
       cost_savings_potential: 15000,
       efficiency_improvements: 25
     };
-  }
-
-  static async trainModel(modelName: string, data: any[]): Promise<boolean> {
-    // Simulate model training
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return true;
   }
 
   static async optimizeOperations(associationId: string): Promise<any> {
@@ -208,45 +188,5 @@ export class AdvancedMLService {
         ]
       }
     };
-  }
-
-  static async generateAutomatedInsights(associationId: string): Promise<AutomatedInsight[]> {
-    return [
-      {
-        id: crypto.randomUUID(),
-        type: 'delinquency',
-        title: 'Delinquency Risk Identified',
-        description: 'Property 102 shows high risk for delinquency based on payment patterns',
-        confidence: 0.85,
-        priority: 'high',
-        created_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  static async generateIntelligentAlerts(associationId: string): Promise<IntelligentAlert[]> {
-    return [
-      {
-        id: crypto.randomUUID(),
-        type: 'maintenance',
-        message: 'Predictive maintenance alert: Pool equipment due for service',
-        severity: 'warning',
-        created_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  static async getMLModelMetrics(): Promise<MLModelMetrics[]> {
-    return [
-      {
-        accuracy: 0.85,
-        precision: 0.82,
-        recall: 0.88,
-        f1Score: 0.85,
-        lastTrained: new Date(Date.now() - 604800000).toISOString(),
-        trainingDataSize: 1000,
-        modelVersion: '1.0.0'
-      }
-    ];
   }
 }

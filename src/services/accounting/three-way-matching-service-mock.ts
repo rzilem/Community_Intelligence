@@ -28,11 +28,17 @@ export interface MatchDiscrepancy {
 
 export interface MatchingException {
   id: string;
-  type: 'quantity' | 'price' | 'amount' | 'vendor' | 'missing_document';
-  severity: 'low' | 'medium' | 'high';
+  match_id: string;
+  exception_type: 'price_variance' | 'quantity_variance' | 'delivery_variance';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
-  amount_variance?: number;
-  recommended_action: string;
+  description: string;
+  variance_amount: number;
+  variance_percentage: number;
+  po_amount: number;
+  invoice_amount: number;
+  receipt_amount: number;
+  created_at: string;
 }
 
 export class ThreeWayMatchingService {
@@ -67,6 +73,23 @@ export class ThreeWayMatchingService {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: 'user-1'
+    }
+  ];
+
+  private static mockExceptions: MatchingException[] = [
+    {
+      id: 'exception-1',
+      match_id: 'match-1',
+      exception_type: 'price_variance',
+      severity: 'critical',
+      message: 'Price difference detected between PO and invoice',
+      description: 'Significant price variance exceeds threshold',
+      variance_amount: 150.00,
+      variance_percentage: 12.5,
+      po_amount: 1200.00,
+      invoice_amount: 1350.00,
+      receipt_amount: 1200.00,
+      created_at: new Date(Date.now() - 3600000).toISOString()
     }
   ];
 
@@ -201,11 +224,12 @@ export class ThreeWayMatchingService {
     };
   }
 
-  static async approveMatch(matchId: string): Promise<void> {
+  static async approveMatch(matchId: string, approver?: string): Promise<void> {
     const match = this.mockMatches.find(m => m.id === matchId);
     if (match) {
       match.match_status = 'matched';
       match.updated_at = new Date().toISOString();
+      match.resolved_by = approver || 'system';
     }
   }
 
@@ -218,12 +242,16 @@ export class ThreeWayMatchingService {
     }
   }
 
-  static async overrideMatch(matchId: string, overrideData: any): Promise<void> {
+  static async overrideMatch(matchId: string, reason: string, newStatus?: string): Promise<void> {
     const match = this.mockMatches.find(m => m.id === matchId);
     if (match) {
-      match.match_status = 'matched';
-      match.discrepancy_reason = `Override: ${overrideData.reason}`;
+      match.match_status = newStatus === 'rejected' ? 'pending' : 'matched';
+      match.discrepancy_reason = `Override: ${reason}`;
       match.updated_at = new Date().toISOString();
     }
+  }
+
+  static async getMatchingExceptions(associationId: string): Promise<MatchingException[]> {
+    return this.mockExceptions;
   }
 }
