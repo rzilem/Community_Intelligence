@@ -43,7 +43,7 @@ const HomeownerRequestCommentDialog: React.FC<HomeownerRequestCommentDialogProps
   });
 
   const { mutate: createComment, isPending } = useSupabaseCreate(
-    'comments',
+    'communications',
     {
       onSuccess: () => {
         toast.success('Comment added successfully');

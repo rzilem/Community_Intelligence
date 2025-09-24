@@ -102,15 +102,30 @@ const VendorManagement: React.FC<VendorManagementProps> = ({
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
-        .eq('hoa_id', hoaId)
-        .order('name', { ascending: true });
+        .eq('association_id', hoaId)
+        .order('company_name', { ascending: true });
 
       if (error) {
         console.error('Error loading vendors:', error);
         toast.error('Failed to load vendors');
         setVendors([]);
       } else {
-        setVendors((data || []) as Vendor[]);
+        setVendors((data || []).map(item => ({
+          id: item.id,
+          hoa_id: item.association_id,
+          name: item.contact_name || 'Unknown Vendor',
+          contact_person: item.contact_name,
+          email: item.email,
+          phone: item.phone,
+          address: item.address1,
+          license_number: '',
+          specialties: ['general'],
+          total_jobs: 0,
+          completed_jobs: 0,
+          is_active: true,
+          created_at: item.created_at,
+          updated_at: item.updated_at
+        })) as Vendor[]);
       }
     } catch (error) {
       console.error('Error loading vendors:', error);

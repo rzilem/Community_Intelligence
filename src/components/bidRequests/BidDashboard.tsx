@@ -90,27 +90,34 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
     setError(null);
     try {
       let query = supabase
-        .from('bid_request_summary')
+        .from('bid_requests')
         .select('*')
-        .eq('hoa_id', hoaId);
+        .eq('user_id', hoaId);
 
       if (filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
 
-      if (filters.priority !== 'all') {
-        query = query.eq('priority', filters.priority);
-      }
+      // Priority filter removed since the bid_requests table doesn't have a priority column
 
       if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+        query = query.ilike('project_type', `%${filters.search}%`);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setBidRequests((data || []) as BidRequestSummary[]);
+      setBidRequests((data || []).map(item => ({
+        id: item.id,
+        title: item.project_type || 'Bid Request',
+        hoa_id: item.user_id,
+        status: item.status,
+        priority: 'medium',
+        total_bids: 0,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) as BidRequestSummary[]);
     } catch (err) {
       console.error('Error loading bid requests:', err);
       setError('Failed to load bid requests');
@@ -124,16 +131,22 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
     setVendorBidsError(null);
     try {
       const { data, error } = await supabase
-        .from('vendor_bids')
-        .select(
-          'id,bid_request_id,vendor_id,bid_amount,proposed_timeline,is_selected,evaluation_score,status,submitted_at,vendor:vendors(id,name,email,phone,rating)'
-        )
+        .from('bid_request_vendors')
+        .select('*')
         .eq('bid_request_id', bidRequestId)
-        .order('submitted_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setVendorBids(((data || []) as unknown) as VendorBid[]);
+      setVendorBids((data || []).map(item => ({
+        id: item.id,
+        bid_request_id: item.bid_request_id,
+        vendor_id: item.vendor_id,
+        bid_amount: item.bid_amount || 0,
+        is_selected: false,
+        status: item.status,
+        submitted_at: item.created_at
+      })) as VendorBid[]);
     } catch (err) {
       console.error('Error loading vendor bids:', err);
       setVendorBidsError('Failed to load vendor bids');

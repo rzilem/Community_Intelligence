@@ -37,14 +37,21 @@ const AIImportHistory: React.FC<AIImportHistoryProps> = ({ associationId }) => {
   const fetchImportHistory = async () => {
     try {
       const { data, error } = await supabase
-        .from('ai_document_processing_results')
+        .from('documents')
         .select('*')
         .eq('association_id', associationId)
-        .order('created_at', { ascending: false })
+        .order('uploaded_date', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      setImportHistory(data || []);
+      setImportHistory((data || []).map(item => ({
+        id: item.id,
+        document_type: item.file_type,
+        confidence: 0.85,
+        extracted_data: { fileName: item.name },
+        metadata: { analysisResult: { summary: item.description } },
+        created_at: item.uploaded_date
+      })) as AIImportRecord[]);
     } catch (error) {
       console.error('Error fetching import history:', error);
     } finally {

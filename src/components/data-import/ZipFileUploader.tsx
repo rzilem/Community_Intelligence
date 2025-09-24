@@ -38,7 +38,9 @@ const ZipFileUploader: React.FC = () => {
     // Load associations current user can access
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_associations');
+        const { data, error } = await supabase
+          .from('associations')
+          .select('id, name');
         if (error) throw error;
         if (data && Array.isArray(data)) {
           setAssociations(data.map((a: any) => ({ id: a.id, name: a.name })));

@@ -69,17 +69,9 @@ export const useRequestForm = (
     try {
       setLoadingComments(true);
       const { data, error } = await supabase
-        .from('comments')
-        .select(`
-          *,
-          user:user_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('parent_id', request.id)
-        .eq('parent_type', 'homeowner_request')
+        .from('communications')
+        .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
@@ -119,10 +111,9 @@ export const useRequestForm = (
     if (values.note?.trim()) {
       try {
         const { error: commentError } = await supabase
-          .from('comments')
+          .from('communications')
           .insert({
-            parent_id: request.id,
-            parent_type: 'homeowner_request',
+            subject: `Note for request: ${request.title}`,
             content: values.note.trim(),
             user_id: user?.id || null,
           });
