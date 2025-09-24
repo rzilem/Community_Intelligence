@@ -54,6 +54,7 @@ const Auth = () => {
   const handleLogin = async (formData: LoginFormValues) => {
     try {
       await signIn(formData.email, formData.password);
+      console.log('🎉 Login successful, navigating to dashboard');
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -112,7 +113,7 @@ const Auth = () => {
               <LoginForm onSubmit={handleLogin} isLoading={loading} />
               
               {/* Emergency bypass button */}
-              {bypassTimer > 5 && (
+              {bypassTimer > 3 && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
                   <p className="text-sm text-red-600 mb-2">
                     Login stuck for {bypassTimer} seconds

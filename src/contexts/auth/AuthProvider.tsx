@@ -215,33 +215,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🚀 Starting sign in for:', email);
       setState(prev => ({ ...prev, isSigningIn: true, error: null }));
       
-      // Emergency timeout safety - force clear isSigningIn after 10 seconds
-      const timeoutId = setTimeout(() => {
-        console.error('⏰ Sign in timeout - forcing clear isSigningIn state');
-        setState(prev => ({ 
-          ...prev, 
-          isSigningIn: false, 
-          error: 'Sign in timed out. Please try again.' 
-        }));
-      }, 10000);
-      
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        clearTimeout(timeoutId); // Clear timeout on response
+      return new Promise<void>((resolve, reject) => {
+        // Reduced timeout to 5 seconds for better UX
+        const timeoutId = setTimeout(() => {
+          console.error('⏰ Sign in timeout - forcing clear isSigningIn state');
+          setState(prev => ({ 
+            ...prev, 
+            isSigningIn: false, 
+            error: 'Sign in timed out. Please try again.' 
+          }));
+          reject(new Error('Sign in timed out'));
+        }, 5000);
         
-        if (error) {
-          console.log('❌ Sign in error:', error.message);
-          setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
-          throw error;
-        }
-        console.log('✅ Sign in successful, waiting for auth state change...');
-        // Don't set isSigningIn to false here - let onAuthStateChange handle it
-      } catch (error) {
-        clearTimeout(timeoutId); // Clear timeout on exception
-        console.log('💥 Sign in exception:', error);
-        setState(prev => ({ ...prev, isSigningIn: false }));
-        throw error;
-      }
+        // Watch for auth state changes to resolve the promise
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session?.user) {
+            clearTimeout(timeoutId);
+            subscription.unsubscribe();
+            console.log('✅ Sign in completed with auth state change');
+            resolve();
+          }
+        });
+        
+        // Perform the actual sign in
+        supabase.auth.signInWithPassword({ email, password })
+          .then(({ error }) => {
+            if (error) {
+              clearTimeout(timeoutId);
+              subscription.unsubscribe();
+              console.log('❌ Sign in error:', error.message);
+              setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
+              reject(error);
+            }
+            console.log('✅ Sign in request successful, waiting for auth state...');
+          })
+          .catch((error) => {
+            clearTimeout(timeoutId);
+            subscription.unsubscribe();
+            console.log('💥 Sign in exception:', error);
+            setState(prev => ({ ...prev, isSigningIn: false }));
+            reject(error);
+          });
+      });
     },
     signUp: async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
       setState(prev => ({ ...prev, isSigningIn: true, error: null }));
