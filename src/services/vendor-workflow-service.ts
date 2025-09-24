@@ -5,9 +5,9 @@ export interface VendorWorkflowAutomation {
   association_id: string;
   name: string;
   trigger_type: string;
-  trigger_conditions: any;
+  trigger_conditions: Record<string, any>;
   action_type: string;
-  action_config: any;
+  action_config: Record<string, any>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -16,9 +16,7 @@ export interface VendorWorkflowAutomation {
 export interface VendorWorkflowExecution {
   id: string;
   automation_id: string;
-  vendor_id: string;
   status: string;
-  execution_data: any;
   created_at: string;
 }
 
@@ -85,10 +83,5 @@ export const vendorWorkflowService = {
       console.error('Error deleting workflow automation:', error);
       throw error;
     }
-  },
-
-  async triggerWorkflowEvent(eventType: string, eventData: WorkflowTriggerData): Promise<void> {
-    console.log('Triggering workflow event:', eventType, eventData);
-    // Implementation would go here
   }
 };
