@@ -2923,6 +2923,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       storage_path_for_association: {
         Args: { association_id: string }
         Returns: string

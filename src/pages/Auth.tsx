@@ -53,14 +53,8 @@ const Auth = () => {
 
   const handleLogin = async (formData: LoginFormValues) => {
     try {
-      console.log('🚀 Starting login process...');
       await signIn(formData.email, formData.password);
-      console.log('🎉 Login successful, navigating to dashboard');
-      
-      // Add a small delay to ensure state is updated
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 100);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       // Error is handled by signIn
