@@ -27,6 +27,11 @@ export type KnownTables =
   | 'bank_statements'
   | 'bank_transactions'
   | 'amenities'
+  | 'amenity_bookings'
+  | 'amenity_blackouts'
+  | 'events'
+  | 'violations'
+  | 'maintenance_requests'
   | 'onboarding_projects'
   | 'onboarding_templates'
   | 'communications'
@@ -106,7 +111,9 @@ export type KnownFunctions =
   | 'upsert_totp_secret'
   | 'verify_totp'
   | 'set_totp_verified'
-  | 'delete_totp_secret';
+  | 'delete_totp_secret'
+  | 'create_association_with_admin'
+  | 'get_user_associations';
 
 // Mock RPC function implementation for missing functions
 export const mockRPCCall = async (functionName: string, params?: any): Promise<any> => {
@@ -138,6 +145,10 @@ export const mockRPCCall = async (functionName: string, params?: any): Promise<a
     case 'set_totp_verified':
     case 'delete_totp_secret':
       return { valid: true };
+      
+    case 'create_association_with_admin':
+    case 'get_user_associations':
+      return [];
       
     default:
       return null;

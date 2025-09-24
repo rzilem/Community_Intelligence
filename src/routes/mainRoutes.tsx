@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import NotFound from '@/pages/NotFound';
@@ -20,16 +20,28 @@ export const mainRoutes = [
     element: <Dashboard />
   },
   {
+    path: '/ai-assistant',
+    element: lazy(() => import('@/pages/AIAssistant'))
+  },
+  {
+    path: '/properties',
+    element: lazy(() => import('@/pages/Properties'))
+  },
+  {
+    path: '/assessments',
+    element: lazy(() => import('@/pages/Assessments'))
+  },
+  {
+    path: '/violations',
+    element: lazy(() => import('@/pages/Violations'))
+  },
+  {
     path: '/dashboard/actions',
     element: <AllActions />
   },
   {
     path: '/design-showcase',
     element: <DesignShowcase />
-  },
-  {
-    path: '/properties',
-    element: <Navigate to="/associations" />
   },
   {
     path: '/residents',
