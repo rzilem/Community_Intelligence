@@ -137,14 +137,15 @@ const AdvancedFinancialReports: React.FC<AdvancedFinancialReportsProps> = ({
       periodEnd.toISOString().split('T')[0]
     );
 
-    const totalDebits = trialBalance.reduce((sum, acc) => sum + acc.debit_balance, 0);
-    const totalCredits = trialBalance.reduce((sum, acc) => sum + acc.credit_balance, 0);
+    const trialBalanceAccounts = result.accounts || [];
+    const totalDebits = result.total_debits || 0;
+    const totalCredits = result.total_credits || 0;
 
     return {
       reportType: 'Trial Balance',
       periodStart,
       periodEnd,
-      data: trialBalance,
+      data: trialBalanceAccounts,
       totals: {
         debits: totalDebits,
         credits: totalCredits,

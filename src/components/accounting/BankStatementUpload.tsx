@@ -37,12 +37,7 @@ const BankStatementUpload: React.FC<BankStatementUploadProps> = ({
     setIsUploading(true);
     
     try {
-      await BankReconciliationService.uploadStatement(
-        file,
-        selectedAccount,
-        statementDate,
-        uploadType as 'csv' | 'pdf' | 'ofx'
-      );
+      await BankReconciliationService.uploadStatement(file, selectedAccount);
       
       onOpenChange(false);
       setFile(null);
