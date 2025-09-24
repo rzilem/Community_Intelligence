@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/profile-types';
+import { Profile, UserRole } from '@/types/profile-types';
 
 /**
  * Fetches a user's complete profile data from Supabase
@@ -22,7 +22,7 @@ export const fetchUserProfile = async (userId: string): Promise<{ profile?: Prof
     // Ensure the profile has all required fields
     const profile: Profile = {
       ...data,
-      role: data.role || 'user',
+      role: (data.role || 'user') as UserRole,
       created_at: data.created_at,
       updated_at: data.updated_at,
       // Backward compatibility fields if needed
