@@ -153,19 +153,19 @@ export const vendorService = {
 
     // Emit workflow event for vendor creation
     try {
-      const associationId = data.association_id || data.hoa_id;
+      const associationId = data.association_id;
       if (associationId) {
         await workflowEventEmitter.emit('vendor_created', {
           vendor: data,
           vendor_name: data.name,
-          specialties: data.specialties || [],
+          specialties: [],
           contact_info: {
             email: data.email,
             phone: data.phone,
-            contact_person: data.contact_name || data.contact_person
+            contact_person: data.contact_name
           },
-          license_number: data.license_number || '',
-          insurance_info: data.insurance_info || {}
+          license_number: '',
+          insurance_info: {}
         }, associationId);
       }
     } catch (eventError) {

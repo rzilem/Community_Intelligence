@@ -200,8 +200,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentAssociation,
     userAssociations: state.associations,
     setCurrentAssociation,
-    signIn: async () => {}, // Mock function
-    signUp: async () => {}, // Mock function
+    signIn: async (email: string, password: string) => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setState(prev => ({ ...prev, isLoading: false, error: error.message }));
+        throw error;
+      }
+    },
+    signUp: async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+      if (error) {
+        setState(prev => ({ ...prev, isLoading: false, error: error.message }));
+        throw error;
+      }
+    }
   };
 
   return (

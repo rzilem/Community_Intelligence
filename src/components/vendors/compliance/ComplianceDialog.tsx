@@ -85,7 +85,10 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
     if (complianceItem) {
       updateMutation.mutate({ id: complianceItem.id, data: itemData });
     } else {
-      createMutation.mutate(itemData);
+      createMutation.mutate({
+        ...itemData,
+        verified_at: null,
+      });
     }
   };
 

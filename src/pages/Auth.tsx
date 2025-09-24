@@ -25,8 +25,7 @@ const Auth = () => {
 
   const handleLogin = async (formData: LoginFormValues) => {
     try {
-      // Mock implementation - signIn expects no arguments
-      await signIn();
+      await signIn(formData.email, formData.password);
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -36,8 +35,10 @@ const Auth = () => {
 
   const handleSignup = async (formData: SignupFormValues) => {
     try {
-      // Mock implementation - signUp expects no arguments
-      await signUp();
+      await signUp(formData.email, formData.password, {
+        first_name: formData.firstName,
+        last_name: formData.lastName
+      });
       setRegistrationSuccess(true);
       // Automatically switch to login tab after successful registration
       setTimeout(() => {

@@ -65,7 +65,7 @@ const VendorContractsTab: React.FC<VendorContractsTabProps> = ({ vendorId }) => 
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{contract.contract_title}</CardTitle>
+                    <CardTitle className="text-lg">{contract.contract_type}</CardTitle>
                     <p className="text-sm text-gray-600">#{contract.contract_number}</p>
                   </div>
                   <Badge className={getStatusColor(contract.status)}>
@@ -103,13 +103,7 @@ const VendorContractsTab: React.FC<VendorContractsTabProps> = ({ vendorId }) => 
                     <p className="text-gray-600">{contract.contract_type}</p>
                   </div>
                 </div>
-                {contract.auto_renew && (
-                  <div className="mt-3 p-2 bg-blue-50 rounded-md">
-                    <p className="text-sm text-blue-800">
-                      Auto-renewal enabled ({contract.renewal_notice_days} days notice)
-                    </p>
-                  </div>
-                )}
+                {/* Auto-renewal info would be displayed here if supported */}
               </CardContent>
             </Card>
           ))}

@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          association_id: string | null
+          created_at: string
+          id: string
+          messages: Json
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_insights: {
+        Row: {
+          association_id: string | null
+          confidence_score: number
+          created_at: string
+          data: Json
+          description: string
+          id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          association_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          data?: Json
+          description: string
+          id?: string
+          title: string
+          type: string
+        }
+        Update: {
+          association_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          data?: Json
+          description?: string
+          id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_models: {
+        Row: {
+          configuration: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          performance_metrics: Json
+          type: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          configuration?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          performance_metrics?: Json
+          type: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          performance_metrics?: Json
+          type?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       association_photos: {
         Row: {
           association_id: string
@@ -1746,6 +1864,59 @@ export type Database = {
           },
         ]
       }
+      smart_suggestions: {
+        Row: {
+          association_id: string | null
+          created_at: string
+          description: string
+          estimated_impact: string
+          id: string
+          implementation_effort: string
+          priority: string
+          status: string
+          suggested_actions: Json
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string
+          description: string
+          estimated_impact: string
+          id?: string
+          implementation_effort?: string
+          priority?: string
+          status?: string
+          suggested_actions?: Json
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string
+          description?: string
+          estimated_impact?: string
+          id?: string
+          implementation_effort?: string
+          priority?: string
+          status?: string
+          suggested_actions?: Json
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_suggestions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_integrations: {
         Row: {
           created_at: string
@@ -2234,6 +2405,45 @@ export type Database = {
           },
         ]
       }
+      vendor_workflow_automations: {
+        Row: {
+          action_config: Json
+          action_type: string
+          association_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          association_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          trigger_conditions?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          association_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          trigger_conditions?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address1: string | null
@@ -2244,6 +2454,7 @@ export type Database = {
           compliance_group: string | null
           compliance_status: string | null
           contact_name: string | null
+          contact_person: string | null
           created_at: string | null
           dba: string | null
           default_payment_method: string | null
@@ -2252,10 +2463,12 @@ export type Database = {
           hold_reason: string | null
           id: string
           insurance: Json | null
+          insurance_info: Json | null
           is_1099: boolean | null
           is_compliant: boolean | null
           is_default: boolean | null
           is_preferred: boolean | null
+          license_number: string | null
           name: string
           notes: string | null
           old_provider_id: string | null
@@ -2263,6 +2476,7 @@ export type Database = {
           phone: string | null
           provider_type: string | null
           report_1099_box: string | null
+          specialties: string[] | null
           state: string | null
           status: string | null
           street_no: string | null
@@ -2280,6 +2494,7 @@ export type Database = {
           compliance_group?: string | null
           compliance_status?: string | null
           contact_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           dba?: string | null
           default_payment_method?: string | null
@@ -2288,10 +2503,12 @@ export type Database = {
           hold_reason?: string | null
           id?: string
           insurance?: Json | null
+          insurance_info?: Json | null
           is_1099?: boolean | null
           is_compliant?: boolean | null
           is_default?: boolean | null
           is_preferred?: boolean | null
+          license_number?: string | null
           name: string
           notes?: string | null
           old_provider_id?: string | null
@@ -2299,6 +2516,7 @@ export type Database = {
           phone?: string | null
           provider_type?: string | null
           report_1099_box?: string | null
+          specialties?: string[] | null
           state?: string | null
           status?: string | null
           street_no?: string | null
@@ -2316,6 +2534,7 @@ export type Database = {
           compliance_group?: string | null
           compliance_status?: string | null
           contact_name?: string | null
+          contact_person?: string | null
           created_at?: string | null
           dba?: string | null
           default_payment_method?: string | null
@@ -2324,10 +2543,12 @@ export type Database = {
           hold_reason?: string | null
           id?: string
           insurance?: Json | null
+          insurance_info?: Json | null
           is_1099?: boolean | null
           is_compliant?: boolean | null
           is_default?: boolean | null
           is_preferred?: boolean | null
+          license_number?: string | null
           name?: string
           notes?: string | null
           old_provider_id?: string | null
@@ -2335,6 +2556,7 @@ export type Database = {
           phone?: string | null
           provider_type?: string | null
           report_1099_box?: string | null
+          specialties?: string[] | null
           state?: string | null
           status?: string | null
           street_no?: string | null
