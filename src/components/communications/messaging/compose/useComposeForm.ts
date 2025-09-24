@@ -124,13 +124,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       const processedContent = replaceMergeTags(messageContent, previewData);
       const processedSubject = replaceMergeTags(subject, previewData);
 
-      await communicationService.sendMessage({
-        subject: processedSubject,
-        content: processedContent,
-        association_id: selectedAssociationId,
-        recipient_groups: selectedGroups,
-        type: messageType
-      });
+      await communicationService.sendMessage();
 
       // Reset form
       setSubject('');
