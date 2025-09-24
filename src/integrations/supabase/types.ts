@@ -1040,6 +1040,81 @@ export type Database = {
           },
         ]
       }
+      homeowner_requests: {
+        Row: {
+          assigned_to: string | null
+          association_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          priority: string
+          property_id: string | null
+          request_type: string
+          requester_email: string
+          requester_name: string
+          requester_phone: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          priority?: string
+          property_id?: string | null
+          request_type: string
+          requester_email: string
+          requester_name: string
+          requester_phone?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          property_id?: string | null
+          request_type?: string
+          requester_email?: string
+          requester_name?: string
+          requester_phone?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_requests_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homeowner_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       html_templates: {
         Row: {
           association_id: string | null
@@ -1149,6 +1224,7 @@ export type Database = {
           association_type: string | null
           city: string | null
           company: string | null
+          created_at: string | null
           createdat: string
           current_management: string | null
           email: string
@@ -1178,6 +1254,7 @@ export type Database = {
           association_type?: string | null
           city?: string | null
           company?: string | null
+          created_at?: string | null
           createdat?: string
           current_management?: string | null
           email: string
@@ -1207,6 +1284,7 @@ export type Database = {
           association_type?: string | null
           city?: string | null
           company?: string | null
+          created_at?: string | null
           createdat?: string
           current_management?: string | null
           email?: string
@@ -1660,6 +1738,75 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "resale_certificates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resale_events: {
+        Row: {
+          agent_contact: string | null
+          agent_name: string | null
+          association_id: string | null
+          buyer_name: string | null
+          created_at: string
+          created_by: string | null
+          event_date: string
+          event_type: string
+          id: string
+          notes: string | null
+          property_id: string | null
+          sale_price: number | null
+          seller_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_contact?: string | null
+          agent_name?: string | null
+          association_id?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date: string
+          event_type?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          sale_price?: number | null
+          seller_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_contact?: string | null
+          agent_name?: string | null
+          association_id?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          sale_price?: number | null
+          seller_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resale_events_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resale_events_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"

@@ -41,6 +41,7 @@ export interface AuthState {
   associations: Association[];
   isLoading: boolean;
   isSigningOut: boolean;
+  isSigningIn: boolean;
   error: string | null;
 }
 
@@ -65,6 +66,7 @@ const initialState: AuthState = {
   associations: [],
   isLoading: true,
   isSigningOut: false,
+  isSigningIn: false,
   error: null,
 };
 
@@ -132,16 +134,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (user: User) => {
     try {
+      // Set user immediately, but keep profile loading separate
       setState(prev => ({ ...prev, user, isLoading: true }));
       
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.warn('Error loading user profile:', error);
       }
 
       setState(prev => ({
@@ -153,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         associations: [],
         isLoading: false,
+        isSigningIn: false,
         error: null,
       }));
 
@@ -161,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setState(prev => ({
         ...prev,
         isLoading: false,
+        isSigningIn: false,
         error: 'Failed to load profile',
       }));
     }
@@ -193,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     refreshProfile,
     // Backward compatibility
-    loading: state.isLoading,
+    loading: state.isLoading || state.isSigningIn,
     isAuthenticated: !!state.user,
     userRole: state.profile?.role || 'resident',
     isAdmin: state.profile?.role === 'admin',
@@ -201,25 +206,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userAssociations: state.associations,
     setCurrentAssociation,
     signIn: async (email: string, password: string) => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setState(prev => ({ ...prev, isLoading: false, error: error.message }));
+      setState(prev => ({ ...prev, isSigningIn: true, error: null }));
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
+          throw error;
+        }
+        // Don't set isSigningIn to false here - let onAuthStateChange handle it
+      } catch (error) {
+        setState(prev => ({ ...prev, isSigningIn: false }));
         throw error;
       }
     },
     signUp: async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData,
-          emailRedirectTo: `${window.location.origin}/`
+      setState(prev => ({ ...prev, isSigningIn: true, error: null }));
+      try {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: userData,
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
+        if (error) {
+          setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
+          throw error;
         }
-      });
-      if (error) {
-        setState(prev => ({ ...prev, isLoading: false, error: error.message }));
+      } catch (error) {
+        setState(prev => ({ ...prev, isSigningIn: false }));
         throw error;
       }
     }
