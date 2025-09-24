@@ -41,7 +41,7 @@ export interface MLModelMetrics {
 }
 
 export class AdvancedMLService {
-  static async generateAutomatedInsights(associationId: string): Promise<AutomatedInsight[]> {
+  static async generateAutomatedInsights(): Promise<AutomatedInsight[]> {
     // Mock automated insights
     return [
       {
@@ -60,7 +60,7 @@ export class AdvancedMLService {
     ];
   }
 
-  static async generateIntelligentAlerts(associationId: string): Promise<IntelligentAlert[]> {
+  static async generateIntelligentAlerts(): Promise<IntelligentAlert[]> {
     // Mock intelligent alerts
     return [
       {

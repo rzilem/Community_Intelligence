@@ -41,9 +41,9 @@ export const AdvancedMLDashboard: React.FC<AdvancedMLDashboardProps> = ({
     setIsLoading(true);
     try {
       const [insightsData, alertsData, metricsData] = await Promise.all([
-        AdvancedMLService.generateAutomatedInsights(associationId),
-        AdvancedMLService.generateIntelligentAlerts(associationId),
-        AdvancedMLService.getMLModelMetrics(associationId)
+        AdvancedMLService.generateAutomatedInsights(),
+        AdvancedMLService.generateIntelligentAlerts(),
+        AdvancedMLService.getMLModelMetrics()
       ]);
       
       setInsights(insightsData);

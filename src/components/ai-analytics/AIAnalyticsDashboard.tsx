@@ -18,7 +18,7 @@ import {
   DollarSign,
   Shield
 } from 'lucide-react';
-import { PredictiveAnalyticsEngine, FinancialForecast, MaintenancePrediction, ResidentBehaviorInsight } from '@/services/ai-analytics/predictive-analytics-engine';
+import { PredictiveAnalyticsEngine, FinancialForecast, MaintenancePrediction, ResidentBehaviorInsight } from '@/services/ai-workflow/predictive-analytics-engine-mock';
 import { IntelligentDocumentProcessor, DocumentProcessingResult, VisionAnalysisResult } from '@/services/ai-analytics/intelligent-document-processor';
 import { DecisionSupportService, SmartRecommendation } from '@/services/ai-analytics/decision-support-service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,14 +58,14 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
         docHistory,
         smartRecs
       ] = await Promise.all([
-        PredictiveAnalyticsEngine.generateFinancialForecast(currentAssociation.id, 'cash_flow', 12),
-        PredictiveAnalyticsEngine.generateFinancialForecast(currentAssociation.id, 'delinquency', 6),
+        PredictiveAnalyticsEngine.generateFinancialForecast(currentAssociation.id, 'cash_flow'),
+        PredictiveAnalyticsEngine.generateFinancialForecast(currentAssociation.id, 'delinquency'),
         PredictiveAnalyticsEngine.analyzeResidentBehavior(currentAssociation.id),
-        IntelligentDocumentProcessor.getProcessingHistory(currentAssociation.id, 10),
+        IntelligentDocumentProcessor.getProcessingHistory(currentAssociation.id),
         DecisionSupportService.getAllRecommendations(currentAssociation.id)
       ]);
 
-      setForecasts([cashFlowForecast, delinquencyForecast]);
+      setForecasts([...cashFlowForecast, ...delinquencyForecast]);
       setResidentInsights(behaviorInsights);
       setDocumentResults(docHistory);
       setRecommendations(smartRecs);
@@ -174,7 +174,7 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(forecasts.reduce((sum, f) => sum + f.accuracy, 0) / (forecasts.length || 1))}%
+              {Math.round(forecasts.reduce((sum, f) => sum + (f.confidence || 0), 0) / (forecasts.length || 1) * 100)}%
             </div>
             <p className="text-xs text-muted-foreground">
               Average across all models
@@ -270,40 +270,47 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
 
         <TabsContent value="forecasts" className="space-y-4">
           <div className="grid gap-6">
-            {forecasts.map((forecast) => (
-              <Card key={forecast.id}>
+            {forecasts.map((forecast, index) => (
+              <Card key={forecast.id || index}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 capitalize">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    {forecast.forecastType.replace('_', ' ')} Forecast
+                    {forecast.period} Forecast
                   </CardTitle>
                   <CardDescription>
-                    AI prediction with {Math.round(forecast.accuracy * 100)}% accuracy
+                    AI prediction with {Math.round((forecast.confidence || 0) * 100)}% confidence
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {forecast.predictions.slice(0, 3).map((pred, index) => (
-                      <div key={index} className="text-center p-4 rounded-lg border">
-                        <div className="text-2xl font-bold text-primary">
-                          ${pred.value.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{pred.period}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {Math.round(pred.confidence * 100)}% confidence
-                        </div>
+                    <div className="text-center p-4 rounded-lg border">
+                      <div className="text-2xl font-bold text-primary">
+                        ${forecast.predictedRevenue.toLocaleString()}
                       </div>
-                    ))}
+                      <div className="text-sm text-muted-foreground">Revenue</div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg border">
+                      <div className="text-2xl font-bold text-primary">
+                        ${forecast.predictedExpenses.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Expenses</div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg border">
+                      <div className="text-2xl font-bold text-primary">
+                        ${forecast.cashFlow.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Cash Flow</div>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
                     <h4 className="font-semibold">AI Recommendations:</h4>
-                    {forecast.recommendations.slice(0, 2).map((rec, index) => (
+                    {forecast.recommendations?.slice(0, 2).map((rec, index) => (
                       <div key={index} className="flex items-start gap-2 p-2 rounded bg-muted/50">
-                        <Badge variant={getPriorityBadgeVariant(rec.priority)} className="mt-0.5">
-                          {rec.priority}
+                        <Badge variant="secondary" className="mt-0.5">
+                          High
                         </Badge>
-                        <p className="text-sm">{rec.description}</p>
+                        <p className="text-sm">{rec}</p>
                       </div>
                     ))}
                   </div>
@@ -333,28 +340,28 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {maintenancePredictions.map((pred) => (
-                    <div key={pred.id} className="border rounded-lg p-4">
+                  {maintenancePredictions.map((pred, index) => (
+                    <div key={pred.id || index} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold capitalize">
-                          {pred.equipmentType.replace('_', ' ')} - {pred.predictionType.replace('_', ' ')}
+                          {pred.equipment_type?.replace('_', ' ')} - {pred.prediction_type?.replace('_', ' ')}
                         </h4>
-                        <Badge variant={pred.probability > 0.7 ? 'destructive' : pred.probability > 0.4 ? 'default' : 'secondary'}>
-                          {Math.round(pred.probability * 100)}% probability
+                        <Badge variant={pred.confidence > 0.7 ? 'destructive' : pred.confidence > 0.4 ? 'default' : 'secondary'}>
+                          {Math.round(pred.confidence * 100)}% confidence
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Expected: {pred.timeframe.likely}
+                        Expected: {pred.predicted_date || 'Soon'}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h5 className="font-medium text-sm mb-1">Estimated Cost</h5>
-                          <p className="text-sm">${pred.estimatedCost.likely.toLocaleString()}</p>
+                          <p className="text-sm">${pred.estimated_cost?.toLocaleString() || 'TBD'}</p>
                         </div>
                         <div>
-                          <h5 className="font-medium text-sm mb-1">Preventive Actions</h5>
+                          <h5 className="font-medium text-sm mb-1">Recommendations</h5>
                           <ul className="text-xs space-y-1">
-                            {pred.preventiveActions.slice(0, 2).map((action, i) => (
+                            {pred.recommendations?.slice(0, 2).map((action, i) => (
                               <li key={i}>• {action}</li>
                             ))}
                           </ul>
@@ -370,41 +377,39 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
 
         <TabsContent value="residents" className="space-y-4">
           <div className="grid gap-6">
-            {residentInsights.map((insight) => (
-              <Card key={insight.id}>
+            {residentInsights.map((insight, index) => (
+              <Card key={insight.id || index}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 capitalize">
                     <Users className="h-5 w-5 text-primary" />
-                    {insight.insightType.replace('_', ' ')} Analysis
+                    {insight.insight_type?.replace('_', ' ')} Analysis
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h4 className="font-semibold mb-2">Key Patterns</h4>
+                      <h4 className="font-semibold mb-2">Key Pattern</h4>
                       <div className="space-y-2">
-                        {insight.patterns.map((pattern, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <Badge variant="outline" className="capitalize">
-                              {pattern.trend}
-                            </Badge>
-                            <span>{pattern.category}</span>
-                          </div>
-                        ))}
+                        <div className="flex items-center gap-2 text-sm">
+                          <Badge variant="outline" className="capitalize">
+                            {insight.pattern}
+                          </Badge>
+                          <span>{insight.category}</span>
+                        </div>
                       </div>
                     </div>
                     
                     <div>
-                      <h4 className="font-semibold mb-2">Action Items</h4>
+                      <h4 className="font-semibold mb-2">Recommendations</h4>
                       <div className="space-y-2">
-                        {insight.actionItems.slice(0, 3).map((item, index) => (
+                        {insight.recommendations?.slice(0, 3).map((item, index) => (
                           <div key={index} className="text-sm p-2 rounded border">
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge variant={getPriorityBadgeVariant(item.priority)}>
-                                {item.priority}
+                              <Badge variant="secondary">
+                                Medium
                               </Badge>
                             </div>
-                            <p>{item.action}</p>
+                            <p className="text-sm">{item}</p>
                           </div>
                         ))}
                       </div>
@@ -421,155 +426,119 @@ export const AIAnalyticsDashboard: React.FC<AIAnalyticsDashboardProps> = ({ clas
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
-                Intelligent Document Processing
+                Document Processing
               </CardTitle>
               <CardDescription>
-                AI-powered document analysis and extraction results
+                AI-powered document analysis and processing results
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {documentResults.map((result) => (
-                  <div key={result.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold capitalize">
-                        {result.documentType.replace('_', ' ')} Document
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={result.confidence * 100} 
-                          className={`w-16 h-2 ${getConfidenceColor(result.confidence)}`}
-                        />
-                        <span className="text-sm">{Math.round(result.confidence * 100)}%</span>
+              {documentResults.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No processed documents available yet.</p>
+                  <p className="text-sm">Documents will appear as they are processed.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {documentResults.map((result) => (
+                    <div key={result.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold capitalize">
+                          {result.documentType.replace('_', ' ')} Document
+                        </h4>
+                        <Badge variant={result.confidence > 0.9 ? 'default' : result.confidence > 0.7 ? 'secondary' : 'destructive'}>
+                          {Math.round(result.confidence * 100)}% confidence
+                        </Badge>
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Language:</span>
-                        <span className="ml-2 uppercase">{result.metadata.language}</span>
+                      <div className="text-sm text-muted-foreground mb-3">
+                        Language: {result.metadata.language.toUpperCase()} • Pages: {result.metadata.pageCount}
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Pages:</span>
-                        <span className="ml-2">{result.metadata.pageCount}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">OCR Accuracy:</span>
-                        <span className="ml-2">{Math.round(result.metadata.ocrAccuracy * 100)}%</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Processing:</span>
-                        <span className="ml-2">{result.metadata.processingTime}ms</span>
-                      </div>
-                    </div>
-
-                    {result.riskAssessment && (
-                      <div className="mt-3 p-2 rounded bg-muted/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Shield className="h-4 w-4" />
-                          <span className="font-medium">Risk Assessment:</span>
-                          <Badge variant={result.riskAssessment.level === 'high' ? 'destructive' : 
-                                         result.riskAssessment.level === 'medium' ? 'default' : 'secondary'}>
-                            {result.riskAssessment.level}
-                          </Badge>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="font-medium text-sm mb-1">Extracted Data</h5>
+                          <p className="text-xs">{Object.keys(result.extractedData).length} fields extracted</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {result.riskAssessment.recommendations.slice(0, 1).join(', ')}
-                        </p>
+                        <div>
+                          <h5 className="font-medium text-sm mb-1">Processing Status</h5>
+                          <p className="text-xs">Completed recently</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-
-                {documentResults.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No documents processed yet.</p>
-                    <p className="text-sm">Document analysis results will appear here.</p>
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="recommendations" className="space-y-4">
-          <div className="grid gap-4">
-            {recommendations.map((rec) => (
-              <Card key={rec.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getInsightIcon(rec.type)}
-                      <span>{rec.title}</span>
-                    </div>
-                    <Badge variant="outline">
-                      {Math.round(rec.confidence * 100)}% confidence
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>{rec.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Recommended Action:</p>
-                      <p className="text-sm text-muted-foreground">{rec.action}</p>
-                    </div>
-                    {rec.potentialSavings && (
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Potential Savings</p>
-                        <p className="text-lg font-bold text-green-600">
-                          ${rec.potentialSavings.toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {recommendations.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8 text-muted-foreground">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Smart Recommendations
+              </CardTitle>
+              <CardDescription>
+                AI-generated recommendations for optimal association management
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recommendations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
                   <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No recommendations available yet.</p>
-                  <p className="text-sm">AI recommendations will appear as we analyze your data.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  <p className="text-sm">Recommendations will appear as AI analyzes your data.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recommendations.map((rec) => (
+                    <div key={rec.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold">{rec.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            High
+                          </Badge>
+                          <Badge variant="outline">
+                            {Math.round(rec.confidence * 100)}% confidence
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {rec.description}
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="font-medium text-sm mb-1">Category</h5>
+                          <p className="text-sm capitalize">{rec.type.replace('_', ' ')}</p>
+                        </div>
+                        {rec.potentialSavings && (
+                          <div>
+                            <h5 className="font-medium text-sm mb-1">Potential Savings</h5>
+                            <p className="text-sm font-medium text-green-600">
+                              ${rec.potentialSavings.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3">
+                        <h5 className="font-medium text-sm mb-2">Action Items:</h5>
+                        <ul className="text-xs space-y-1">
+                          <li className="flex items-start gap-1">
+                            <span className="text-primary">•</span>
+                            <span>Review and implement recommendation</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Quick Actions</CardTitle>
-          <CardDescription>
-            Trigger AI analysis and model updates
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => loadAIInsights()}>
-              <Brain className="h-4 w-4 mr-2" />
-              Refresh Insights
-            </Button>
-            <Button variant="outline" size="sm">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Generate Forecast
-            </Button>
-            <Button variant="outline" size="sm">
-              <Wrench className="h-4 w-4 mr-2" />
-              Analyze Maintenance
-            </Button>
-            <Button variant="outline" size="sm">
-              <Users className="h-4 w-4 mr-2" />
-              Study Residents
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -23,6 +23,9 @@ export interface RuleExecution {
 }
 
 export class AutomationRulesEngine {
+  static async evaluateEvent(eventType: string, eventData: any): Promise<any[]> {
+    return [];
+  }
   private static mockRules: AutomationRule[] = [
     {
       id: 'rule-1',

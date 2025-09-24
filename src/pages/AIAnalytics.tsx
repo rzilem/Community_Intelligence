@@ -28,10 +28,10 @@ interface AIStats {
 }
 
 interface CommAnalytics {
-  totalMessages: number;
-  categoryBreakdown: Record<string, number>;
-  sentimentAnalysis: { average: number; positive: number; neutral: number; negative: number };
-  trendsOverTime: { date: string; messageCount: number; averageSentiment: number }[];
+  total_messages: number;
+  response_rate: number;
+  average_response_time: number;
+  sentiment_score: number;
 }
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#8dd1e1', '#a4de6c'];
@@ -52,7 +52,7 @@ const AIAnalytics: React.FC = () => {
         const { data: statsData } = await supabase.functions.invoke(statsUrl, { method: 'GET' });
         setAIStats(statsData?.stats || null);
 
-        const analytics = await communicationIntelligenceHub.getAnalytics(currentAssociation.id);
+        const analytics = await communicationIntelligenceHub.analyzeMessageTrends(currentAssociation.id);
         setCommAnalytics(analytics);
 
         // Mock: Get API key (use mockRPCCall from supabase-utils)
@@ -78,7 +78,10 @@ const AIAnalytics: React.FC = () => {
   }, [currentAssociation]);
 
   const categoryData = commAnalytics
-    ? Object.entries(commAnalytics.categoryBreakdown).map(([name, value]) => ({ name, value }))
+    ? [
+        { name: 'Messages', value: commAnalytics.total_messages },
+        { name: 'Response Rate', value: Math.round(commAnalytics.response_rate * 100) }
+      ]
     : [];
 
   return (
@@ -139,17 +142,14 @@ const AIAnalytics: React.FC = () => {
                     </div>
 
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={commAnalytics.trendsOverTime} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis yAxisId="left" />
-                          <YAxis yAxisId="right" orientation="right" />
-                          <Tooltip />
-                          <Line yAxisId="left" type="monotone" dataKey="messageCount" stroke="#3b82f6" name="Messages" />
-                          <Line yAxisId="right" type="monotone" dataKey="averageSentiment" stroke="#ef4444" name="Sentiment" />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div className="text-center py-8">
+                        <p className="text-sm text-muted-foreground">
+                          Sentiment Score: {commAnalytics.sentiment_score}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Avg Response Time: {commAnalytics.average_response_time}h
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

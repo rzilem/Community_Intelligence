@@ -20,7 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import { WorkflowTemplate } from '@/types/ai-workflow-types';
-import { intelligentWorkflowEngine } from '@/services/ai-workflow/intelligent-workflow-engine';
+import { IntelligentWorkflowEngine } from '@/services/ai-workflow/intelligent-workflow-engine';
 import { toast } from 'sonner';
 
 interface IntelligentWorkflowDesignerProps {
@@ -47,7 +47,7 @@ const IntelligentWorkflowDesigner: React.FC<IntelligentWorkflowDesignerProps> = 
 
   const loadRecommendedTemplates = async () => {
     try {
-      const templates = await intelligentWorkflowEngine.getAIRecommendedTemplates(associationId);
+      const templates = await IntelligentWorkflowEngine.getWorkflows(associationId);
       setRecommendedTemplates(templates);
     } catch (error) {
       console.error('Failed to load recommended templates:', error);
@@ -98,7 +98,7 @@ const IntelligentWorkflowDesigner: React.FC<IntelligentWorkflowDesignerProps> = 
         association_id: associationId
       };
 
-      const created = await intelligentWorkflowEngine.createWorkflowTemplate(workflowTemplate);
+      const created = await IntelligentWorkflowEngine.createWorkflow(workflowTemplate);
       
       toast.success('Workflow created successfully');
       onWorkflowCreated?.(created);
@@ -140,10 +140,9 @@ const IntelligentWorkflowDesigner: React.FC<IntelligentWorkflowDesignerProps> = 
         updated_at: new Date().toISOString()
       };
 
-      const created = await intelligentWorkflowEngine.createWorkflowTemplate(testTemplate);
-      const execution = await intelligentWorkflowEngine.executeWorkflow(
+      const created = await IntelligentWorkflowEngine.createWorkflow(testTemplate);
+      const execution = await IntelligentWorkflowEngine.executeWorkflow(
         created.id,
-        associationId,
         { test_mode: true }
       );
       

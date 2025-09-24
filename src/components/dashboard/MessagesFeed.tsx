@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth';
 import { communicationIntelligenceHub } from '@/services/ai-workflow/communication-intelligence-hub';
-import { CommunicationIntelligence } from '@/types/ai-workflow-types';
+import { CommunicationInsight } from '@/services/ai-workflow/communication-intelligence-hub-mock';
 
 export const MessagesFeed: React.FC = () => {
   const { currentAssociation } = useAuth();
-  const [messages, setMessages] = useState<CommunicationIntelligence[]>([]);
+  const [messages, setMessages] = useState<CommunicationInsight[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const MessagesFeed: React.FC = () => {
       if (!currentAssociation?.id) return;
       setLoading(true);
       try {
-        const data = await communicationIntelligenceHub.getIntelligenceByAssociation(currentAssociation.id);
+        const data = await communicationIntelligenceHub.generateInsights(currentAssociation.id);
         setMessages(data);
       } catch (err) {
         console.error('Failed to load message intelligence', err);
@@ -43,19 +43,12 @@ export const MessagesFeed: React.FC = () => {
             {messages.map(msg => (
               <div key={msg.id} className="border-b pb-4">
                 <div className="flex justify-between mb-1">
-                  <h4 className="font-medium truncate max-w-xs">{msg.message_content}</h4>
-                  {msg.ai_category && <Badge>{msg.ai_category}</Badge>}
+                  <h4 className="font-medium truncate max-w-xs">{msg.message}</h4>
+                  <Badge>{msg.type}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Sentiment: {msg.sentiment_score.toFixed(2)} – Urgency: {msg.urgency_level}
+                  Confidence: {Math.round(msg.confidence * 100)}%
                 </p>
-                {Array.isArray(msg.suggested_responses) && msg.suggested_responses.length > 0 && (
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                    {msg.suggested_responses.slice(0, 2).map((r: string, idx: number) => (
-                      <li key={idx}>{r}</li>
-                    ))}
-                  </ul>
-                )}
               </div>
             ))}
           </div>
