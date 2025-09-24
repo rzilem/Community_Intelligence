@@ -118,12 +118,12 @@ class VendorContractService extends BaseMockService {
     return this.createResponse(updatedTemplate);
   }
 
-  async getVendorContracts(vendorId: string): Promise<ServiceResponse<VendorContract[]>> {
+  async getVendorContracts(vendorId: string): Promise<VendorContract[]> {
     this.logCall('VendorContractService', 'getVendorContracts', { vendorId });
     await this.simulateDelay();
 
     const contracts = this.mockContracts.filter(c => c.vendor_id === vendorId);
-    return this.createResponse(contracts);
+    return contracts;
   }
 
   async createVendorContract(contract: Omit<VendorContract, 'id' | 'created_at' | 'updated_at' | 'contract_number'>): Promise<ServiceResponse<VendorContract>> {
@@ -196,3 +196,8 @@ const vendorContractService = new VendorContractService();
 
 // Export as service object matching the original structure
 export { vendorContractService };
+
+// Export individual functions for backward compatibility
+export const getVendorContracts = async (vendorId: string): Promise<VendorContract[]> => {
+  return await vendorContractService.getVendorContracts(vendorId);
+};

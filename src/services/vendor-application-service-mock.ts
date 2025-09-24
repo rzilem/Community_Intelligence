@@ -12,6 +12,13 @@ export interface VendorApplication {
   application_status: string;
   services_offered: string[];
   created_at: string;
+  submitted_at: string;
+  specialties: string[];
+  years_in_business: number;
+  license_number: string;
+  insurance_provider: string;
+  background_check_status: string;
+  qualification_score: number;
 }
 
 class VendorApplicationService extends BaseMockService {
@@ -24,7 +31,14 @@ class VendorApplicationService extends BaseMockService {
       phone: '555-0123',
       application_status: 'pending',
       services_offered: ['landscaping', 'maintenance'],
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      specialties: ['landscaping', 'maintenance'],
+      years_in_business: 5,
+      license_number: 'LIC123456',
+      insurance_provider: 'State Farm',
+      background_check_status: 'completed',
+      qualification_score: 85
     },
     {
       id: 'app-2',
@@ -34,7 +48,14 @@ class VendorApplicationService extends BaseMockService {
       phone: '555-0456',
       application_status: 'approved',
       services_offered: ['plumbing', 'emergency'],
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      specialties: ['plumbing', 'emergency'],
+      years_in_business: 8,
+      license_number: 'PL789012',
+      insurance_provider: 'Allstate',
+      background_check_status: 'completed',
+      qualification_score: 92
     }
   ];
 
@@ -65,7 +86,14 @@ class VendorApplicationService extends BaseMockService {
       phone: application.phone || '',
       application_status: 'pending',
       services_offered: application.services_offered || [],
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      specialties: application.specialties || [],
+      years_in_business: application.years_in_business || 0,
+      license_number: application.license_number || '',
+      insurance_provider: application.insurance_provider || '',
+      background_check_status: application.background_check_status || 'pending',
+      qualification_score: application.qualification_score || 0
     };
     
     this.mockVendorApplications.push(newApplication);
@@ -106,8 +134,9 @@ class VendorApplicationService extends BaseMockService {
     return this.createResponse(updatedApplication);
   }
 
-  async getApplications(): Promise<ServiceResponse<VendorApplication[]>> {
-    return this.getVendorApplications();
+  async getApplications(associationId?: string): Promise<VendorApplication[]> {
+    const response = await this.getVendorApplications();
+    return response.data || [];
   }
 }
 

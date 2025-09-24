@@ -12,6 +12,10 @@ export interface VendorComplianceItem {
   expiry_date?: string;
   required: boolean;
   renewal_notice_days: number;
+  description: string;
+  issue_date: string;
+  verified_at: string;
+  notes: string;
 }
 
 class VendorComplianceService extends BaseMockService {
@@ -24,7 +28,11 @@ class VendorComplianceService extends BaseMockService {
       status: 'valid',
       expiry_date: '2025-12-31',
       required: true,
-      renewal_notice_days: 30
+      renewal_notice_days: 30,
+      description: 'General liability insurance coverage',
+      issue_date: '2024-01-01',
+      verified_at: '2024-01-01',
+      notes: 'Valid insurance certificate'
     },
     {
       id: 'comp-2',
@@ -34,16 +42,20 @@ class VendorComplianceService extends BaseMockService {
       status: 'expired',
       expiry_date: '2024-06-15',
       required: true,
-      renewal_notice_days: 60
+      renewal_notice_days: 60,
+      description: 'Business operating license',
+      issue_date: '2023-06-15',
+      verified_at: '2023-06-15',
+      notes: 'License has expired, needs renewal'
     }
   ];
 
-  async getVendorCompliance(vendorId: string): Promise<ServiceResponse<VendorComplianceItem[]>> {
+  async getVendorCompliance(vendorId: string): Promise<VendorComplianceItem[]> {
     this.logCall('VendorComplianceService', 'getVendorCompliance', { vendorId });
     await this.simulateDelay(200);
     
     const items = this.mockComplianceItems.filter(item => item.vendor_id === vendorId);
-    return this.createResponse(items);
+    return items;
   }
 
   async getComplianceItemById(itemId: string): Promise<ServiceResponse<VendorComplianceItem | null>> {
@@ -141,8 +153,7 @@ export { vendorComplianceService };
 
 // Export individual functions for backward compatibility
 export const getVendorCompliance = async (vendorId: string): Promise<VendorComplianceItem[]> => {
-  const response = await vendorComplianceService.getVendorCompliance(vendorId);
-  return response.data!;
+  return await vendorComplianceService.getVendorCompliance(vendorId);
 };
 
 export const getComplianceItemById = async (itemId: string): Promise<VendorComplianceItem | null> => {

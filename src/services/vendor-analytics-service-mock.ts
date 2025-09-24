@@ -9,6 +9,12 @@ export interface VendorAnalytics {
   successRate: number;
   averageBidAmount: number;
   recentActivity: any[];
+  success_rate: number;
+  average_response_time: number;
+  total_revenue: number;
+  customer_satisfaction: number;
+  performance_metrics: any[];
+  bid_analytics: any[];
 }
 
 class VendorAnalyticsService extends BaseMockService {
@@ -21,6 +27,36 @@ class VendorAnalyticsService extends BaseMockService {
       successfulBids: 8,
       successRate: 53.3,
       averageBidAmount: 2500.00,
+      success_rate: 53.3,
+      average_response_time: 4.5,
+      total_revenue: 125000,
+      customer_satisfaction: 4.2,
+      performance_metrics: [
+        {
+          id: 'perf-1',
+          reporting_period: new Date().toISOString(),
+          completed_jobs: 25,
+          total_jobs: 30,
+          average_rating: 4.3,
+          total_revenue: 75000
+        }
+      ],
+      bid_analytics: [
+        {
+          id: 'bid-1',
+          bid_amount: 1800.00,
+          response_time_hours: 4,
+          was_selected: true,
+          feedback_score: 4.5
+        },
+        {
+          id: 'bid-2',
+          bid_amount: 3200.00,
+          response_time_hours: 6,
+          was_selected: false,
+          feedback_score: 3.8
+        }
+      ],
       recentActivity: [
         {
           id: 'bid-1',
@@ -42,8 +78,9 @@ class VendorAnalyticsService extends BaseMockService {
     return this.createResponse(analytics);
   }
 
-  async getVendorAnalyticsSummary(vendorId?: string): Promise<ServiceResponse<VendorAnalytics>> {
-    return this.getAnalytics(vendorId);
+  async getVendorAnalyticsSummary(vendorId?: string): Promise<VendorAnalytics> {
+    const response = await this.getAnalytics(vendorId);
+    return response.data!;
   }
 
   async getBidsByAssociation(associationId: string): Promise<ServiceResponse<any[]>> {
@@ -79,7 +116,7 @@ const vendorAnalyticsService = new VendorAnalyticsService();
 export { vendorAnalyticsService };
 
 // Export individual functions for backward compatibility
-export const getVendorAnalytics = async (vendorId: string): Promise<VendorAnalytics> => {
+export const getVendorAnalytics = async (vendorId?: string): Promise<VendorAnalytics> => {
   const response = await vendorAnalyticsService.getAnalytics(vendorId);
   return response.data!;
 };

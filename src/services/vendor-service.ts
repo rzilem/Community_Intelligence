@@ -47,8 +47,13 @@ interface VendorUpdate {
 const transformDatabaseVendor = (dbVendor: any): Vendor => {
   return {
     ...dbVendor,
-    status: dbVendor.status as VendorStatus,
-    insurance_info: dbVendor.insurance_info as InsuranceInfo | undefined
+    // Map database columns to app expected columns
+    hoa_id: dbVendor.association_id || dbVendor.hoa_id,
+    contact_person: dbVendor.contact_name || dbVendor.contact_person,
+    specialties: dbVendor.specialties || [],
+    license_number: dbVendor.license_number || '',
+    insurance_info: dbVendor.insurance_info as InsuranceInfo | undefined,
+    status: dbVendor.status as VendorStatus
   };
 };
 
@@ -153,14 +158,14 @@ export const vendorService = {
         await workflowEventEmitter.emit('vendor_created', {
           vendor: data,
           vendor_name: data.name,
-          specialties: data.specialties,
+          specialties: data.specialties || [],
           contact_info: {
             email: data.email,
             phone: data.phone,
-            contact_person: data.contact_person
+            contact_person: data.contact_name || data.contact_person
           },
-          license_number: data.license_number,
-          insurance_info: data.insurance_info
+          license_number: data.license_number || '',
+          insurance_info: data.insurance_info || {}
         }, associationId);
       }
     } catch (eventError) {
