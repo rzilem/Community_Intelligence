@@ -88,11 +88,23 @@ class SearchDataManager {
           break;
 
         case 'homeownerRequests':
-          const { data: requests } = await supabase
-            .from('homeowner_requests')
-            .select('*')
-            .abortSignal(abortController.signal);
-          data = requests || [];
+          // Mock data for homeowner requests (table doesn't exist yet)
+          data = [
+            {
+              id: 'hr-1',
+              title: 'Pool Maintenance Request',
+              status: 'pending',
+              created_at: new Date().toISOString(),
+              type: 'maintenance'
+            },
+            {
+              id: 'hr-2', 
+              title: 'Landscaping Request',
+              status: 'approved',
+              created_at: new Date().toISOString(),
+              type: 'improvement'
+            }
+          ];
           break;
 
         case 'leads':
@@ -104,11 +116,25 @@ class SearchDataManager {
           break;
 
         case 'invoices':
-          const { data: invoices } = await supabase
-            .from('invoices')
-            .select('*')
-            .abortSignal(abortController.signal);
-          data = invoices || [];
+          // Mock data for invoices (table doesn't exist yet)
+          data = [
+            {
+              id: 'inv-1',
+              invoice_number: 'INV-001',
+              amount: 1500.00,
+              status: 'paid',
+              due_date: new Date().toISOString(),
+              vendor: 'Sample Vendor'
+            },
+            {
+              id: 'inv-2',
+              invoice_number: 'INV-002', 
+              amount: 2300.00,
+              status: 'pending',
+              due_date: new Date().toISOString(),
+              vendor: 'Another Vendor'
+            }
+          ];
           break;
       }
 
