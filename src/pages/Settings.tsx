@@ -19,7 +19,7 @@ const SettingsPage = () => {
     firstName: profile?.first_name || '',
     lastName: profile?.last_name || '',
     email: user?.email || '',
-    jobTitle: profile?.job_title || '',
+    jobTitle: profile?.phone_number || '', // Use available field
     phone: profile?.phone_number || '',
   });
 

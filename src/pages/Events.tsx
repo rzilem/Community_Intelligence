@@ -67,10 +67,10 @@ const Events: React.FC = () => {
 
     try {
       if (editingEvent) {
-        await updateEvent.mutateAsync({ id: editingEvent.id, ...eventData });
+        await updateEvent({ id: editingEvent.id, ...eventData });
         setEditingEvent(null);
       } else {
-        await createEvent.mutateAsync(eventData);
+        await createEvent(eventData);
         setIsCreateOpen(false);
       }
       resetForm();

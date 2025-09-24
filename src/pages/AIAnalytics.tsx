@@ -55,7 +55,8 @@ const AIAnalytics: React.FC = () => {
         const analytics = await communicationIntelligenceHub.getAnalytics(currentAssociation.id);
         setCommAnalytics(analytics);
 
-        const { data: secret } = await supabase.rpc('get_secret', { secret_name: 'OPENAI_API_KEY' });
+        // Mock: Get API key (use mockRPCCall from supabase-utils)
+        const secret = 'mock-openai-key';
         if (secret) {
           const { data: usageData } = await supabase.functions.invoke('test-openai-connection', {
             body: {

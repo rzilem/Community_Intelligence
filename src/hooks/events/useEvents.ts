@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Event } from '@/types/event-management-types';
 
+export type { Event } from '@/types/event-management-types';
+
 export const useEvents = (associationId?: string) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);

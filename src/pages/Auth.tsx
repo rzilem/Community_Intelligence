@@ -11,17 +11,17 @@ import SupabaseStatus from '@/components/auth/SupabaseStatus';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, loading, session } = useAuth();
+  const { signIn, signUp, loading, user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'login');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (session) {
+    if (user) {
       navigate('/dashboard');
     }
-  }, [session, navigate]);
+  }, [user, navigate]);
 
   const handleLogin = async (formData: LoginFormValues) => {
     try {
@@ -35,14 +35,7 @@ const Auth = () => {
 
   const handleSignup = async (formData: SignupFormValues) => {
     try {
-      await signUp(
-        formData.email, 
-        formData.password, 
-        { 
-          first_name: formData.first_name, 
-          last_name: formData.last_name 
-        }
-      );
+      await signUp(formData.email, formData.password);
       setRegistrationSuccess(true);
       // Automatically switch to login tab after successful registration
       setTimeout(() => {
