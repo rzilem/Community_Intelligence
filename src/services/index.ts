@@ -6,7 +6,7 @@ export * from './communications';
 export * from './user';
 
 // Individual service exports
-export { BidRequestService, bidRequestService } from './bidRequestService';
+export { bidRequestService } from './bidRequestService';
 export { submitProposalRequest, getProposalRequests } from './proposal-request-service';
 export { vendorService } from './vendor-service';
 export { fetchHOAs, fetchHOAById, createHOA, updateHOA, deleteHOA } from './hoa-service';

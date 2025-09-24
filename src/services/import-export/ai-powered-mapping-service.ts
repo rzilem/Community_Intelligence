@@ -28,14 +28,39 @@ export const aiPoweredMappingService = {
     };
   },
 
-  generateIntelligentMappings: async (data: any[], headers?: string[], associationId?: string, tableType?: string, existingMappings?: any): Promise<AIMappingSuggestion[]> => {
+  generateIntelligentMappings: async (
+    fileColumns: string[],
+    systemFields: { value: string; label: string }[],
+    sampleData: any[],
+    dataType: string,
+    associationId?: string
+  ): Promise<Record<string, AIMappingSuggestion>> => {
     await new Promise(resolve => setTimeout(resolve, 400));
-    return data.map((item, index) => ({
-      fieldValue: `field_${index}`,
-      confidence: 0.8 + (Math.random() * 0.2),
-      dataQuality: 'good' as const,
-      suggestions: [`Suggestion for field ${index}`]
-    }));
+    
+    const suggestions: Record<string, AIMappingSuggestion> = {};
+    
+    // Create mappings for each file column
+    fileColumns.forEach((column, index) => {
+      const normalizedColumn = column.toLowerCase().replace(/\s+/g, '_');
+      
+      // Find best matching system field
+      let bestMatch = systemFields.find(field => 
+        field.value.toLowerCase() === normalizedColumn ||
+        field.label.toLowerCase() === normalizedColumn
+      ) || systemFields[index % systemFields.length];
+      
+      if (bestMatch) {
+        suggestions[column] = {
+          fieldValue: bestMatch.value,
+          confidence: 0.8 + (Math.random() * 0.2),
+          reasoning: `Matched "${column}" to "${bestMatch.label}" based on name similarity`,
+          dataQuality: 'good' as const,
+          suggestions: [`Consider mapping to ${bestMatch.label}`]
+        };
+      }
+    });
+    
+    return suggestions;
   },
 
   learnFromCorrection: async (correction: any): Promise<void> => {

@@ -37,6 +37,7 @@ export const aiMappingService = {
       // Convert to the expected format for backward compatibility
       const suggestions: Record<string, MappingSuggestion> = {};
       
+      // aiSuggestions is already a Record<string, AIMappingSuggestion>
       Object.entries(aiSuggestions).forEach(([column, suggestion]) => {
         suggestions[column] = {
           fieldValue: suggestion.fieldValue,

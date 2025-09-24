@@ -106,9 +106,7 @@ export class AIZipProcessor {
       const allData = parsedFiles.flatMap(f => f.fullData);
 
       const associationCandidates = await associationAutoCreationService.detectAssociationCandidates(
-        folderNames,
-        fileNames,
-        allData
+        folderNames
       );
 
       const createdAssociations = await associationAutoCreationService.createOrFindAssociations(
