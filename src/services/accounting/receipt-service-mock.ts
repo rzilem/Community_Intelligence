@@ -34,6 +34,7 @@ export interface ReceiptWithLines extends Receipt {
 export interface CreateReceiptData {
   association_id?: string;
   po_id: string;
+  vendor_id?: string;
   received_date: string;
   received_by: string;
   total_amount: number;

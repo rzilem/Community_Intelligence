@@ -64,7 +64,7 @@ const ReceiptManagement: React.FC<ReceiptManagementProps> = ({ associationId }) 
       
       // Filter POs that are approved but not fully received
       const pendingReceiptPOs = posData.filter(po => 
-        po.status === 'approved' || po.status === 'partially_received'
+        po.status === 'approved'
       );
       setPendingPOs(pendingReceiptPOs);
     } catch (error) {
@@ -131,10 +131,17 @@ const ReceiptManagement: React.FC<ReceiptManagementProps> = ({ associationId }) 
     try {
       const createData: CreateReceiptData = {
         po_id: selectedPO.id,
-        association_id: associationId,
-        vendor_id: selectedPO.vendor_id,
-        delivery_note: receiptData.delivery_note,
-        line_items: receiptData.line_items.filter(item => item.quantity_received > 0)
+        received_date: new Date().toISOString().split('T')[0],
+        received_by: 'current-user',
+        total_amount: receiptData.line_items.reduce((sum, item) => sum + (item.quantity_received * (item.unit_price || 0)), 0),
+        status: 'complete',
+        receipt_lines: receiptData.line_items.filter(item => item.quantity_received > 0).map(item => ({
+          po_line_id: item.po_line_id,
+          quantity_received: item.quantity_received,
+          unit_cost: item.unit_price || 0,
+          line_total: item.quantity_received * (item.unit_price || 0),
+          condition: 'good' as const
+        }))
       };
 
       await ReceiptService.createReceipt(createData);

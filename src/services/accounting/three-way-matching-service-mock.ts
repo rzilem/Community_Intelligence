@@ -26,6 +26,15 @@ export interface MatchDiscrepancy {
   variance_percent: number;
 }
 
+export interface MatchingException {
+  id: string;
+  type: 'quantity' | 'price' | 'amount' | 'vendor' | 'missing_document';
+  severity: 'low' | 'medium' | 'high';
+  message: string;
+  amount_variance?: number;
+  recommended_action: string;
+}
+
 export class ThreeWayMatchingService {
   private static mockMatches: ThreeWayMatch[] = [
     {
@@ -175,6 +184,46 @@ export class ThreeWayMatchingService {
     const index = this.mockMatches.findIndex(m => m.id === matchId);
     if (index !== -1) {
       this.mockMatches.splice(index, 1);
+    }
+  }
+
+  static async getThreeWayMatches(associationId: string): Promise<ThreeWayMatch[]> {
+    return this.getMatches(associationId);
+  }
+
+  static async getMatchingStatistics(associationId: string): Promise<any> {
+    const matches = await this.getMatches(associationId);
+    return {
+      total: matches.length,
+      matched: matches.filter(m => m.match_status === 'matched').length,
+      pending: matches.filter(m => m.match_status === 'pending').length,
+      discrepancies: matches.filter(m => m.match_status === 'discrepancy').length
+    };
+  }
+
+  static async approveMatch(matchId: string): Promise<void> {
+    const match = this.mockMatches.find(m => m.id === matchId);
+    if (match) {
+      match.match_status = 'matched';
+      match.updated_at = new Date().toISOString();
+    }
+  }
+
+  static async rejectMatch(matchId: string, reason: string): Promise<void> {
+    const match = this.mockMatches.find(m => m.id === matchId);
+    if (match) {
+      match.match_status = 'pending';
+      match.discrepancy_reason = reason;
+      match.updated_at = new Date().toISOString();
+    }
+  }
+
+  static async overrideMatch(matchId: string, overrideData: any): Promise<void> {
+    const match = this.mockMatches.find(m => m.id === matchId);
+    if (match) {
+      match.match_status = 'matched';
+      match.discrepancy_reason = `Override: ${overrideData.reason}`;
+      match.updated_at = new Date().toISOString();
     }
   }
 }
