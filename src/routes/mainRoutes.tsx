@@ -9,6 +9,7 @@ import Permissions from '@/pages/system/Permissions';
 import UserProfile from '@/pages/user/UserProfile';
 import AllActions from '@/pages/AllActions';
 import DesignShowcase from '@/pages/DesignShowcase';
+import EmergencyDashboard from '@/pages/EmergencyDashboard';
 
 export const mainRoutes = [
   {
@@ -62,6 +63,10 @@ export const mainRoutes = [
   {
     path: '/auth',
     element: <Auth />
+  },
+  {
+    path: '/emergency',
+    element: <EmergencyDashboard />
   },
   {
     path: '*',

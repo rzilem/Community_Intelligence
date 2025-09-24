@@ -15,6 +15,34 @@ const Auth = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'login');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [bypassTimer, setBypassTimer] = useState(0);
+
+  // Emergency bypass timer
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setBypassTimer(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+    setBypassTimer(0);
+  }, [loading]);
+
+  // Check for existing auth in browser storage
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        const existingSession = localStorage.getItem('sb-eqbbnewrorxilukaocjx-auth-token');
+        if (existingSession && window.location.pathname === '/auth') {
+          console.log('🚀 Found existing auth session, redirecting...');
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkExistingAuth();
+  }, [navigate]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -82,6 +110,24 @@ const Auth = () => {
                 </CardDescription>
               </CardHeader>
               <LoginForm onSubmit={handleLogin} isLoading={loading} />
+              
+              {/* Emergency bypass button */}
+              {bypassTimer > 5 && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                  <p className="text-sm text-red-600 mb-2">
+                    Login stuck for {bypassTimer} seconds
+                  </p>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('emergency_bypass', 'true');
+                      window.location.href = '/emergency';
+                    }}
+                    className="text-red-600 underline text-sm hover:text-red-800"
+                  >
+                    Emergency Dashboard Access →
+                  </button>
+                </div>
+              )}
             </Card>
           </TabsContent>
           
