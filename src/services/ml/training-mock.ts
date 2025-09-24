@@ -52,7 +52,7 @@ export const trainingService = {
     };
   },
 
-  getTrainingJobs: async (): Promise<MLTrainingJob[]> => {
+  getTrainingJobs: async (associationId?: string): Promise<MLTrainingJob[]> => {
     await new Promise(resolve => setTimeout(resolve, 150));
     return [];
   },
@@ -62,18 +62,21 @@ export const trainingService = {
     return {
       id,
       status: updates.status || 'pending',
-      type: 'general',
+      job_status: updates.job_status || updates.status || 'pending',
+      type: updates.type || 'general',
+      model_type: updates.model_type || 'classification',
+      training_data_size: updates.training_data_size || 1000,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
   },
 
-  getModelPerformance: async (): Promise<MLModelPerformance[]> => {
+  getModelPerformance: async (associationId?: string): Promise<MLModelPerformance[]> => {
     await new Promise(resolve => setTimeout(resolve, 200));
     return [];
   },
 
-  getTrainingDatasets: async (): Promise<TrainingDataset[]> => {
+  getTrainingDatasets: async (associationId?: string): Promise<TrainingDataset[]> => {
     await new Promise(resolve => setTimeout(resolve, 180));
     return [];
   }
