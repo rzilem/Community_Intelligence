@@ -99,7 +99,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSubmit, isLoading:
       if (onSubmit) {
         await onSubmit(formData);
       } else {
-        await signUp();
+        await signUp(formData.email, formData.password, {
+          first_name: formData.first_name,
+          last_name: formData.last_name
+        });
         toast.success('Account created successfully! Please check your email to verify your account.');
         onSuccess?.();
       }

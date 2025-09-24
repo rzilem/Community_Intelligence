@@ -213,7 +213,7 @@ export const vendorService = {
 
     // Emit workflow event for vendor update
     try {
-      const associationId = data.association_id || data.hoa_id;
+      const associationId = data.association_id;
       if (associationId) {
         let eventType = 'vendor_updated';
         if (vendorData.status === 'suspended') {

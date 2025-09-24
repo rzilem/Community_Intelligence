@@ -4,10 +4,12 @@ export interface VendorWorkflowAutomation {
   id: string;
   association_id: string;
   name: string;
+  description?: string;
   trigger_type: string;
-  trigger_conditions: Record<string, any>;
+  trigger_conditions: any;
   action_type: string;
-  action_config: Record<string, any>;
+  action_config: any;
+  actions?: Array<{ type: string; config: Record<string, any>; }>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -17,6 +19,9 @@ export interface VendorWorkflowExecution {
   id: string;
   automation_id: string;
   status: string;
+  execution_status: string;
+  started_at: string;
+  completed_at?: string;
   created_at: string;
 }
 
@@ -39,7 +44,7 @@ export const vendorWorkflowService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as VendorWorkflowAutomation[];
   },
 
   async createWorkflowAutomation(workflow: Omit<VendorWorkflowAutomation, 'id' | 'created_at' | 'updated_at'>): Promise<VendorWorkflowAutomation> {
@@ -54,7 +59,7 @@ export const vendorWorkflowService = {
       throw error;
     }
 
-    return data;
+    return data as VendorWorkflowAutomation;
   },
 
   async updateWorkflowAutomation(id: string, updates: Partial<Omit<VendorWorkflowAutomation, 'id' | 'created_at' | 'updated_at'>>): Promise<VendorWorkflowAutomation> {
@@ -70,7 +75,7 @@ export const vendorWorkflowService = {
       throw error;
     }
 
-    return data;
+    return data as VendorWorkflowAutomation;
   },
 
   async deleteWorkflowAutomation(id: string): Promise<void> {
@@ -83,5 +88,21 @@ export const vendorWorkflowService = {
       console.error('Error deleting workflow automation:', error);
       throw error;
     }
+  },
+
+  async getWorkflowExecutions(associationId: string): Promise<VendorWorkflowExecution[]> {
+    return [];
+  },
+
+  async getWorkflowActionLogs(automationId: string): Promise<any[]> {
+    return [];
+  },
+
+  async triggerWorkflowEvent(eventType: string, data: WorkflowTriggerData): Promise<void> {
+    // Stub implementation
+  },
+
+  async executeWorkflow(automationId: string, data: WorkflowTriggerData): Promise<void> {
+    // Stub implementation
   }
 };

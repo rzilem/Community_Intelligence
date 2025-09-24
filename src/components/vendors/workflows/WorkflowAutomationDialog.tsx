@@ -102,7 +102,9 @@ const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
 
     createMutation.mutate({
       ...formData,
-      association_id: currentAssociation.id
+      association_id: currentAssociation.id,
+      action_type: formData.actions?.[0]?.type || 'notification',
+      action_config: formData.actions?.[0]?.config || {}
     });
   };
 

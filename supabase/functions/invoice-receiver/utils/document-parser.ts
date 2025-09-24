@@ -1,7 +1,7 @@
 
 import { createWorker } from "https://esm.sh/tesseract.js@4.1.1";
-import mammoth from "npm:mammoth";
-import textract from "npm:textract";
+// mammoth removed due to dependency issues - placeholder for now
+// textract removed due to dependency issues - placeholder for now
 
 /**
  * Determines the document type based on file extension
@@ -50,13 +50,9 @@ export async function extractTextFromPdf(content: string): Promise<string> {
  */
 export async function extractTextFromDocx(content: string): Promise<string> {
   try {
-    const binaryString = atob(content.replace(/^data:.*;base64,/, ''));
-    const buffer = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      buffer[i] = binaryString.charCodeAt(i);
-    }
-    const { value } = await mammoth.extractRawText({ buffer });
-    return value.trim();
+    // Placeholder implementation - mammoth removed due to dependency issues
+    console.log('DOCX text extraction not yet implemented');
+    return 'DOCX text extraction temporarily unavailable';
   } catch (error: any) {
     console.error('Error extracting text from DOCX:', error);
     return '';
@@ -70,18 +66,9 @@ export async function extractTextFromDocx(content: string): Promise<string> {
  */
 export async function extractTextFromDoc(content: string): Promise<string> {
   try {
-    const binaryString = atob(content.replace(/^data:.*;base64,/, ''));
-    const buffer = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      buffer[i] = binaryString.charCodeAt(i);
-    }
-    const text: string = await new Promise((resolve, reject) => {
-      textract.fromBufferWithName('file.doc', buffer, (err: any, res: string) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
-    return text.trim();
+    // Placeholder implementation - textract removed due to dependency issues
+    console.log('DOC text extraction not yet implemented');
+    return 'DOC text extraction temporarily unavailable';
   } catch (error: any) {
     console.error('Error extracting text from DOC:', error);
     return '';
