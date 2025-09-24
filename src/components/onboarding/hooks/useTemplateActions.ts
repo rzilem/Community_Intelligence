@@ -65,13 +65,10 @@ export const useTemplateActions = () => {
     }
 
     try {
-      await updateTemplate({
-        id: selectedTemplate.id,
-        data: {
-          name: formData.name,
-          description: formData.description || undefined,
-          template_type: formData.template_type
-        }
+      await updateTemplate(selectedTemplate.id, {
+        name: formData.name,
+        description: formData.description || undefined,
+        template_type: formData.template_type
       });
       setFormData({ name: '', description: '', template_type: 'hoa' });
       setSelectedTemplate(null);

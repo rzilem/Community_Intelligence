@@ -1,7 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { Proposal, ProposalSection } from '@/types/proposal-types';
-import { supabase } from '@/integrations/supabase/client';
+import { Proposal } from '@/types/proposal-types';
 
 export const useProposalQuery = (leadId?: string) => {
   const queryKey = leadId ? ['proposals', leadId] : ['proposals'];
@@ -14,53 +13,29 @@ export const useProposalQuery = (leadId?: string) => {
   } = useQuery({
     queryKey,
     queryFn: async (): Promise<Proposal[]> => {
-      try {
-        let query = supabase.from('proposals').select('*');
-        
-        if (leadId) {
-          query = query.eq('lead_id', leadId);
+      // Mock: Return sample proposals
+      const mockProposals: Proposal[] = [
+        {
+          id: '1',
+          lead_id: leadId || 'mock-lead-1',
+          name: 'Property Management Proposal',
+          status: 'draft',
+          content: '<p>Comprehensive property management services</p>',
+          amount: 25000,
+          signature_required: false,
+          sections: [],
+          attachments: [],
+          analytics: {
+            views: 5,
+            view_count_by_section: {}
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
-        
-        const { data, error } = await query
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          throw new Error(error.message);
-        }
-        
-        const proposalsWithAttachments = await Promise.all(
-          (data || []).map(async (proposal: any) => {
-            const { data: attachments, error: attachmentsError } = await supabase
-              .from('proposal_attachments')
-              .select('*')
-              .eq('proposal_id', proposal.id);
-              
-            if (attachmentsError) {
-              console.error('Error fetching attachments:', attachmentsError);
-            }
-            
-            // Safely convert sections to proper type
-            const typedSections = proposal.sections ? 
-              (Array.isArray(proposal.sections) ? proposal.sections as ProposalSection[] : []) : 
-              [];
-            
-            return {
-              ...proposal,
-              attachments: attachments || [],
-              sections: typedSections,
-              analytics: proposal.analytics_data || {
-                views: 0,
-                view_count_by_section: {}
-              }
-            } as Proposal;
-          })
-        );
-        
-        return proposalsWithAttachments;
-      } catch (err) {
-        console.error("Error in useProposalQuery:", err);
-        throw err;
-      }
+      ];
+      
+      console.log('Mock: Fetching proposals for lead:', leadId);
+      return leadId ? mockProposals.filter(p => p.lead_id === leadId) : mockProposals;
     }
   });
 

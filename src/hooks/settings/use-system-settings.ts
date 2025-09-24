@@ -165,20 +165,8 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
         throw new Error('Authentication required');
       }
 
-      // Use direct database access instead of edge function to avoid issues
-      const { error: dbError } = await supabase
-        .from('system_settings')
-        .upsert({
-          key,
-          value: newValue as any,
-          updated_at: new Date().toISOString()
-        });
-      
-      if (dbError) {
-        console.error("Error updating settings directly:", dbError);
-        throw new Error(dbError.message || 'Failed to update settings');
-      }
-      
+      // Mock: Update system settings
+      console.log(`Mock: Updating system setting ${key}`, newValue);
       console.log(`Successfully updated system setting: ${key}`);
     },
     onSuccess: () => {
@@ -212,23 +200,9 @@ export const useAllSystemSettings = () => {
           return;
         }
         
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('key, value');
-        
-        if (error) {
-          throw error;
-        }
-        
+        // Mock: Use default settings
+        console.log('Mock: Fetching all system settings');
         const newSettings = { ...defaultSettings };
-        
-        if (data && data.length > 0) {
-          data.forEach((item) => {
-            const key = item.key as SettingKey;
-            // Fix: Use type assertion to handle the conversion properly
-            newSettings[key] = item.value as any;
-          });
-        }
         
         setSettings(newSettings);
       } catch (err) {

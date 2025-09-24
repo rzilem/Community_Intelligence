@@ -45,13 +45,10 @@ const TemplateDetailHeader = ({ template, onTemplateUpdated }: TemplateDetailHea
     }
 
     try {
-      await updateTemplate({
-        id: template.id,
-        data: {
-          name: formData.name,
-          description: formData.description || undefined,
-          template_type: formData.template_type
-        }
+      await updateTemplate(template.id, {
+        name: formData.name,
+        description: formData.description || undefined,
+        template_type: formData.template_type
       });
       
       setIsEditDialogOpen(false);

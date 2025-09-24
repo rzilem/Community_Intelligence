@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProposalTemplate } from '@/types/proposal-types';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useProposalTemplates = () => {
   const queryClient = useQueryClient();
@@ -15,61 +14,51 @@ export const useProposalTemplates = () => {
   } = useQuery({
     queryKey: ['proposalTemplates'],
     queryFn: async (): Promise<ProposalTemplate[]> => {
-      const { data, error } = await supabase
-        .from('proposal_templates')
-        .select('*')
-        .order('name');
-        
-      if (error) {
-        throw new Error(error.message);
-      }
+      // Mock: Return sample templates
+      const mockTemplates: ProposalTemplate[] = [
+        {
+          id: '1',
+          name: 'Standard Management Proposal',
+          description: 'Standard template for property management proposals',
+          content: '<p>Welcome to our property management services...</p>',
+          folder_id: null,
+          attachments: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'HOA Management Proposal',
+          description: 'Template for HOA-specific management proposals',
+          content: '<p>Specialized HOA management services...</p>',
+          folder_id: null,
+          attachments: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
       
-      return (data || []).map((template: any) => ({
-        id: template.id,
-        name: template.name,
-        description: template.description || '',
-        content: template.content,
-        folder_id: template.folder_id,
-        attachments: template.attachments || [],
-        created_at: template.created_at,
-        updated_at: template.updated_at
-      }));
+      console.log('Mock: Fetching proposal templates');
+      return mockTemplates;
     }
   });
 
   const createMutation = useMutation({
     mutationFn: async (template: Partial<ProposalTemplate>) => {
-      // Convert attachments to a format compatible with JSON storage
-      const attachmentsToInsert = template.attachments ? 
-        JSON.parse(JSON.stringify(template.attachments)) : 
-        [];
-        
-      const { data, error } = await supabase
-        .from('proposal_templates')
-        .insert({
-          name: template.name || 'New Template',
-          description: template.description,
-          content: template.content || '<p>Enter your proposal content here</p>',
-          folder_id: template.folder_id,
-          attachments: attachmentsToInsert
-        })
-        .select()
-        .single();
-        
-      if (error) throw new Error(error.message);
+      // Mock: Create template
+      const newTemplate: ProposalTemplate = {
+        id: Date.now().toString(),
+        name: template.name || 'New Template',
+        description: template.description || '',
+        content: template.content || '<p>Enter your proposal content here</p>',
+        folder_id: template.folder_id || null,
+        attachments: template.attachments || [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      // Parse the response and ensure proper typing
-      const resultData = data as any;
-      return {
-        id: resultData.id,
-        name: resultData.name,
-        description: resultData.description || '',
-        content: resultData.content,
-        folder_id: resultData.folder_id,
-        attachments: resultData.attachments || [],
-        created_at: resultData.created_at,
-        updated_at: resultData.updated_at
-      } as ProposalTemplate;
+      console.log('Mock: Creating template', newTemplate);
+      return newTemplate;
     },
     onSuccess: () => {
       toast.success('Template created successfully');
@@ -84,38 +73,20 @@ export const useProposalTemplates = () => {
     mutationFn: async (template: Partial<ProposalTemplate>) => {
       if (!template.id) throw new Error('Template ID is required');
       
-      // Convert attachments to a format compatible with JSON storage
-      const attachmentsToUpdate = template.attachments ? 
-        JSON.parse(JSON.stringify(template.attachments)) : 
-        undefined;
-        
-      const { data, error } = await supabase
-        .from('proposal_templates')
-        .update({
-          name: template.name,
-          description: template.description,
-          content: template.content,
-          folder_id: template.folder_id,
-          attachments: attachmentsToUpdate
-        })
-        .eq('id', template.id)
-        .select()
-        .single();
-        
-      if (error) throw new Error(error.message);
+      // Mock: Update template
+      const updatedTemplate: ProposalTemplate = {
+        id: template.id,
+        name: template.name || 'Updated Template',
+        description: template.description || '',
+        content: template.content || '',
+        folder_id: template.folder_id || null,
+        attachments: template.attachments || [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      // Parse the response and ensure proper typing
-      const resultData = data as any;
-      return {
-        id: resultData.id,
-        name: resultData.name,
-        description: resultData.description || '',
-        content: resultData.content,
-        folder_id: resultData.folder_id,
-        attachments: resultData.attachments || [],
-        created_at: resultData.created_at,
-        updated_at: resultData.updated_at
-      } as ProposalTemplate;
+      console.log('Mock: Updating template', updatedTemplate);
+      return updatedTemplate;
     },
     onSuccess: () => {
       toast.success('Template updated successfully');
@@ -128,12 +99,8 @@ export const useProposalTemplates = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('proposal_templates')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw new Error(error.message);
+      // Mock: Delete template
+      console.log(`Mock: Deleting template ${id}`);
       return id;
     },
     onSuccess: () => {

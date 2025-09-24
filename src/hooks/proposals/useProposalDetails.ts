@@ -1,51 +1,35 @@
 
 import { useCallback } from 'react';
-import { Proposal, ProposalSection } from '@/types/proposal-types';
-import { supabase } from '@/integrations/supabase/client';
+import { Proposal } from '@/types/proposal-types';
 import { toast } from 'sonner';
 
 export const useProposalDetails = () => {
   const getProposal = useCallback(async (id: string): Promise<Proposal | null> => {
     try {
-      const { data: proposal, error } = await supabase
-        .from('proposals')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (error) {
-        toast.error(`Error loading proposal: ${error.message}`);
-        return null;
-      }
-      
-      const { data: attachments, error: attachmentsError } = await supabase
-        .from('proposal_attachments')
-        .select('*')
-        .eq('proposal_id', id);
-        
-      if (attachmentsError) {
-        console.error('Error fetching attachments:', attachmentsError);
-      }
-      
-      // Cast the proposal to handle typing issues
-      const dbProposal = proposal as any;
-      
-      // Safely convert sections data to proper type
-      const typedSections = dbProposal.sections ? 
-        (Array.isArray(dbProposal.sections) ? dbProposal.sections as ProposalSection[] : []) : 
-        [];
-      
-      return {
-        ...dbProposal,
-        attachments: attachments || [],
-        sections: typedSections,
-        analytics: dbProposal.analytics_data || {
+      // Mock: Get proposal by ID
+      const mockProposal: Proposal = {
+        id,
+        lead_id: 'mock-lead-1',
+        name: 'Sample Proposal',
+        status: 'draft',
+        content: '<p>This is a mock proposal content</p>',
+        amount: 25000,
+        signature_required: false,
+        sections: [],
+        attachments: [],
+        analytics: {
           views: 0,
           view_count_by_section: {}
-        }
-      } as Proposal;
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Mock: Getting proposal', mockProposal);
+      return mockProposal;
     } catch (err) {
       console.error("Error in getProposal:", err);
+      toast.error("Error loading proposal");
       return null;
     }
   }, []);

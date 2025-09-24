@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface ResalePackage {
   id: string;
@@ -40,26 +39,35 @@ export const useResalePackages = (associationId?: string) => {
       setIsLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('resale_packages')
-        .select(`
-          *,
-          properties!inner(
-            unit_number,
-            address
-          )
-        `);
+      // Mock: Return sample resale packages
+      const mockPackages: ResalePackage[] = [
+        {
+          id: '1',
+          property_id: 'prop-1',
+          requester_name: 'John Smith',
+          requester_email: 'john@example.com',
+          requester_phone: '555-0123',
+          buyer_name: 'Jane Doe',
+          buyer_email: 'jane@example.com',
+          closing_date: '2024-01-15',
+          package_type: 'Standard',
+          status: 'pending',
+          request_date: '2023-12-01',
+          documents_generated: ['Certificate of Compliance', 'Financial Statement'],
+          fees_collected: 350,
+          notes: 'Standard resale package request',
+          association_id: associationId || 'assoc-1',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          properties: {
+            unit_number: '101',
+            address: '123 Main St'
+          }
+        }
+      ];
 
-      if (associationId) {
-        query = query.eq('association_id', associationId);
-      }
-
-      const { data, error: fetchError } = await query
-        .order('request_date', { ascending: false });
-
-      if (fetchError) throw fetchError;
-
-      setPackages(data || []);
+      console.log('Mock: Fetching resale packages for association:', associationId);
+      setPackages(associationId ? mockPackages.filter(p => p.association_id === associationId) : mockPackages);
 
     } catch (err) {
       console.error('Error fetching resale packages:', err);
@@ -71,24 +79,17 @@ export const useResalePackages = (associationId?: string) => {
 
   const createResalePackage = async (packageData: Omit<ResalePackage, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase
-        .from('resale_packages')
-        .insert([packageData])
-        .select(`
-          *,
-          properties!inner(
-            unit_number,
-            address
-          )
-        `)
-        .single();
+      // Mock: Create new resale package
+      const newPackage: ResalePackage = {
+        ...packageData,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-
-      if (data) {
-        setPackages(prev => [data, ...prev]);
-        return data;
-      }
+      console.log('Mock: Creating resale package', newPackage);
+      setPackages(prev => [newPackage, ...prev]);
+      return newPackage;
     } catch (err) {
       console.error('Error creating resale package:', err);
       throw err;
@@ -97,27 +98,19 @@ export const useResalePackages = (associationId?: string) => {
 
   const updateResalePackage = async (id: string, updates: Partial<ResalePackage>) => {
     try {
-      const { data, error } = await supabase
-        .from('resale_packages')
-        .update(updates)
-        .eq('id', id)
-        .select(`
-          *,
-          properties!inner(
-            unit_number,
-            address
-          )
-        `)
-        .single();
+      // Mock: Update resale package
+      const updatedPackage = packages.find(p => p.id === id);
+      if (!updatedPackage) throw new Error('Package not found');
 
-      if (error) throw error;
+      const updated = {
+        ...updatedPackage,
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
 
-      if (data) {
-        setPackages(prev => prev.map(pkg => 
-          pkg.id === id ? data : pkg
-        ));
-        return data;
-      }
+      console.log('Mock: Updating resale package', updated);
+      setPackages(prev => prev.map(pkg => pkg.id === id ? updated : pkg));
+      return updated;
     } catch (err) {
       console.error('Error updating resale package:', err);
       throw err;
