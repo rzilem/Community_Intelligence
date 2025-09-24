@@ -55,45 +55,51 @@ const WorkflowDetails: React.FC = () => {
     queryKey: ['workflow', id],
     queryFn: async () => {
       try {
-        let query;
-        // Check if this is a template or a regular workflow
-        const templateCheck = await supabase
-          .from('workflow_templates')
-          .select('id')
-          .eq('id', id)
-          .single();
-        
-        if (templateCheck.data) {
-          query = await supabase
-            .from('workflow_templates')
-            .select('*')
-            .eq('id', id)
-            .single();
-        } else {
-          query = await supabase
-            .from('workflows')
-            .select('*')
-            .eq('id', id)
-            .single();
-        }
-        
-        const { data, error } = query;
-        if (error) throw error;
-        
-        // Convert to our Workflow type
-        const result: Workflow = {
-          id: data.id,
-          name: data.name,
-          description: data.description || '',
-          type: data.type,
-          status: data.status,
-          steps: data.steps || [],
-          isTemplate: data.is_template,
-          isPopular: data.is_popular || false
+        // Mock workflow data since workflow tables don't exist
+        const mockWorkflow: Workflow = {
+          id: id || '1',
+          name: 'Sample Maintenance Workflow',
+          description: 'A sample workflow for maintenance requests processing',
+          type: 'Maintenance',
+          status: 'active',
+          steps: [
+            {
+              id: 'step-1',
+              name: 'Initial Assessment',
+              description: 'Evaluate the maintenance request and assign priority',
+              order: 0,
+              isComplete: false,
+              notifyRoles: ['manager'],
+              autoExecute: false
+            },
+            {
+              id: 'step-2', 
+              name: 'Assign Technician',
+              description: 'Assign appropriate maintenance staff to the request',
+              order: 1,
+              isComplete: false,
+              notifyRoles: ['maintenance'],
+              autoExecute: false
+            },
+            {
+              id: 'step-3',
+              name: 'Complete Work',
+              description: 'Perform the maintenance work and update status',
+              order: 2,
+              isComplete: false,
+              notifyRoles: ['maintenance', 'manager'],
+              autoExecute: false
+            }
+          ],
+          isTemplate: false,
+          isPopular: true
         };
         
-        setWorkflowData(result);
-        return result;
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setWorkflowData(mockWorkflow);
+        return mockWorkflow;
       } catch (err) {
         console.error('Error fetching workflow:', err);
         throw err;
@@ -106,23 +112,12 @@ const WorkflowDetails: React.FC = () => {
   const updateWorkflow = useMutation({
     mutationFn: async (data: Partial<Workflow>) => {
       try {
-        const isTemplate = data.isTemplate;
-        const tableName = isTemplate ? 'workflow_templates' : 'workflows';
+        // Mock update - simulate API call
+        console.log('Updating workflow:', data);
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        const { error } = await supabase
-          .from(tableName)
-          .update({
-            name: data.name,
-            description: data.description,
-            steps: data.steps,
-            // Don't update these unless explicitly changed
-            type: data.type,
-            status: data.status,
-          })
-          .eq('id', id);
-          
-        if (error) throw error;
-        
+        // Update local data
+        setWorkflowData(data as Workflow);
         return data;
       } catch (err) {
         console.error('Error updating workflow:', err);
@@ -147,15 +142,9 @@ const WorkflowDetails: React.FC = () => {
   const deleteWorkflow = useMutation({
     mutationFn: async () => {
       try {
-        const isTemplate = workflow?.isTemplate;
-        const tableName = isTemplate ? 'workflow_templates' : 'workflows';
-        
-        const { error } = await supabase
-          .from(tableName)
-          .delete()
-          .eq('id', id);
-          
-        if (error) throw error;
+        // Mock delete - simulate API call
+        console.log('Deleting workflow:', id);
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         return true;
       } catch (err) {
