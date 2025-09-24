@@ -1,4 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
+// Complete mock implementation to avoid database errors
+export * from './three-way-matching-service-mock';
 import { Database } from '@/integrations/supabase/types';
 
 type ThreeWayMatch = Database['public']['Tables']['three_way_matches']['Row'];

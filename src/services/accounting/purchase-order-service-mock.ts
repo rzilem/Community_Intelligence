@@ -44,6 +44,8 @@ export interface CreatePurchaseOrderData {
 export interface PurchaseOrderWithLines extends PurchaseOrder {
   lines?: PurchaseOrderLine[];
   purchase_order_lines?: PurchaseOrderLine[];
+  approval_status: string;
+  requested_by: string;
 }
 
 export class PurchaseOrderService {
@@ -63,6 +65,8 @@ export class PurchaseOrderService {
       department: 'Administration',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      approval_status: 'approved',
+      requested_by: 'John Doe',
       lines: [
         {
           id: '1',
@@ -111,6 +115,8 @@ export class PurchaseOrderService {
       department: data.department,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      approval_status: 'pending',
+      requested_by: 'Current User',
       lines: data.line_items.map((item, index) => ({
         id: crypto.randomUUID(),
         po_id: '',

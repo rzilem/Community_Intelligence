@@ -26,6 +26,27 @@ export interface ReceiptWithLines extends Receipt {
   receipt_lines: ReceiptLine[];
   vendor_name: string;
   received_by_name: string;
+  purchase_order?: any;
+  total_received: number;
+  receipt_date: string;
+}
+
+export interface CreateReceiptData {
+  association_id?: string;
+  po_id: string;
+  received_date: string;
+  received_by: string;
+  total_amount: number;
+  status: 'partial' | 'complete';
+  notes?: string;
+  receipt_lines: {
+    po_line_id: string;
+    quantity_received: number;
+    unit_cost: number;
+    line_total: number;
+    condition: 'good' | 'damaged' | 'defective';
+    notes?: string;
+  }[];
 }
 
 export class ReceiptService {
@@ -42,6 +63,9 @@ export class ReceiptService {
       updated_at: new Date().toISOString(),
       vendor_name: 'Mock Vendor',
       received_by_name: 'John Doe',
+      purchase_order: { po_number: 'PO-001', vendor_name: 'Mock Vendor' },
+      total_received: 1000,
+      receipt_date: new Date().toISOString().split('T')[0],
       receipt_lines: [
         {
           id: '1',
@@ -68,7 +92,21 @@ export class ReceiptService {
     return this.mockReceipts.find(receipt => receipt.id === receiptId) || null;
   }
 
-  static async createReceipt(receiptData: any): Promise<string> {
+  static async getReceipts(associationId: string): Promise<ReceiptWithLines[]> {
+    return this.mockReceipts;
+  }
+
+  static async getPOReceiptSummary(poId: string): Promise<any> {
+    const receipts = this.mockReceipts.filter(receipt => receipt.po_id === poId);
+    const totalReceived = receipts.reduce((sum, r) => sum + r.total_amount, 0);
+    return {
+      totalReceived,
+      receiptCount: receipts.length,
+      status: receipts.length > 0 ? 'partial' : 'pending'
+    };
+  }
+
+  static async createReceipt(receiptData: CreateReceiptData): Promise<string> {
     const newReceipt: ReceiptWithLines = {
       id: crypto.randomUUID(),
       po_id: receiptData.po_id,
@@ -82,9 +120,17 @@ export class ReceiptService {
       updated_at: new Date().toISOString(),
       vendor_name: 'Mock Vendor',
       received_by_name: 'John Doe',
-      receipt_lines: receiptData.receipt_lines || []
+      purchase_order: { po_number: 'PO-001', vendor_name: 'Mock Vendor' },
+      total_received: receiptData.total_amount,
+      receipt_date: receiptData.received_date,
+      receipt_lines: receiptData.receipt_lines.map(line => ({
+        id: crypto.randomUUID(),
+        receipt_id: '',
+        ...line
+      }))
     };
 
+    newReceipt.receipt_lines.forEach(line => line.receipt_id = newReceipt.id);
     this.mockReceipts.push(newReceipt);
     return newReceipt.id;
   }
