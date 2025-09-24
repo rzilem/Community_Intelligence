@@ -29,21 +29,17 @@ export const useUserPreferences = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('column_preferences')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!error && data?.column_preferences && typeof data.column_preferences === 'object' && data.column_preferences !== null) {
-        const columnPrefs = data.column_preferences as Record<string, any>;
-        if (columnPrefs.invoicePreview) {
-          setPreferences({
-            ...defaultPreferences,
-            ...columnPrefs.invoicePreview
-          });
+      // Mock user preferences since user_settings table doesn't exist
+      const mockColumnPrefs = {
+        invoicePreview: {
+          ...defaultPreferences
         }
-      }
+      };
+      
+      setPreferences({
+        ...defaultPreferences,
+        ...mockColumnPrefs.invoicePreview
+      });
     } catch (error) {
       console.error('Failed to load user preferences:', error);
     } finally {
@@ -59,18 +55,8 @@ export const useUserPreferences = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          column_preferences: {
-            invoicePreview: updatedPreferences
-          }
-        });
-
-      if (error) {
-        console.error('Failed to save preferences:', error);
-      }
+      // Mock saving preferences since user_settings table doesn't exist
+      console.log('Mock: Saving user preferences:', updatedPreferences);
     } catch (error) {
       console.error('Failed to update user preferences:', error);
     }

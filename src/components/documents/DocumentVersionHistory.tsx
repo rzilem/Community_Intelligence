@@ -55,11 +55,7 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({
   const handleAddVersion = async () => {
     if (!file || !document) return;
     
-    await uploadNewVersion({ 
-      file, 
-      documentId: document.id, 
-      notes 
-    });
+    await uploadNewVersion(file, document.id, notes);
     
     setFile(null);
     setNotes('');
