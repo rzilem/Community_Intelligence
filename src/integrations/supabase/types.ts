@@ -107,6 +107,7 @@ export type Database = {
           founded_date: string | null
           id: string
           name: string
+          property_type: string | null
           state: string | null
           status: string | null
           type: string | null
@@ -126,6 +127,7 @@ export type Database = {
           founded_date?: string | null
           id?: string
           name: string
+          property_type?: string | null
           state?: string | null
           status?: string | null
           type?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           founded_date?: string | null
           id?: string
           name?: string
+          property_type?: string | null
           state?: string | null
           status?: string | null
           type?: string | null
