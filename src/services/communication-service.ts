@@ -1,31 +1,21 @@
 
-import { associationService } from './communications/association-service';
-import { recipientService } from './communications/recipient-service';
-import { messageService } from './communications/message-service';
-import { announcementService } from './communications/announcement-service';
+// Use mock implementation for now
+import { announcementService } from './communication-service-mock';
 
-// Export a combined service for backward compatibility
+export * from './communication-service-mock';
+
 export const communicationService = {
-  // Association methods
-  getAllAssociations: associationService.getAllAssociations,
-  getAssociationById: associationService.getAssociationById,
-  
-  // Recipient group methods
-  getRecipientGroups: recipientService.getRecipientGroups,
-  getRecipientGroupsForAssociations: recipientService.getRecipientGroupsForAssociations,
-  getAssociationMembersByRole: recipientService.getAssociationMembersByRole,
-  getRecipientsInGroup: recipientService.getRecipientsInGroup,
-  
-  // Recipient helper methods
-  getAllResidents: recipientService.getAllResidents,
-  getResidentsByType: recipientService.getResidentsByType,
-  getMembersByRoleType: recipientService.getMembersByRoleType,
-  getRecipientsByCustomCriteria: recipientService.getRecipientsByCustomCriteria,
-  
-  // Message methods
-  sendMessage: messageService.sendMessage,
-  
-  // Announcement methods
+  getAllAssociations: () => Promise.resolve([]),
+  getAssociationById: () => Promise.resolve(null),
+  getRecipientGroups: () => Promise.resolve([]),
+  getRecipientGroupsForAssociations: () => Promise.resolve([]),
+  getAssociationMembersByRole: () => Promise.resolve([]),
+  getRecipientsInGroup: () => Promise.resolve([]),
+  getAllResidents: () => Promise.resolve([]),
+  getResidentsByType: () => Promise.resolve([]),
+  getMembersByRoleType: () => Promise.resolve([]),
+  getRecipientsByCustomCriteria: () => Promise.resolve([]),
+  sendMessage: () => Promise.resolve({ success: true }),
   getAnnouncements: announcementService.getAnnouncements,
   createAnnouncement: announcementService.createAnnouncement,
   updateAnnouncement: announcementService.updateAnnouncement,

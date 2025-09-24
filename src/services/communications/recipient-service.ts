@@ -1,5 +1,6 @@
 
-import { supabase } from '@/integrations/supabase/client';
+// Use mock implementation
+export * from './recipient-service-mock';
 import { RecipientGroup } from '@/types/communication-types';
 import { Resident } from '@/types/resident-types';
 import { Json } from '@/integrations/supabase/types';
