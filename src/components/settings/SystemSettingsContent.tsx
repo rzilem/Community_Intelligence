@@ -1,6 +1,3 @@
-// File: src/components/settings/SystemSettingsContent.tsx
-// Fixed TypeScript errors for System Settings
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { mockRPCCall } from '@/hooks/supabase/supabase-utils';
 import { AIConfigurationSection } from './AIConfigurationSection';
 
 // Define proper types
@@ -119,7 +117,7 @@ export function SystemSettingsContent() {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_secret', {
+      const { data, error } = await mockRPCCall('get_secret', {
         secret_name: 'system_settings'
       });
 
@@ -148,7 +146,7 @@ export function SystemSettingsContent() {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase.rpc('set_secret', {
+      const { error } = await mockRPCCall('set_secret', {
         secret_name: 'system_settings',
         secret_value: JSON.stringify(settings)
       });

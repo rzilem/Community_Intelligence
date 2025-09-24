@@ -27,9 +27,17 @@ export const userService = {
 
   async createProfile(profileData: Partial<Profile>): Promise<Profile> {
     try {
+      // Ensure required fields are present
+      const completeProfileData = {
+        id: profileData.id!,
+        email: profileData.email!,
+        role: profileData.role || 'resident',
+        ...profileData
+      };
+
       const { data, error } = await supabase
         .from('profiles')
-        .insert(profileData)
+        .insert(completeProfileData)
         .select()
         .single();
 

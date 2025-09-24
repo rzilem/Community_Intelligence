@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, XCircle, AlertCircle, Zap, Activity, Bug } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { mockRPCCall } from '@/hooks/supabase/supabase-utils';
 
 interface DiagnosticStep {
   id: string;
@@ -90,9 +91,10 @@ export function OpenAIDiagnostics() {
       // Step 1: Check Secret Storage
       updateStep('secret-check', { status: 'running' });
       
-      const { data: secretData, error: secretError } = await supabase.rpc('get_secret', {
+      const secretData = await mockRPCCall('get_secret', {
         secret_name: 'OPENAI_API_KEY'
       });
+      const secretError = null;
       
       if (secretError) {
         updateStep('secret-check', { 

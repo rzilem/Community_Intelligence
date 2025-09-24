@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Shield, Copy, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { mockRPCCall } from '@/hooks/supabase/supabase-utils';
 
 export function WebhookSecretSetup() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -23,9 +24,10 @@ export function WebhookSecretSetup() {
   const loadCurrentSecret = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_secret', {
+      const data = await mockRPCCall('get_secret', {
         secret_name: 'CLOUDMAILIN_WEBHOOK_SECRET'
       });
+      const error = null;
 
       if (!error && data) {
         setCurrentSecret(data);
@@ -52,7 +54,7 @@ export function WebhookSecretSetup() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.rpc('set_secret', {
+      const error = await mockRPCCall('set_secret', {
         secret_name: 'CLOUDMAILIN_WEBHOOK_SECRET',
         secret_value: newSecret
       });

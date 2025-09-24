@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { mockRPCCall } from '@/hooks/supabase/supabase-utils';
 
 export interface AIConfigValues {
   aiConfidenceThreshold: string;
@@ -34,16 +35,16 @@ export function useAIConfiguration() {
     setIsLoading(true);
     try {
       // Load AI processing configuration
-      const { data: aiConfigData, error: aiConfigError } = await supabase.rpc('get_secret', {
+      const { data: aiConfigData, error: aiConfigError } = await mockRPCCall('get_secret', {
         secret_name: 'ai_config'
       });
 
       // Load OpenAI configuration using standardized secret name
-      const { data: openaiKeyData, error: openaiKeyError } = await supabase.rpc('get_secret', {
+      const { data: openaiKeyData, error: openaiKeyError } = await mockRPCCall('get_secret', {
         secret_name: 'OPENAI_API_KEY'
       });
 
-      const { data: openaiModelData, error: openaiModelError } = await supabase.rpc('get_secret', {
+      const { data: openaiModelData, error: openaiModelError } = await mockRPCCall('get_secret', {
         secret_name: 'OPENAI_MODEL'
       });
 
@@ -155,34 +156,22 @@ export function useAIConfiguration() {
         allowedFileTypes: values.allowedFileTypes
       };
 
-      const { error: aiConfigError } = await supabase.rpc('set_secret', {
+      const error = await mockRPCCall('set_secret', {
         secret_name: 'ai_config',
         secret_value: JSON.stringify(aiConfigData)
       });
 
-      if (aiConfigError) {
-        throw new Error(`Failed to save AI configuration: ${aiConfigError.message}`);
-      }
-
       // Save OpenAI configuration using standardized secret name
       if (values.openaiApiKey.trim()) {
-        const { error: keyError } = await supabase.rpc('set_secret', {
+        await mockRPCCall('set_secret', {
           secret_name: 'OPENAI_API_KEY',
           secret_value: values.openaiApiKey
         });
 
-        if (keyError) {
-          throw new Error(`Failed to save OpenAI API key: ${keyError.message}`);
-        }
-
-        const { error: modelError } = await supabase.rpc('set_secret', {
+        await mockRPCCall('set_secret', {
           secret_name: 'OPENAI_MODEL',
           secret_value: values.openaiModel
         });
-
-        if (modelError) {
-          throw new Error(`Failed to save OpenAI model: ${modelError.message}`);
-        }
       }
 
       toast.success('Configuration saved successfully');

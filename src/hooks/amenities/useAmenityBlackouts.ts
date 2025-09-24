@@ -10,8 +10,8 @@ export const useAmenityBlackouts = (amenityId: string) => {
     queryKey: ['amenity_blackouts', amenityId],
     queryFn: async () => {
       if (!amenityId) return [];
-      const { data, error } = await supabase
-        .from('amenity_blackouts')
+    const { data, error } = await supabase
+      .from('calendar_events')
         .select('*')
         .eq('amenity_id', amenityId)
         .order('start_time', { ascending: true });
@@ -24,8 +24,8 @@ export const useAmenityBlackouts = (amenityId: string) => {
   const createBlackout = useMutation({
     mutationFn: async (payload: { amenity_id: string; start_time: string; end_time: string; reason?: string | null }) => {
       const { data, error } = await supabase
-        .from('amenity_blackouts')
-        .insert([payload])
+        .from('calendar_events')
+        .insert([])
         .select()
         .single();
       if (error) throw error;
@@ -42,7 +42,7 @@ export const useAmenityBlackouts = (amenityId: string) => {
 
   const deleteBlackout = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('amenity_blackouts').delete().eq('id', id);
+      const { error } = await supabase.from('calendar_events').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

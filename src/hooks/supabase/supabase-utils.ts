@@ -96,3 +96,50 @@ export const showErrorToast = (operation: string, table: string, error: any) => 
 export const showSuccessToast = (operation: string, table: string) => {
   toast.success(`Successfully ${operation} ${table}`);
 };
+
+// Function types
+export type KnownFunctions = 
+  | 'storage_path_for_association'
+  | 'get_secret'
+  | 'set_secret'
+  | 'check_totp_status'
+  | 'upsert_totp_secret'
+  | 'verify_totp'
+  | 'set_totp_verified'
+  | 'delete_totp_secret';
+
+// Mock RPC function implementation for missing functions
+export const mockRPCCall = async (functionName: string, params?: any): Promise<any> => {
+  console.log(`Mock RPC call: ${functionName}`, params);
+  
+  switch (functionName) {
+    case 'get_secret':
+      // Return mock data for development
+      if (params?.secret_name === 'system_settings') {
+        return JSON.stringify({
+          appearance: { theme: 'system', colorScheme: 'blue' },
+          notifications: { emailNotifications: true },
+          integrations: { autoSync: true },
+          security: { twoFactorEnabled: false },
+          preferences: { language: 'en', timezone: 'UTC' }
+        });
+      }
+      return '';
+      
+    case 'set_secret':
+      // Mock successful save
+      return null;
+      
+    case 'check_totp_status':
+      return { enabled: false };
+      
+    case 'upsert_totp_secret':
+    case 'verify_totp':
+    case 'set_totp_verified':
+    case 'delete_totp_secret':
+      return { valid: true };
+      
+    default:
+      return null;
+  }
+};

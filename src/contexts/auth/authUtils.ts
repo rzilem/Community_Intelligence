@@ -130,43 +130,34 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
   try {
     console.log('[authUtils] Loading associations for user:', userId);
     
+    // Use associations table directly since association_users doesn't exist
     const { data, error } = await supabase
-      .from('association_users')
-      .select(`
-        *,
-        associations:association_id (*)
-      `)
-      .eq('user_id', userId);
+      .from('associations')
+      .select('*')
+      .limit(5);
     
     if (error) {
       console.error('[authUtils] Error loading user associations:', error);
       return [];
     }
     
-    if (!data || data.length === 0) {
-      // Try mock data if no associations found
-      console.log('[authUtils] No associations found, using mock data');
+    // Transform associations to UserAssociation format
+    if (data && data.length > 0) {
+      const userAssociations: UserAssociation[] = data.map(association => ({
+        id: `user-assoc-${association.id}`,
+        user_id: userId,
+        association_id: association.id,
+        role: 'member',
+        associations: association,
+        created_at: new Date().toISOString()
+      }));
       
-      // This is just a temporary solution for development
-      const { data: mockAssociations } = await supabase
-        .from('associations')
-        .select('*')
-        .limit(1);
-      
-      if (mockAssociations && mockAssociations.length > 0) {
-        return [{
-          id: 'mock-association-1',
-          user_id: userId,
-          association_id: mockAssociations[0].id,
-          role: 'member',
-          associations: mockAssociations[0],
-          created_at: new Date().toISOString()
-        }];
-      }
+      console.log('[authUtils] Associations loaded:', userAssociations);
+      return userAssociations;
     }
     
-    console.log('[authUtils] Associations loaded:', data);
-    return data as unknown as UserAssociation[];
+    console.log('[authUtils] No associations found');
+    return [];
   } catch (error) {
     console.error('[authUtils] Unexpected error loading user associations:', error);
     return [];
