@@ -133,16 +133,14 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
       setLoading(true);
       const journalEntryData: JournalEntryData = {
         association_id: associationId,
-        entry_number: formData.entry_number,
-        reference_number: formData.reference_number,
+        date: formData.entry_date,
+        reference: formData.reference_number,
         description: formData.description,
-        entry_date: formData.entry_date,
         line_items: lineItems.map(item => ({
-          gl_account_id: item.gl_account_id,
+          account_id: item.gl_account_id,
           debit_amount: item.debit_amount || 0,
           credit_amount: item.credit_amount || 0,
-          description: item.description || formData.description,
-          property_id: item.property_id
+          description: item.description || formData.description
         }))
       };
 

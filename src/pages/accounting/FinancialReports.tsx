@@ -37,18 +37,18 @@ const FinancialReports: React.FC = () => {
       setLoading(true);
       
       if (reportType === 'trial_balance') {
-        const trialBalance = await AdvancedGLService.generateTrialBalance(
+        const result = await AdvancedGLService.getTrialBalance(
           associationId, 
           endDate || new Date().toISOString().split('T')[0]
         );
         
         toast({
           title: "Report Generated",
-          description: `Trial Balance generated with ${trialBalance.length} accounts`
+          description: `Trial Balance generated with ${result.accounts.length} accounts`
         });
         
         // In a real implementation, this would format and display/download the report
-        console.log('Trial Balance Data:', trialBalance);
+        console.log('Trial Balance Data:', result);
       } else {
         // Placeholder for other report types
         toast({

@@ -105,7 +105,7 @@ const UserProfile = () => {
                         </div>
                       ) : (
                         <UserProfileForm 
-                          profile={profile} 
+                          profile={profile as any} 
                           onProfileUpdated={handleProfileUpdated} 
                         />
                       )}

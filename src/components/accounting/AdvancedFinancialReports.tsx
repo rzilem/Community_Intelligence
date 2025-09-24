@@ -132,7 +132,7 @@ const AdvancedFinancialReports: React.FC<AdvancedFinancialReportsProps> = ({
   };
 
   const generateTrialBalance = async (): Promise<FinancialReportData> => {
-    const trialBalance = await AdvancedGLService.generateTrialBalance(
+    const result = await AdvancedGLService.getTrialBalance(
       associationId,
       periodEnd.toISOString().split('T')[0]
     );
