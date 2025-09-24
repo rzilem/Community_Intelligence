@@ -214,8 +214,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn: async (email: string, password: string) => {
       console.log('🚀 Starting sign in for:', email);
       setState(prev => ({ ...prev, isSigningIn: true, error: null }));
+      
+      // Emergency timeout safety - force clear isSigningIn after 10 seconds
+      const timeoutId = setTimeout(() => {
+        console.error('⏰ Sign in timeout - forcing clear isSigningIn state');
+        setState(prev => ({ 
+          ...prev, 
+          isSigningIn: false, 
+          error: 'Sign in timed out. Please try again.' 
+        }));
+      }, 10000);
+      
       try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
+        clearTimeout(timeoutId); // Clear timeout on response
+        
         if (error) {
           console.log('❌ Sign in error:', error.message);
           setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
@@ -224,6 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('✅ Sign in successful, waiting for auth state change...');
         // Don't set isSigningIn to false here - let onAuthStateChange handle it
       } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout on exception
         console.log('💥 Sign in exception:', error);
         setState(prev => ({ ...prev, isSigningIn: false }));
         throw error;

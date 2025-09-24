@@ -15,7 +15,7 @@ export const useHomeownerRequestNotifications = () => {
     localStorage.getItem('lastHomeownerRequestsCheckTimestamp') || new Date().toISOString()
   );
 
-  // Get recent homeowner requests to check for unread ones
+  // Get recent homeowner requests to check for unread ones with error handling
   const { data: recentRequests = [] } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
@@ -23,7 +23,11 @@ export const useHomeownerRequestNotifications = () => {
       order: { column: 'created_at', ascending: false },
       filter: [
         { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
-      ]
+      ],
+      onError: (error) => {
+        console.warn('📊 Homeowner requests table not found or query failed:', error);
+        // Return empty array to prevent hook failures
+      }
     }
   );
 

@@ -22,7 +22,7 @@ export const useResaleEventNotifications = () => {
     localStorage.getItem('lastResaleEventCheckTimestamp') || new Date().toISOString()
   );
 
-  // Get recent resale events to check for unread ones
+  // Get recent resale events to check for unread ones with error handling
   const { data: recentEvents = [] } = useSupabaseQuery<ResaleEvent[]>(
     'resale_events',
     {
@@ -30,7 +30,11 @@ export const useResaleEventNotifications = () => {
       order: { column: 'created_at', ascending: false },
       filter: [
         { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
-      ]
+      ],
+      onError: (error) => {
+        console.warn('📊 Resale events table not found or query failed:', error);
+        // Return empty array to prevent hook failures
+      }
     }
   );
 
