@@ -27,6 +27,37 @@ const mockJobs: ImportJob[] = [
 ];
 
 export const jobService = {
+  createImportJob: async (options: any): Promise<ImportJob> => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const newJob: ImportJob = {
+      id: `job-${Date.now()}`,
+      type: options.importType || 'import',
+      status: 'pending',
+      progress: 0,
+      total_records: options.totalRecords || 0,
+      processed_records: 0,
+      error_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    mockJobs.push(newJob);
+    return newJob;
+   },
+
+  updateImportJobStatus: async (jobId: string, status: string, progressOrData?: number | any): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const index = mockJobs.findIndex(j => j.id === jobId);
+    if (index !== -1) {
+      mockJobs[index].status = status as any;
+      if (typeof progressOrData === 'number') {
+        mockJobs[index].progress = progressOrData;
+      } else if (progressOrData && typeof progressOrData.processed === 'number') {
+        mockJobs[index].processed_records = progressOrData.processed;
+        mockJobs[index].progress = Math.round((progressOrData.processed / mockJobs[index].total_records) * 100);
+      }
+      mockJobs[index].updated_at = new Date().toISOString();
+    }
+  },
   getJobs: async (): Promise<ImportJob[]> => {
     await new Promise(resolve => setTimeout(resolve, 200));
     return [...mockJobs];
