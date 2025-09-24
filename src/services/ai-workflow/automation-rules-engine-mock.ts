@@ -42,6 +42,11 @@ export class AutomationRulesEngine {
 
   private static mockExecutions: RuleExecution[] = [];
 
+  static async initialize(): Promise<void> {
+    // Mock initialization
+    console.log('AutomationRulesEngine initialized');
+  }
+
   static async createRule(rule: Partial<AutomationRule>): Promise<AutomationRule> {
     const newRule: AutomationRule = {
       id: crypto.randomUUID(),
@@ -176,3 +181,6 @@ export class AutomationRulesEngine {
     };
   }
 }
+
+// Export singleton instance for compatibility
+export const automationRulesEngine = AutomationRulesEngine;

@@ -250,6 +250,8 @@ export class PredictiveAnalyticsService {
         description: '3 properties showing payment pattern concerns',
         confidence: 0.82,
         impact: 'high',
+        timeframe: '30 days',
+        recommendations: ['Send payment reminders', 'Offer payment plans'],
         created_at: new Date().toISOString()
       }
     ];
@@ -260,12 +262,17 @@ export class PredictiveAnalyticsService {
       {
         id: crypto.randomUUID(),
         property_id: 'prop-1',
+        propertyId: 'prop-1',
         asset_type: 'HVAC',
+        assetType: 'HVAC',
         predicted_failure_date: new Date(Date.now() + 2592000000).toISOString(),
+        predictedFailureDate: new Date(Date.now() + 2592000000).toISOString(),
         confidence: 0.75,
         estimated_cost: 1500,
+        estimatedCost: 1500,
         priority: 'high',
         recommendations: ['Schedule inspection', 'Plan for replacement'],
+        preventiveMeasures: ['Schedule inspection', 'Plan for replacement'],
         created_at: new Date().toISOString()
       }
     ];

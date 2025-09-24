@@ -28,3 +28,6 @@ export class CommunicationIntelligenceHub {
     };
   }
 }
+
+// Export singleton instance for compatibility
+export const communicationIntelligenceHub = CommunicationIntelligenceHub;
