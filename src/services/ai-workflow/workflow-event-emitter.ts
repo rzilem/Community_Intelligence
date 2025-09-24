@@ -31,7 +31,7 @@ export class WorkflowEventEmitter {
       devLog.info(`Emitting workflow event: ${eventType}`, { associationId, eventData });
 
       // Trigger automation rules evaluation
-      await automationRulesEngine.evaluateEvent(eventType, eventData, associationId);
+      const triggeredRules = await automationRulesEngine.evaluateEvent(eventType, eventData);
     } catch (error) {
       devLog.error('Failed to emit workflow event', error);
     }

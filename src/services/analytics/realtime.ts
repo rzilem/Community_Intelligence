@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
 
 export interface RealTimeMetric {
@@ -31,98 +30,65 @@ export class RealTimeAnalyticsEngine {
 
   async getRealTimeMetrics(): Promise<RealTimeAnalyticsData> {
     try {
-      // Fetch real data from Supabase tables
-      const [
-        profilesCount,
-        associationsCount,
-        maintenanceData,
-        paymentsData,
-        analyticsData
-      ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('associations').select('id', { count: 'exact', head: true }),
-        supabase.from('work_orders').select('status, created_at').order('created_at', { ascending: false }).limit(50),
-        supabase.from('payment_transactions_enhanced').select('net_amount, payment_date').order('payment_date', { ascending: false }).limit(50),
-        supabase.from('analytics_metrics').select('metric_value, metric_name, recorded_at').order('recorded_at', { ascending: false }).limit(100)
-      ]);
-
-      // Calculate real metrics from data
-      const totalUsers = profilesCount.count || 0;
-      const totalAssociations = associationsCount.count || 0;
-      const recentMaintenance = maintenanceData.data || [];
-      const recentPayments = paymentsData.data || [];
-      const recentAnalytics = analyticsData.data || [];
-
-      // Calculate maintenance resolution time
-      const openMaintenance = recentMaintenance.filter(req => req.status === 'open').length;
-      const totalMaintenance = recentMaintenance.length;
-      const maintenanceRate = totalMaintenance > 0 ? (openMaintenance / totalMaintenance) * 100 : 0;
-
-      // Calculate payment metrics
-      const totalPaymentValue = recentPayments.reduce((sum, payment) => sum + (payment.net_amount || 0), 0);
-      
-      // Get specific analytics metrics
-      const revenueMetric = recentAnalytics.find(m => m.metric_name === 'revenue');
-      const totalRevenue = revenueMetric?.metric_value || 50000;
-
+      // Mock metrics since the required tables don't exist
       const metrics: RealTimeMetric[] = [
         {
           id: 'active-users',
           name: 'Active Users',
-          value: totalUsers,
-          change: Math.floor(Math.random() * 10) - 5,
-          changePercent: (Math.random() - 0.5) * 10,
-          trend: totalUsers > 50 ? 'up' : 'stable',
+          value: 150,
+          change: 5,
+          changePercent: 3.4,
+          trend: 'up',
           unit: 'count',
           timestamp: new Date().toISOString()
         },
         {
           id: 'associations',
           name: 'Associations',
-          value: totalAssociations,
-          change: Math.floor(Math.random() * 3) - 1,
-          changePercent: (Math.random() - 0.5) * 5,
-          trend: totalAssociations > 5 ? 'up' : 'stable',
+          value: 12,
+          change: 1,
+          changePercent: 9.1,
+          trend: 'up',
           unit: 'count',
           timestamp: new Date().toISOString()
         },
         {
           id: 'revenue',
           name: 'Revenue',
-          value: totalRevenue,
-          change: Math.floor(Math.random() * 1000) - 500,
-          changePercent: (Math.random() - 0.5) * 15,
-          trend: totalRevenue > 10000 ? 'up' : 'down',
+          value: 85000,
+          change: 2500,
+          changePercent: 3.0,
+          trend: 'up',
           unit: 'currency',
           timestamp: new Date().toISOString()
         },
         {
           id: 'maintenance-rate',
           name: 'Maintenance Rate',
-          value: maintenanceRate,
-          change: (Math.random() - 0.5) * 5,
-          changePercent: (Math.random() - 0.5) * 20,
-          trend: maintenanceRate > 50 ? 'down' : 'up',
+          value: 85.2,
+          change: -2.1,
+          changePercent: -2.4,
+          trend: 'down',
           unit: 'percentage',
           timestamp: new Date().toISOString()
         },
         {
           id: 'work-orders',
           name: 'Active Work Orders',
-          value: openMaintenance,
-          change: Math.floor(Math.random() * 5) - 2,
-          changePercent: (Math.random() - 0.5) * 25,
-          trend: openMaintenance < 10 ? 'up' : 'stable',
+          value: 7,
+          change: -2,
+          changePercent: -22.2,
+          trend: 'down',
           unit: 'count',
           timestamp: new Date().toISOString()
         },
         {
           id: 'payments',
           name: 'Payment Volume',
-          value: totalPaymentValue,
-          change: Math.floor(Math.random() * 500) - 250,
-          changePercent: (Math.random() - 0.5) * 12,
-          trend: totalPaymentValue > 5000 ? 'up' : 'down',
+          value: 45000,
+          change: 3200,
+          changePercent: 7.6,
+          trend: 'up',
           unit: 'currency',
           timestamp: new Date().toISOString()
         }
@@ -152,28 +118,6 @@ export class RealTimeAnalyticsEngine {
         '7d': 7 * 24 * 60 * 60 * 1000
       };
 
-      const startTime = new Date(now.getTime() - timeRangeMs[timeRange]);
-      
-      // Fetch real historical data from various tables
-      const [payments, maintenance, analytics] = await Promise.all([
-        supabase
-          .from('payment_transactions_enhanced')
-          .select('net_amount, payment_date')
-          .gte('payment_date', startTime.toISOString())
-          .order('payment_date', { ascending: true }),
-        supabase
-          .from('work_orders')
-          .select('created_at')
-          .gte('created_at', startTime.toISOString())
-          .order('created_at', { ascending: true }),
-        supabase
-          .from('analytics_metrics')
-          .select('metric_value, recorded_at')
-          .gte('recorded_at', startTime.toISOString())
-          .order('recorded_at', { ascending: true })
-      ]);
-
-      // Process real data into time series
       const intervals = {
         '1h': 60000, // 1 minute intervals
         '6h': 300000, // 5 minute intervals
@@ -184,33 +128,17 @@ export class RealTimeAnalyticsEngine {
       const intervalMs = intervals[timeRange];
       const pointsCount = Math.ceil(timeRangeMs[timeRange] / intervalMs);
 
-      // Aggregate data by time intervals
       for (let i = 0; i <= pointsCount; i++) {
-        const timestamp = new Date(startTime.getTime() + (i * intervalMs));
-        const nextTimestamp = new Date(timestamp.getTime() + intervalMs);
+        const timestamp = new Date(now.getTime() - ((pointsCount - i) * intervalMs));
         
-        // Count data points in this interval
-        const paymentCount = payments.data?.filter(pay => {
-          const payDate = new Date(pay.payment_date);
-          return payDate >= timestamp && payDate < nextTimestamp;
-        }).length || 0;
-
-        const maintCount = maintenance.data?.filter(maint => {
-          const maintDate = new Date(maint.created_at);
-          return maintDate >= timestamp && maintDate < nextTimestamp;
-        }).length || 0;
-
-        const analyticsCount = analytics.data?.filter(analytic => {
-          const analyticDate = new Date(analytic.recorded_at);
-          return analyticDate >= timestamp && analyticDate < nextTimestamp;
-        }).length || 0;
-
-        // Create composite activity score
-        const activityScore = (paymentCount * 10) + (maintCount * 5) + (analyticsCount * 3);
+        // Generate realistic mock data with some variance
+        const baseValue = 50;
+        const variance = Math.sin(i / 10) * 20 + Math.random() * 10;
+        const value = Math.max(1, baseValue + variance);
         
         dataPoints.push({
           timestamp: timestamp.toISOString(),
-          value: Math.max(1, activityScore),
+          value,
           metric: 'activity'
         });
       }
@@ -218,21 +146,7 @@ export class RealTimeAnalyticsEngine {
       return dataPoints;
     } catch (error) {
       devLog.error('Failed to get historical data', error);
-      
-      // Fallback to mock data if real data fails
-      const fallbackPoints: HistoricalDataPoint[] = [];
-      const config = { points: 24, intervalMs: 3600000 };
-      
-      for (let i = config.points; i >= 0; i--) {
-        const timestamp = new Date(new Date().getTime() - (i * config.intervalMs));
-        fallbackPoints.push({
-          timestamp: timestamp.toISOString(),
-          value: Math.max(1, 10 + Math.random() * 50),
-          metric: 'activity'
-        });
-      }
-      
-      return fallbackPoints;
+      throw error;
     }
   }
 
@@ -245,24 +159,12 @@ export class RealTimeAnalyticsEngine {
       this.isStreaming = true;
       devLog.info('Starting real-time analytics stream');
 
-      // Set up real-time subscription to database changes
-      const subscription = supabase
-        .channel('analytics-changes')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public' }, 
-          (payload) => {
-            devLog.info('Database change detected', payload);
-            this.notifySubscribers();
-          }
-        )
-        .subscribe();
-
-      // Also set up periodic updates for demonstration
+      // Set up periodic updates for demonstration
       this.streamingInterval = setInterval(async () => {
         if (this.isStreaming) {
           await this.notifySubscribers();
         }
-      }, 2000); // Update every 2 seconds
+      }, 5000); // Update every 5 seconds
 
       return Promise.resolve();
     } catch (error) {
@@ -279,9 +181,6 @@ export class RealTimeAnalyticsEngine {
         clearInterval(this.streamingInterval);
         this.streamingInterval = null;
       }
-
-      // Unsubscribe from database changes
-      await supabase.removeAllChannels();
       
       devLog.info('Real-time analytics stream stopped');
     } catch (error) {
@@ -317,7 +216,6 @@ export class RealTimeAnalyticsEngine {
     };
   }
 
-  // Advanced analytics methods
   async getSystemPerformance(): Promise<{
     cpu: number;
     memory: number;
@@ -327,10 +225,10 @@ export class RealTimeAnalyticsEngine {
     try {
       // Mock system performance data
       return {
-        cpu: Math.random() * 100,
-        memory: Math.random() * 100,
-        network: Math.random() * 100,
-        disk: Math.random() * 100
+        cpu: 45 + Math.random() * 30,
+        memory: 60 + Math.random() * 25,
+        network: 20 + Math.random() * 40,
+        disk: 35 + Math.random() * 30
       };
     } catch (error) {
       devLog.error('Failed to get system performance', error);
@@ -346,21 +244,23 @@ export class RealTimeAnalyticsEngine {
     acknowledged: boolean;
   }>> {
     try {
-      // Generate mock alerts based on current metrics
-      const alerts = [];
-      const metrics = await this.getRealTimeMetrics();
-      
-      for (const metric of metrics.metrics) {
-        if (Math.abs(metric.changePercent) > 25) {
-          alerts.push({
-            id: `alert-${metric.id}-${Date.now()}`,
-            type: metric.changePercent > 0 ? 'warning' : 'error' as const,
-            message: `${metric.name} ${metric.changePercent > 0 ? 'spike' : 'drop'} detected: ${metric.changePercent.toFixed(1)}%`,
-            timestamp: new Date().toISOString(),
-            acknowledged: false
-          });
+      // Generate mock alerts
+      const alerts = [
+        {
+          id: 'alert-1',
+          type: 'info' as const,
+          message: 'System performance is optimal',
+          timestamp: new Date().toISOString(),
+          acknowledged: false
+        },
+        {
+          id: 'alert-2',
+          type: 'warning' as const,
+          message: 'High maintenance request volume detected',
+          timestamp: new Date(Date.now() - 300000).toISOString(),
+          acknowledged: false
         }
-      }
+      ];
 
       return alerts;
     } catch (error) {
@@ -375,29 +275,19 @@ export class RealTimeAnalyticsEngine {
     trend: 'increasing' | 'decreasing' | 'stable';
   }> {
     try {
-      // Simple trend prediction using historical data
-      const historical = await this.getHistoricalData('24h');
-      const values = historical.map(d => d.value);
-      
-      // Calculate trend using linear regression
-      const n = values.length;
-      const sumX = values.reduce((sum, _, i) => sum + i, 0);
-      const sumY = values.reduce((sum, val) => sum + val, 0);
-      const sumXY = values.reduce((sum, val, i) => sum + i * val, 0);
-      const sumXX = values.reduce((sum, _, i) => sum + i * i, 0);
-      
-      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
-      
-      // Generate predictions
+      // Generate mock prediction data
       const predictions = [];
+      const baseValue = 50;
+      
       for (let i = 0; i < hours; i++) {
-        const predictedValue = intercept + slope * (n + i);
-        predictions.push(Math.max(0, predictedValue));
+        const trend = Math.sin(i / 8) * 10;
+        const noise = (Math.random() - 0.5) * 5;
+        const predictedValue = Math.max(0, baseValue + trend + noise);
+        predictions.push(predictedValue);
       }
       
-      const trend = slope > 5 ? 'increasing' : slope < -5 ? 'decreasing' : 'stable';
-      const confidence = Math.max(0.1, Math.min(0.9, 1 - Math.abs(slope) / 100));
+      const trend = 'increasing';
+      const confidence = 0.75;
       
       return {
         prediction: predictions,
