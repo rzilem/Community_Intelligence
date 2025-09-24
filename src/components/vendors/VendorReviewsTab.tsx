@@ -161,9 +161,9 @@ const VendorReviewsTab: React.FC<VendorReviewsTabProps> = ({ vendorId }) => {
                     <div className="flex items-center gap-2">
                       <User className="h-5 w-5 text-gray-400" />
                       <span className="font-medium">
-                        {typeof review.reviewer === 'object' && review.reviewer?.first_name && review.reviewer?.last_name
+                        {review.reviewer && typeof review.reviewer === 'object' && 'first_name' in review.reviewer && 'last_name' in review.reviewer
                           ? `${review.reviewer.first_name} ${review.reviewer.last_name}`
-                          : typeof review.reviewer === 'object' && review.reviewer?.email 
+                          : review.reviewer && typeof review.reviewer === 'object' && 'email' in review.reviewer 
                           ? review.reviewer.email 
                           : typeof review.reviewer === 'string' 
                           ? review.reviewer 

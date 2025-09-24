@@ -55,8 +55,8 @@ export interface AuthContextType extends AuthState {
   currentAssociation: Association | null;
   userAssociations: Association[];
   setCurrentAssociation: (association: Association | null) => void;
-  signIn: () => Promise<void>;
-  signUp: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: { first_name: string; last_name: string }) => Promise<void>;
 }
 
 const initialState: AuthState = {
