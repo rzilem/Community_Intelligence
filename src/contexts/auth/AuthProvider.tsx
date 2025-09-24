@@ -134,8 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (user: User) => {
     try {
-      // Set user immediately, but keep profile loading separate
-      setState(prev => ({ ...prev, user, isLoading: true }));
+      console.log('🔄 Loading user profile for:', user.email);
+      
+      // Set user immediately, don't set isLoading to true here as it conflicts with isSigningIn
+      setState(prev => ({ ...prev, user }));
       
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -144,16 +146,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (error) {
-        console.warn('Error loading user profile:', error);
+        console.warn('⚠️ Error loading user profile:', error);
       }
+
+      const finalProfile = profile || {
+        id: user.id,
+        email: user.email || '',
+        role: 'resident'
+      };
+
+      console.log('✅ Profile loaded:', finalProfile);
 
       setState(prev => ({
         ...prev,
-        profile: profile || {
-          id: user.id,
-          email: user.email || '',
-          role: 'resident'
-        },
+        profile: finalProfile,
         associations: [],
         isLoading: false,
         isSigningIn: false,
@@ -161,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
 
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('❌ Error loading user profile:', error);
       setState(prev => ({
         ...prev,
         isLoading: false,
@@ -206,15 +212,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userAssociations: state.associations,
     setCurrentAssociation,
     signIn: async (email: string, password: string) => {
+      console.log('🚀 Starting sign in for:', email);
       setState(prev => ({ ...prev, isSigningIn: true, error: null }));
       try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
+          console.log('❌ Sign in error:', error.message);
           setState(prev => ({ ...prev, isSigningIn: false, error: error.message }));
           throw error;
         }
+        console.log('✅ Sign in successful, waiting for auth state change...');
         // Don't set isSigningIn to false here - let onAuthStateChange handle it
       } catch (error) {
+        console.log('💥 Sign in exception:', error);
         setState(prev => ({ ...prev, isSigningIn: false }));
         throw error;
       }
