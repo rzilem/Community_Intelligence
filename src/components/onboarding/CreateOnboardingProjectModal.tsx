@@ -61,7 +61,7 @@ const CreateOnboardingProjectModal: React.FC<CreateOnboardingProjectModalProps> 
         template_id: templateId,
         start_date: startDate,
       });
-      if (project?.id) {
+      if (project && 'id' in project && project.id) {
         toast.success('Onboarding project created');
         onOpenChange(false);
         onCreated?.(project.id);

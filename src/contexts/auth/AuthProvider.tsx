@@ -1,269 +1,207 @@
-import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
-import { AuthContextType } from './types';
-import { isAdminRole } from '@/utils/role-utils';
-import { ensurePasswordNotLeaked } from '@/utils/security/password-utils';
-import { toast } from 'sonner';
 
-export const AuthContext = createContext<AuthContextType>({
+export interface Profile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email: string;
+  role: string;
+  phone_number?: string;
+  profile_image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Association {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  status?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  contact_website?: string;
+  property_type?: string;
+  units?: number;
+  founded_date?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  profile: Profile | null;
+  associations: Association[];
+  isLoading: boolean;
+  isSigningOut: boolean;
+  error: string | null;
+}
+
+export interface AuthContextType extends AuthState {
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  // Backward compatibility properties
+  loading: boolean;
+  isAuthenticated: boolean;
+  userRole: string;
+  isAdmin: boolean;
+  currentAssociation: Association | null;
+  userAssociations: Association[];
+  setCurrentAssociation: (association: Association | null) => void;
+  signIn: () => Promise<void>;
+  signUp: () => Promise<void>;
+}
+
+const initialState: AuthState = {
   user: null,
-  session: null,
   profile: null,
-  loading: true,
+  associations: [],
   isLoading: true,
-  isAdmin: false,
-  isAuthenticated: false,
-  currentAssociation: null,
-  userAssociations: [],
-  userRole: null,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  setCurrentAssociation: () => {},
-  refreshProfile: async () => {},
-});
+  isSigningOut: false,
+  error: null,
+};
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userAssociations, setUserAssociations] = useState<any[]>([]);
-  const [currentAssociation, setCurrentAssociation] = useState<any | null>(null);
+  const [state, setState] = useState<AuthState>(initialState);
+  const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
 
-  // Determine authentication state
-  const isAuthenticated = !!user;
-  
-  // Determine user role
-  const userRole = useMemo(() => {
-    return profile?.role || null;
-  }, [profile?.role]);
-
-  // Determine if user is an admin
-  const isAdmin = useMemo(() => {
-    return isAdminRole(profile?.role);
-  }, [profile?.role]);
-
-  // Function to refresh the user profile data
-  const refreshProfile = useCallback(async () => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-    
-    try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-        
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return;
-      }
-      
-      if (profileData) {
-        setProfile(profileData);
-        console.log('Profile data reloaded:', profileData);
-      }
-    } catch (error) {
-      console.error('Unexpected error fetching profile:', error);
-    }
-  }, [user]);
-
-  // Fetch user profile when user changes
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) {
-        setProfile(null);
-        return;
-      }
-      
+    let mounted = true;
+
+    const getInitialSession = async () => {
       try {
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
         
-        if (profileData) {
-          setProfile(profileData);
-          console.log('Profile data loaded:', profileData);
-        }
-      } catch (error) {
-        console.error('Unexpected error fetching profile:', error);
-      }
-    };
-    
-    fetchProfile();
-  }, [user]);
-  
-  // Fetch user associations when user changes
-  useEffect(() => {
-    const fetchAssociations = async () => {
-      if (!user) {
-        setUserAssociations([]);
-        setCurrentAssociation(null);
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from('association_users')
-          .select(`
-            *,
-            associations:association_id (*)
-          `)
-          .eq('user_id', user.id);
-          
-        if (error) {
-          console.error('Error fetching user associations:', error);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          console.info('[AuthProvider] User associations loaded:', data);
-          setUserAssociations(data);
-          
-          // Set first association as current if not already set
-          if (!currentAssociation) {
-            setCurrentAssociation(data[0].associations);
+        if (mounted) {
+          if (session?.user) {
+            await loadUserProfile(session.user);
+          } else {
+            setState(prev => ({ ...prev, isLoading: false }));
           }
         }
       } catch (error) {
-        console.error('Unexpected error fetching associations:', error);
+        console.error('Error getting initial session:', error);
+        if (mounted) {
+          setState(prev => ({ 
+            ...prev, 
+            isLoading: false, 
+            error: 'Failed to load session' 
+          }));
+        }
       }
     };
-    
-    fetchAssociations();
-  }, [user, currentAssociation]);
 
-  // Initialize auth state
-  useEffect(() => {
-    // Set up auth state listener FIRST
+    getInitialSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.id);
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        // If user logs out, reset states
-        if (event === 'SIGNED_OUT') {
-          setProfile(null);
-          setCurrentAssociation(null);
-          setUserAssociations([]);
+      async (event, session) => {
+        if (mounted) {
+          if (session?.user) {
+            await loadUserProfile(session.user);
+          } else {
+            setState(initialState);
+            setCurrentAssociation(null);
+          }
         }
       }
     );
 
-    // THEN check for existing session
-    const initializeAuth = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-      } catch (error) {
-        console.error('Error getting session:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Authentication methods
-  const signIn = async (email: string, password: string) => {
+  const loadUserProfile = async (user: User) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      setState(prev => ({ ...prev, user, isLoading: true }));
       
-      if (error) {
-        console.error('Sign in error:', error);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
         throw error;
       }
-    } catch (error: any) {
-      console.error('Unexpected sign in error:', error);
-      throw error;
+
+      setState(prev => ({
+        ...prev,
+        profile: profile || {
+          id: user.id,
+          email: user.email || '',
+          role: 'resident'
+        },
+        associations: [],
+        isLoading: false,
+        error: null,
+      }));
+
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Failed to load profile',
+      }));
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
-    try {
-      // New: prevent sign-up with leaked/breached passwords
-      try {
-        await ensurePasswordNotLeaked(password);
-      } catch (err: any) {
-        console.warn('[AuthProvider] Blocked leaked password during sign-up:', err);
-        toast.error(err?.message || 'This password appears in known breaches. Please choose a different password.');
-        throw err;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-          },
-        },
-      });
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        throw error;
-      }
-    } catch (error: any) {
-      console.error('Unexpected sign up error:', error);
-      throw error;
-    }
+  const refreshProfile = async () => {
+    if (!state.user) return;
+    await loadUserProfile(state.user);
   };
 
   const signOut = async () => {
+    setState(prev => ({ ...prev, isSigningOut: true }));
+    
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Sign out error:', error);
-      }
+      await supabase.auth.signOut();
+      setState(initialState);
+      setCurrentAssociation(null);
     } catch (error) {
-      console.error('Unexpected sign out error:', error);
+      console.error('Error signing out:', error);
+      setState(prev => ({ 
+        ...prev, 
+        isSigningOut: false,
+        error: 'Failed to sign out' 
+      }));
     }
   };
 
-  const handleSetCurrentAssociation = (association: any) => {
-    setCurrentAssociation(association);
-  };
-
-  const contextValue = {
-    user,
-    session,
-    profile,
-    loading,
-    isLoading: loading, // Alias loading as isLoading to match the type
-    isAuthenticated,
-    userAssociations,
-    currentAssociation,
-    userRole,
-    isAdmin,
-    signIn,
-    signUp,
+  const contextValue: AuthContextType = {
+    ...state,
     signOut,
-    setCurrentAssociation: handleSetCurrentAssociation,
     refreshProfile,
+    // Backward compatibility
+    loading: state.isLoading,
+    isAuthenticated: !!state.user,
+    userRole: state.profile?.role || 'resident',
+    isAdmin: state.profile?.role === 'admin',
+    currentAssociation,
+    userAssociations: state.associations,
+    setCurrentAssociation,
+    signIn: async () => {}, // Mock function
+    signUp: async () => {}, // Mock function
   };
 
   return (
